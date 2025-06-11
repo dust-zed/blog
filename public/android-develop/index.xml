@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Android-Develops on zed的博客</title>
+    <link>http://localhost:1313/android-develop/</link>
+    <description>Recent content in Android-Develops on zed的博客</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Wed, 11 Jun 2025 15:26:57 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/android-develop/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>RecyclerView缓存机制</title>
+      <link>http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</link>
+      <pubDate>Wed, 11 Jun 2025 15:26:57 +0800</pubDate>
+      <guid>http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</guid>
+      <description>&lt;p&gt;RecyclerView缓存机制&lt;/p&gt;&#xA;&lt;h4 id=&#34;多级缓存体系架构图&#34;&gt;&lt;strong&gt;多级缓存体系架构图&lt;/strong&gt;&lt;/h4&gt;&#xA;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;TEXT&#xA;&#xA;RecyclerView 缓存系统&#xA;├── 1. 屏幕内缓存 (Attached Scrap)&#xA;│   └── 存放当前可见的ViewHolder（快速复用）&#xA;├── 2. 屏幕外缓存 (Cache)&#xA;│   └── 保存最近离开屏幕的ViewHolder（默认容量=2）&#xA;├── 3. 扩展缓存 (ViewCacheExtension)&#xA;│   └── 开发者自定义缓存（特殊用途）&#xA;└── 4. 回收池 (RecycledViewPool)&#xA;    └── 全局共享的ViewHolder存储（不同类型独立缓存）&#xA;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;根据&lt;code&gt;position&lt;/code&gt;判断是否命中&lt;code&gt;Cache&lt;/code&gt;，根据&lt;code&gt;viewType&lt;/code&gt;判断是否命中&lt;code&gt;RecyclerViewPool&lt;/code&gt;，会执行&lt;code&gt;onBindViewHolder&lt;/code&gt;&lt;/p&gt;&#xA;&lt;p&gt;在 &lt;strong&gt;RecyclerView&lt;/strong&gt; 的回收复用机制中，&lt;code&gt;changedScrap&lt;/code&gt; 和 &lt;code&gt;attachedScrap&lt;/code&gt; 是两个关键临时缓存，而 &lt;strong&gt;Stable IDs&lt;/strong&gt; 会改变 ViewHolder 获取的方式。以下是详细解释：&lt;/p&gt;&#xA;&lt;hr&gt;&#xA;&lt;h3 id=&#34;1&#34;&gt;&lt;strong&gt;1. &lt;code&gt;changedScrap&lt;/code&gt; 的作用&lt;/strong&gt;&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;用途&lt;/strong&gt;：专门配合 &lt;code&gt;notifyItemChanged()&lt;/code&gt; 或 &lt;code&gt;notifyDataSetChanged()&lt;/code&gt; 使用。&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;工作机制&lt;/strong&gt;：&#xA;&lt;ul&gt;&#xA;&lt;li&gt;当调用 &lt;code&gt;notifyItemChanged(position)&lt;/code&gt; 时，被标记更新的 item 会被临时移到 &lt;code&gt;changedScrap&lt;/code&gt; 中。&lt;/li&gt;&#xA;&lt;li&gt;在布局阶段（如 &lt;code&gt;onLayout&lt;/code&gt;），这些 ViewHolder 会被重新绑定数据（调用 &lt;code&gt;onBindViewHolder()&lt;/code&gt;），然后放回原位置。&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;目的&lt;/strong&gt;：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;hr&gt;&#xA;&lt;h3 id=&#34;2&#34;&gt;&lt;strong&gt;2. &lt;code&gt;attachedScrap&lt;/code&gt; 的作用&lt;/strong&gt;&lt;/h3&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;用途&lt;/strong&gt;：用于 &lt;strong&gt;快速复用可见或即将可见的 ViewHolder&lt;/strong&gt;。&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;工作机制&lt;/strong&gt;：&#xA;&lt;ul&gt;&#xA;&lt;li&gt;在布局过程中（如 &lt;code&gt;LinearLayoutManager.fill()&lt;/code&gt;），RecyclerView 会先将当前屏幕上的 ViewHolder &lt;strong&gt;临时移除&lt;/strong&gt; 到 &lt;code&gt;attachedScrap&lt;/code&gt;。&lt;/li&gt;&#xA;&lt;li&gt;遍历新布局时，直接从 &lt;code&gt;attachedScrap&lt;/code&gt; 中按 &lt;strong&gt;position 匹配&lt;/strong&gt; 取回 ViewHolder（无需创建或绑定）。&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;目的&lt;/strong&gt;：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;hr&gt;&#xA;&lt;h3 id=&#34;3-stable-ids-如何改变-viewholder-获取方式&#34;&gt;&lt;strong&gt;3. Stable IDs 如何改变 ViewHolder 获取方式&lt;/strong&gt;&lt;/h3&gt;&#xA;&lt;p&gt;当启用 &lt;strong&gt;Stable IDs&lt;/strong&gt;（通过 &lt;code&gt;setHasStableIds(true)&lt;/code&gt; + 重写 &lt;code&gt;getItemId()&lt;/code&gt;）时：&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

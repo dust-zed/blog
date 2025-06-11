@@ -2,8 +2,28 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>http://localhost:1313/categories/android-develop/</loc>
+    <lastmod>2025-06-11T15:26:57+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/android-develop/</loc>
+    <lastmod>2025-06-11T15:26:57+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
     <loc>http://localhost:1313/categories/</loc>
-    <lastmod>2025-06-11T12:20:50+08:00</lastmod>
+    <lastmod>2025-06-11T15:26:57+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</loc>
+    <lastmod>2025-06-11T15:26:57+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/</loc>
+    <lastmod>2025-06-11T15:26:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
@@ -18,11 +38,6 @@
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/tutorials/</loc>
-    <lastmod>2025-06-11T12:20:50+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/</loc>
     <lastmod>2025-06-11T12:20:50+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

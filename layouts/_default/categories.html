@@ -1,0 +1,70 @@
+<!-- 显示所有分类 -->
+<section class="category-list">
+  <h2>分类导航</h2>
+  
+  <!-- 遍历所有分类 -->
+  {{ range $term, $pages := .Site.Taxonomies.categories }}
+    <div class="category-card">
+      <!-- 分类标题（带链接） -->
+      <h3>
+        <a href="{{ .Page.RelPermalink }}">
+          {{ .Page.Title }} 
+          <span class="count">({{ .Count }})</span>
+        </a>
+      </h3>
+      
+      <!-- 显示该分类下的最新5篇文章 -->
+      <ul class="post-preview">
+        {{ range first 5 .Pages }}
+          <li>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            <time>{{ .Date.Format "2006-01-02" }}</time>
+          </li>
+        {{ end }}
+      </ul>
+    </div>
+  {{ end }}
+</section>
+
+<!-- 添加CSS样式 -->
+<style>
+.category-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+.category-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: transform 0.3s;
+}
+.category-card:hover {
+  transform: translateY(-5px);
+}
+.category-card h3 a {
+  color: #2c3e50;
+  text-decoration: none;
+}
+.count {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+.post-preview {
+  margin-top: 10px;
+  list-style: none;
+  padding-left: 0;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.post-preview li {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+.post-preview time {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+</style>
+
