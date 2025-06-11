@@ -2,8 +2,7 @@ theme = 'ananke'
 baseURL = "https://www.dust-zed.site"
 title = "zed的博客"
 languageCode = "zh-cn"
-
-DefaultContentLanguage = "zh"
+DefaultContentLanguage = "zh-cn"
 SectionPagesMenu = "main"
 Paginate = 3                  # this is set low for demonstrating with dummy content. Set to a higher number
 googleAnalytics = ""
