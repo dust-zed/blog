@@ -97,5 +97,3 @@ hugo new tutorials/hugo-vercel博客配置.md
   archetypes/
   ├── tutorials.md     # 博客教程模板
   ```
-
-  
