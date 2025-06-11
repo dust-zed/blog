@@ -12,6 +12,13 @@ changefreq = "monthly"
 priority = 0.5
 filename = "sitemap.xml"
 
+[taxonomies]
+category = "categories"
+tag = "tags"
+
+[permalinks]
+tutorials = "tutorials/:slug/"
+
 [params]
 text_color = ""
 author = ""
