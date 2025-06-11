@@ -2,6 +2,7 @@
 date = '2025-06-11T15:26:57+08:00'
 draft = true
 title = 'RecyclerView缓存机制'
+categories = ['android-develop']
 +++
 
 RecyclerView缓存机制
