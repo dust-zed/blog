@@ -4,25 +4,8 @@ title = "zed的博客"
 languageCode = "zh-cn"
 DefaultContentLanguage = "zh-cn"
 SectionPagesMenu = "main"
-Paginate = 3                  # this is set low for demonstrating with dummy content. Set to a higher number
 googleAnalytics = ""
 enableRobotsTXT = true
-
-[languages]
-[languages.zh-cn]
-contentDir = "content/"
-languageName = "简体中文"
-weight = 1
-[languages]
-[languages.en]
-title = "Ananke"
-weight = 2
-contentDir = "content/en"
-# languageDirection = 'rtl' for Right-To-Left languages
-[languages.fr]
-title = "Ananke Fr"
-weight = 3
-contentDir = "content/fr"
 
 [sitemap]
 changefreq = "monthly"
