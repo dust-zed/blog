@@ -17,7 +17,11 @@ category = "categories"
 tag = "tags"
 
 [permalinks]
+android-develop = "android-develop/:slug/"
 tutorials = "tutorials/:slug/"
+kotlin = "kotlin/:slug"
+rust = "rust/:slug"
+reviews = "reviews/:slug"
 
 [params]
 text_color = ""
