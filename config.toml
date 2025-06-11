@@ -1,1 +1,3 @@
 theme = 'ananke'
+baseURL = "https://www.dust-zed.site"
+title = "zed的博客"
