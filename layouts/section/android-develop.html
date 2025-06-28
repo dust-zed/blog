@@ -1,72 +1,105 @@
 {{ define "main" }}
+  <!-- 添加环境信息调试标记（正式环境构建后删除） -->
+  <div style="display:none">
+    Pages Count: {{ len .Pages }} | 
+    Section: {{ .Section }} | 
+    Kind: {{ .Kind }}
+  </div>
+
+  <!-- 核心内容区域 -->
   <div class="content">
-    <!-- 自定义卡片列表区 -->
     <div class="android-card-container mw9 center pa3">
-      <div class="flex flex-wrap">
-        {{ range .Pages }}
-          <div class="w-100 w-50-m w-33-l pa2">
-            <div class="custom-card ba b--light-gray br2 bg-white shadow-hover grow">
-              <!-- 卡片内容 -->
-              <div class="pa3">
-                <!-- 文章标题（点击跳转） -->
-                <h3 class="f4 mv0">
-                  <a href="{{ .RelPermalink }}" class="link primary-color dim">
-                    {{ .Title }}
-                  </a>
-                </h3>
-                
-                <!-- 文章元信息 -->
-                <div class="f6 gray mv2">
-                  发布于：{{ .Date.Format "2006-01-02" }} | 
-                  阅读：{{ .ReadingTime }}分钟
-                </div>
-                
-                <!-- 文章摘要 -->
-                <p class="f6 lh-copy measure">
-                  {{ .Summary | truncate 100 }}
-                </p>
-                
-                <!-- 分类标签 -->
-                {{ with .Params.categories }}
-                  <div class="mt2">
-                    {{ range . }}
-                      <span class="dib pa1 mr1 bg-light-gray f7">{{ . }}</span>
+      {{ if .Pages }}
+        <div class="flex flex-wrap">
+          {{ range .Pages }}
+            <div class="w-100 w-50-m w-33-l pa2">
+              <div class="custom-card ba b--light-gray br2 bg-white shadow-hover">
+                <div class="pa3">
+                  <h3 class="f4 mv0">
+                    <!-- 使用绝对URL解决路径问题 -->
+                    <a href="{{ .RelPermalink | absURL }}" class="link primary-color dim">
+                      {{ .Title }}
+                    </a>
+                  </h3>
+                  
+                  <div class="f6 gray mv2">
+                    <!-- 使用安全日期格式 -->
+                    {{ if .Date }}
+                      发布于: {{ .Date.Format "2006-01-02" }} | 
                     {{ end }}
+                    阅读: {{ .ReadingTime }}分钟
                   </div>
-                {{ end }}
+                  
+                  <p class="f6 lh-copy measure">
+                    <!-- 摘要安全处理 -->
+                    {{ if .Summary }}
+                      {{ .Summary | truncate 100 }}
+                    {{ else }}
+                      {{ .Content | plainify | truncate 100 }}
+                    {{ end }}
+                  </p>
+                  
+                  {{ with .Params.categories }}
+                    <div class="mt2">
+                      {{ range . }}
+                        <span class="dib pa1 mr1 bg-light-gray f7">{{ . }}</span>
+                      {{ end }}
+                    </div>
+                  {{ end }}
+                </div>
               </div>
             </div>
-          </div>
-        {{ end }}
-      </div>
+          {{ end }}
+        </div>
+      {{ else }}
+        <!-- 空状态处理 -->
+        <div class="tc pa5">
+          <svg class="w4 h4 mb3 gray" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <p class="f4 gray">该分类下暂无文章</p>
+          <a href="/" class="link blue dim">返回首页</a>
+        </div>
+      {{ end }}
     </div>
   </div>
-  
-  <!-- 精简后的自定义样式 -->
+
+  <!-- 内联样式（解决CDN加载问题） -->
   <style>
     .custom-card {
-      transition: transform 0.3s, box-shadow 0.3s;
-      height: 100%; /* 确保所有卡片高度一致 */
+      transition: all 0.3s;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
     }
-    .shadow-hover:hover {
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      z-index: 10;
+    .custom-card:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #1e6bb8;
+      transform: scaleX(0);
+      transition: transform 0.3s;
     }
-    .grow {
-      transform: scale(1);
+    .custom-card:hover {
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
     }
-    .grow:hover {
-      transform: scale(1.02);
+    .custom-card:hover:before {
+      transform: scaleX(1);
     }
     .primary-color {
       color: #1e6bb8;
     }
-    .android-card-container .w-100 { 
-      min-width: 320px; /* 确保最小宽度 */
+    .android-card-container {
+      min-height: 300px;
     }
-    .lh-copy {
-      line-height: 1.5;
-      margin-bottom: 10px;
+    @media (max-width: 767px) {
+      .w-100-m {
+        width: 100% !important;
+      }
     }
   </style>
 {{ end }}

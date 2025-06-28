@@ -1,196 +1,24 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    
-    <title>zed的博客</title>
-    <meta name="viewport" content="width=device-width,minimum-scale=1">
-    <meta name="description" content="The last theme you&#39;ll ever need. Maybe.">
-    <meta name="generator" content="Hugo 0.147.8">
-    
-    
-    
-      <meta name="robots" content="noindex, nofollow">
-    
-    
-
-    
-<link rel="stylesheet" href="/ananke/css/main.min.css" >
-
-
-
-
-    
-
-
-    
-      
-
-    
-
-    
-    
-      <link href="/tutorials/index.xml" rel="alternate" type="application/rss+xml" title="zed的博客" />
-      <link href="/tutorials/index.xml" rel="feed" type="application/rss+xml" title="zed的博客" />
-      
-    
-
-    
-      <link rel="canonical" href="http://localhost:1313/tutorials/">
-    
-
-    <meta property="og:url" content="http://localhost:1313/tutorials/">
-  <meta property="og:site_name" content="zed的博客">
-  <meta property="og:title" content="Tutorials">
-  <meta property="og:description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta property="og:locale" content="zh_cn">
-  <meta property="og:type" content="website">
-
-  <meta itemprop="name" content="Tutorials">
-  <meta itemprop="description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta itemprop="datePublished" content="2025-06-11T12:20:50+08:00">
-  <meta itemprop="dateModified" content="2025-06-11T12:20:50+08:00">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Tutorials">
-  <meta name="twitter:description" content="The last theme you&#39;ll ever need. Maybe.">
-
-	
-  </head><body class="ma0 avenir bg-near-white development">
-
-    
-
-  <header>
-    <div class="pb3-m pb6-l bg-black">
-      <nav class="pv3 ph3 ph4-ns" role="navigation">
-  <div class="flex-l center items-center justify-between">
-    <a href="/" class="f3 fw2 hover-white white-90 dib no-underline">
-      
-        zed的博客
-      
-    </a>
-    <div class="flex-l items-center">
-      
-
-      
-        <ul class="pl0 mr3">
-          
-          <li class="list f5 f4-ns fw4 dib pr3">
-            <a class="hover-white white-90 no-underline" href="/android-develop/" title="">
-              Android-Develops
-            </a>
-          </li>
-          
-          <li class="list f5 f4-ns fw4 dib pr3">
-            <a class="hover-white white-90 no-underline" href="/tutorials/" title="">
-              Tutorials
-            </a>
-          </li>
-          
-        </ul>
-      
-      <div class="ananke-socials"></div>
-
-    </div>
-  </div>
-</nav>
-
-      <div class="tc-l pv3 ph3 ph4-ns">
-        <h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">
-          Tutorials
-        </h1>
-        
-      </div>
-    </div>
-  </header>
-
-
-    <main class="pb7" role="main">
-      
-  <article class="pa3 pa4-ns nested-copy-line-height">
-    <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy nested-links mid-gray"></section>
-    <section class="flex-ns mt5 flex-wrap justify-around">
-      
-        <div class="w-100 w-30-l mb4 relative bg-white">
-          <div class="w-100 mb4 nested-copy-line-height relative bg-white">
-  <div class="mb3 pa4 gray overflow-hidden bg-white">
-    <span class="f6 db">Tutorials</span>
-    <h1 class="f3 near-black">
-      <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/" class="link black dim">
-        Hugo Vercel博客配置
-      </a>
-    </h1>
-    <div class="nested-links f5 lh-copy nested-copy-line-height">
-      <h4 id="前期准备">前期准备</h4>
-<ol>
-<li>
-<p>安装 Hugo</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># macOS (Homebrew)</span>
-</span></span><span style="display:flex;"><span>brew install hugo
-</span></span></code></pre></div></li>
-<li>
-<p>注册Vercel账号</p>
-</li>
-</ol>
-<h4 id="创建本地博客">创建本地博客</h4>
-<h5 id="11-生成新站点">1.1 生成新站点</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hugo new site myblog
-</span></span><span style="display:flex;"><span>cd myblog
-</span></span></code></pre></div><h5 id="12-添加主题">1.2 添加主题</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
-</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;theme = &#39;ananke&#39;&#34;</span> &gt;&gt; config.toml  <span style="color:#75715e"># 配置主题</span>
-</span></span></code></pre></div><h4 id="自定义域名">自定义域名</h4>
-<ol>
-<li>在Vercel控制控制台 -&gt; <strong>Settings</strong> -&gt; <strong>Domains</strong></li>
-<li>输入自己的域名(<code>dust-zed.site</code>,可在阿里云购买)</li>
-<li>按提示配置DNS解析</li>
-</ol>
-<h4 id="管理不同类型的文章">管理不同类型的文章</h4>
-<h5 id="31-使用物理目录分类">3.1 使用物理目录分类</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>content/
-</span></span><span style="display:flex;"><span>├── blog/           <span style="color:#75715e"># 常规博客</span>
-</span></span><span style="display:flex;"><span>├── tutorials/      <span style="color:#75715e"># 教程类</span>
-</span></span><span style="display:flex;"><span>├── reviews/        <span style="color:#75715e"># 产品评测</span>
-</span></span><span style="display:flex;"><span>└── notes/          <span style="color:#75715e"># 学习笔记</span>
-</span></span></code></pre></div><h5 id="32-创建对应类型文章">3.2 创建对应类型文章</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hugo new tutorials/hugo-vercel博客配置.md
-</span></span></code></pre></div><h5 id="33-统一配置文件">3.3 统一配置文件</h5>
-<p>在<code>config.toml</code>中集中管理URL规则</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span><span style="color:#75715e"># 所有文章默认路径</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># :slug动态代表内容的URL友好版本标题</span>
-</span></span><span style="display:flex;"><span>[<span style="color:#a6e22e">permalinks</span>]
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">posts</span> = <span style="color:#e6db74">&#34;/blog/:year/:month/:slug/&#34;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">tutorials</span> = <span style="color:#e6db74">&#34;/learn/:slug/&#34;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reviews</span> = <span style="color:#e6db74">&#34;/products/:category/:slug/&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 分类页面路径</span>
-</span></span><span style="display:flex;"><span>[<span style="color:#a6e22e">taxonomies</span>]
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">category</span> = <span style="color:#e6db74">&#34;categories&#34;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">tag</span> = <span style="color:#e6db74">&#34;tags&#34;</span>
-</span></span></code></pre></div><h5 id="34-自动生成分类列表">3.4 自动生成分类列表</h5>
-<h4 id="升级维护">升级维护</h4>
-<ul>
-<li>
-<p>更新主题：<code>git submodule update --remote --merge</code></p>
-    </div>
-    <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
-  </div>
-</div>
-
-        </div>
-      
-    </section></article>
-
-    </main>
-    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
-  <div class="flex justify-between">
-  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="http://localhost:1313/" >
-    &copy;  zed的博客 2025 
-  </a>
-    <div><div class="ananke-socials"></div>
-</div>
-  </div>
-</footer>
-
-  </body>
-</html>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1"><title>zed的博客</title><meta name=viewport content="width=device-width,minimum-scale=1"><meta name=description content="The last theme you'll ever need. Maybe."><meta name=generator content="Hugo 0.147.8"><meta name=robots content="index, follow"><link rel=stylesheet href=/ananke/css/main.min.8d048772ae72ab11245a0e296d1f2a36d3e3dd376c6c867394d6cc659c68fc37.css><link href=/tutorials/index.xml rel=alternate type=application/rss+xml title=zed的博客><link href=/tutorials/index.xml rel=feed type=application/rss+xml title=zed的博客><link rel=canonical href=https://www.dust-zed.site/tutorials/><meta property="og:url" content="https://www.dust-zed.site/tutorials/"><meta property="og:site_name" content="zed的博客"><meta property="og:title" content="Tutorials"><meta property="og:description" content="The last theme you'll ever need. Maybe."><meta property="og:locale" content="zh_cn"><meta property="og:type" content="website"><meta itemprop=name content="Tutorials"><meta itemprop=description content="The last theme you'll ever need. Maybe."><meta itemprop=datePublished content="2025-06-11T12:20:50+08:00"><meta itemprop=dateModified content="2025-06-11T12:20:50+08:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Tutorials"><meta name=twitter:description content="The last theme you'll ever need. Maybe."></head><body class="ma0 avenir bg-near-white production"><header><div class="pb3-m pb6-l bg-black"><nav class="pv3 ph3 ph4-ns" role=navigation><div class="flex-l center items-center justify-between"><a href=/ class="f3 fw2 hover-white white-90 dib no-underline">zed的博客</a><div class="flex-l items-center"><ul class="pl0 mr3"><li class="list f5 f4-ns fw4 dib pr3"><a class="hover-white white-90 no-underline" href=/android-develop/ title>Android-Develops</a></li><li class="list f5 f4-ns fw4 dib pr3"><a class="hover-white white-90 no-underline" href=/tutorials/ title>Tutorials</a></li></ul><div class=ananke-socials></div></div></div></nav><div class="tc-l pv3 ph3 ph4-ns"><h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">Tutorials</h1></div></div></header><main class=pb7 role=main><article class="pa3 pa4-ns nested-copy-line-height"><section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy nested-links mid-gray"></section><section class="flex-ns mt5 flex-wrap justify-around"><div class="w-100 w-30-l mb4 relative bg-white"><div class="w-100 mb4 nested-copy-line-height relative bg-white"><div class="mb3 pa4 gray overflow-hidden bg-white"><span class="f6 db">Tutorials</span><h1 class="f3 near-black"><a href=/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/ class="link black dim">Hugo Vercel博客配置</a></h1><div class="nested-links f5 lh-copy nested-copy-line-height"><h4 id=前期准备>前期准备</h4><ol><li><p>安装 Hugo</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># macOS (Homebrew)</span>
+</span></span><span style=display:flex><span>brew install hugo
+</span></span></code></pre></div></li><li><p>注册Vercel账号</p></li></ol><h4 id=创建本地博客>创建本地博客</h4><h5 id=11-生成新站点>1.1 生成新站点</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hugo new site myblog
+</span></span><span style=display:flex><span>cd myblog
+</span></span></code></pre></div><h5 id=12-添加主题>1.2 添加主题</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
+</span></span><span style=display:flex><span>echo <span style=color:#e6db74>&#34;theme = &#39;ananke&#39;&#34;</span> &gt;&gt; config.toml  <span style=color:#75715e># 配置主题</span>
+</span></span></code></pre></div><h4 id=自定义域名>自定义域名</h4><ol><li>在Vercel控制控制台 -> <strong>Settings</strong> -> <strong>Domains</strong></li><li>输入自己的域名(<code>dust-zed.site</code>,可在阿里云购买)</li><li>按提示配置DNS解析</li></ol><h4 id=管理不同类型的文章>管理不同类型的文章</h4><h5 id=31-使用物理目录分类>3.1 使用物理目录分类</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>content/
+</span></span><span style=display:flex><span>├── blog/           <span style=color:#75715e># 常规博客</span>
+</span></span><span style=display:flex><span>├── tutorials/      <span style=color:#75715e># 教程类</span>
+</span></span><span style=display:flex><span>├── reviews/        <span style=color:#75715e># 产品评测</span>
+</span></span><span style=display:flex><span>└── notes/          <span style=color:#75715e># 学习笔记</span>
+</span></span></code></pre></div><h5 id=32-创建对应类型文章>3.2 创建对应类型文章</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hugo new tutorials/hugo-vercel博客配置.md
+</span></span></code></pre></div><h5 id=33-统一配置文件>3.3 统一配置文件</h5><p>在<code>config.toml</code>中集中管理URL规则</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-toml data-lang=toml><span style=display:flex><span><span style=color:#75715e># 所有文章默认路径</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># :slug动态代表内容的URL友好版本标题</span>
+</span></span><span style=display:flex><span>[<span style=color:#a6e22e>permalinks</span>]
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>posts</span> = <span style=color:#e6db74>&#34;/blog/:year/:month/:slug/&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tutorials</span> = <span style=color:#e6db74>&#34;/learn/:slug/&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>reviews</span> = <span style=color:#e6db74>&#34;/products/:category/:slug/&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 分类页面路径</span>
+</span></span><span style=display:flex><span>[<span style=color:#a6e22e>taxonomies</span>]
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>category</span> = <span style=color:#e6db74>&#34;categories&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tag</span> = <span style=color:#e6db74>&#34;tags&#34;</span>
+</span></span></code></pre></div><h5 id=34-自动生成分类列表>3.4 自动生成分类列表</h5><h4 id=升级维护>升级维护</h4><ul><li><p>更新主题：<code>git submodule update --remote --merge</code></p></div><a href=/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/ class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a></div></div></div></section></article></main><footer class="bg-black bottom-0 w-100 pa3" role=contentinfo><div class="flex justify-between"><a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href=https://www.dust-zed.site/>&copy; zed的博客 2025</a><div><div class=ananke-socials></div></div></div></footer></body></html>
