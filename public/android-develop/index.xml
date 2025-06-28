@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Android-Develops on zed的博客</title>
+    <title>Android开发 on zed的博客</title>
     <link>http://localhost:1313/android-develop/</link>
-    <description>Recent content in Android-Develops on zed的博客</description>
+    <description>Recent content in Android开发 on zed的博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sat, 28 Jun 2025 12:15:42 +0800</lastBuildDate>

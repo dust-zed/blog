@@ -1,34 +1,42 @@
 {{ define "main" }}
-  <!-- 增强的环境检查 -->
-  <div style="display: none">
-    ENV: {{ hugo.Environment }}, Pages: {{ len .Pages }}, 
-    Section: {{ .Section }}, Kind: {{ .Kind }}
+  <!-- 添加环境信息调试标记（正式环境构建后删除） -->
+  <div style="display:none">
+    Pages Count: {{ len .Pages }} | 
+    Section: {{ .Section }} | 
+    Kind: {{ .Kind }}
   </div>
 
+  <!-- 核心内容区域 -->
   <div class="content">
     <div class="android-card-container mw9 center pa3">
-      <!-- 更安全的页面判断 -->
-      {{ if gt (len .RegularPages) 0 }}
+      {{ if .Pages }}
         <div class="flex flex-wrap">
-          {{ range .RegularPages }}
+          {{ range .Pages }}
             <div class="w-100 w-50-m w-33-l pa2">
               <div class="custom-card ba b--light-gray br2 bg-white shadow-hover">
                 <div class="pa3">
                   <h3 class="f4 mv0">
-                    <!-- 使用更可靠的链接方式 -->
-                    <a href="{{ .RelPermalink }}" class="link primary-color dim">
-                      {{ .Title | safeHTML }}
+                    <!-- 使用绝对URL解决路径问题 -->
+                    <a href="{{ .RelPermalink | absURL }}" class="link primary-color dim">
+                      {{ .Title }}
                     </a>
                   </h3>
                   
                   <div class="f6 gray mv2">
-                    {{ with .Date }}发布于: {{ .Format "2006-01-02" }} | {{ end }}
+                    <!-- 使用安全日期格式 -->
+                    {{ if .Date }}
+                      发布于: {{ .Date.Format "2006-01-02" }} | 
+                    {{ end }}
                     阅读: {{ .ReadingTime }}分钟
                   </div>
                   
                   <p class="f6 lh-copy measure">
-                    <!-- 更安全的摘要处理 -->
-                    {{ .Summary | default (truncate 100 "请阅读全文...") }}
+                    <!-- 摘要安全处理 -->
+                    {{ if .Summary }}
+                      {{ .Summary | truncate 100 }}
+                    {{ else }}
+                      {{ .Content | plainify | truncate 100 }}
+                    {{ end }}
                   </p>
                   
                   {{ with .Params.categories }}
@@ -44,87 +52,54 @@
           {{ end }}
         </div>
       {{ else }}
-        <!-- 增强的空状态处理 -->
+        <!-- 空状态处理 -->
         <div class="tc pa5">
-          <div class="bg-light-gray pa3 br-100 w3 h3 flex items-center justify-center mb3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h2 w2 gray" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p class="f4 gray mb3">该分类下暂无文章</p>
-          <p class="f6 gray mb4">或内容尚未完成构建</p>
-          <a href="/" class="link blue dim b">返回首页 ↗</a>
+          <svg class="w4 h4 mb3 gray" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <p class="f4 gray">该分类下暂无文章</p>
+          <a href="/" class="link blue dim">返回首页</a>
         </div>
       {{ end }}
     </div>
   </div>
 
-  <!-- 安全的内联样式 -->
-  <style type="text/css">
-    .android-card-container {
-      min-height: 300px;
-      position: relative;
-      z-index: 1;
-    }
-    
+  <!-- 内联样式（解决CDN加载问题） -->
+  <style>
     .custom-card {
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transition: all 0.3s;
       height: 100%;
       position: relative;
       overflow: hidden;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      background: white;
     }
-    
+    .custom-card:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #1e6bb8;
+      transform: scaleX(0);
+      transition: transform 0.3s;
+    }
     .custom-card:hover {
-      box-shadow: 0 14px 28px rgba(0,0,0,0.08), 0 10px 10px rgba(0,0,0,0.05);
-      transform: translateY(-4px);
-      border-color: #cbd5e0;
-      z-index: 2;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
     }
-    
+    .custom-card:hover:before {
+      transform: scaleX(1);
+    }
     .primary-color {
-      color: #2b6cb0;
+      color: #1e6bb8;
     }
-    
-    .primary-color:hover {
-      color: #2c5282;
-      text-decoration: underline;
+    .android-card-container {
+      min-height: 300px;
     }
-    
     @media (max-width: 767px) {
-      .android-card-container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-      
       .w-100-m {
         width: 100% !important;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
       }
     }
   </style>
-  
-  <!-- 安全的前端诊断脚本 -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const cards = document.querySelectorAll('.custom-card');
-      console.log('[AndroidDevelop] Card count:', cards.length);
-      
-      if (cards.length === 0) {
-        console.warn('[AndroidDevelop] No articles detected');
-        
-        // 自动报告空状态
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon('/site-error', JSON.stringify({
-            page: 'android-develop',
-            error: 'empty_page'
-          }));
-        }
-      }
-    });
-  </script>
 {{ end }}
