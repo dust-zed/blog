@@ -1,4 +1,12 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1"><title>Choreographer类解析 | zed的博客</title><meta name=viewport content="width=device-width,minimum-scale=1"><meta name=description content='一、核心作用
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>Choreographer类解析 | zed的博客</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="一、核心作用
 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
 二、关键概念
 
@@ -24,8 +32,8 @@ public final class Choreographer {
     public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型
     
     // 单例模式实现
-    private static final ThreadLocal<Choreographer> sThreadInstance =
-        new ThreadLocal<Choreographer>() {
+    private static final ThreadLocal&lt;Choreographer&gt; sThreadInstance =
+        new ThreadLocal&lt;Choreographer&gt;() {
             @Override
             protected Choreographer initialValue() {
                 Looper looper = Looper.myLooper();
@@ -44,14 +52,14 @@ public final class Choreographer {
 }
 三、核心架构图解
 ┌───────────────────────┐       ┌───────────────────────┐
-│    VSYNC 信号源        │──────>│ FrameDisplayEventReceiver │
+│    VSYNC 信号源        │──────&gt;│ FrameDisplayEventReceiver │
 └───────────────────────┘       │  (接收硬件VSYNC信号)     │
                                 └───────────┬───────────┘
                                             │
                                             ▼
 ┌───────────────────────┐       ┌───────────────────────┐
-│     FrameHandler       │<──────│    onVsync()          │
-│   (处理3类消息)        │──────>│    scheduleVsync()    │
+│     FrameHandler       │&lt;──────│    onVsync()          │
+│   (处理3类消息)        │──────&gt;│    scheduleVsync()    │
 └───────────┬───────────┘       └───────────────────────┘
             │
             ▼
@@ -80,13 +88,13 @@ private void postCallbackDelayedInternal(int callbackType,
     
     synchronized (mLock) {
         final long now = SystemClock.uptimeMillis();
-        final long dueTime = now + delayMillis;
+        final long dueTime = now &#43; delayMillis;
         
         // 1. 添加到对应的回调队列
         mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token);
 
         // 2. 调度帧处理
-        if (dueTime <= now) {
+        if (dueTime &lt;= now) {
             // 立即调度
             scheduleFrameLocked(now);
         } else {
@@ -111,7 +119,7 @@ private static final class CallbackQueue {
         }
         
         // 链表按照执行时间排序（小到大）
-        if (dueTime < mHead.dueTime) {
+        if (dueTime &lt; mHead.dueTime) {
             callback.next = mHead;
             mHead = callback;
             return;
@@ -119,7 +127,7 @@ private static final class CallbackQueue {
         
         CallbackRecord entry = mHead;
         while (entry.next != null) {
-            if (dueTime < entry.next.dueTime) {
+            if (dueTime &lt; entry.next.dueTime) {
                 callback.next = entry.next;
                 entry.next = callback;
                 return;
@@ -190,11 +198,11 @@ void doFrame(long frameTimeNanos, int frame) {
         
         // 计算跳帧情况
         long jitterNanos = startNanos - frameTimeNanos;
-        if (jitterNanos >= mFrameIntervalNanos) {
+        if (jitterNanos &gt;= mFrameIntervalNanos) {
             final long skippedFrames = jitterNanos / mFrameIntervalNanos;
             // 超过阈值打印警告日志
-            if (skippedFrames >= SKIPPED_FRAME_WARNING_LIMIT) {
-                Log.i(TAG, "Skipped " + skippedFrames + " frames!");
+            if (skippedFrames &gt;= SKIPPED_FRAME_WARNING_LIMIT) {
+                Log.i(TAG, &#34;Skipped &#34; &#43; skippedFrames &#43; &#34; frames!&#34;);
             }
             frameTimeNanos = ...; // 调整帧时间
         }
@@ -254,8 +262,8 @@ CallbackRecord extractDueCallbacksLocked(long now) {
     CallbackRecord callbacks = null;
     CallbackRecord next = mHead;
     
-    // 遍历链表，找出所有dueTime<=now的节点
-    while (next != null && next.dueTime <= now) {
+    // 遍历链表，找出所有dueTime&lt;=now的节点
+    while (next != null &amp;&amp; next.dueTime &lt;= now) {
         CallbackRecord temp = next;
         next = next.next;
         temp.next = callbacks;  // 新节点插入链表头部
@@ -270,272 +278,480 @@ CallbackRecord extractDueCallbacksLocked(long now) {
 }
 六、Choreographer的其他作用
 1. 帧率监控
-开发者可以通过postFrameCallback实现帧率监控：'><meta name=generator content="Hugo 0.147.8"><meta name=robots content="index, follow"><link rel=stylesheet href=/ananke/css/main.min.8d048772ae72ab11245a0e296d1f2a36d3e3dd376c6c867394d6cc659c68fc37.css><link rel=canonical href=https://www.dust-zed.site/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/><meta property="og:url" content="https://www.dust-zed.site/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/"><meta property="og:site_name" content="zed的博客"><meta property="og:title" content="Choreographer类解析"><meta property="og:description" content='一、核心作用 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
-二、关键概念 VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧 Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行 Callback Types（按执行顺序排序） CALLBACK_INPUT CALLBACK_ANIMATION CALLBACK_INSETS_ANIMATION CALLBACK_TRAVERSAL CALLBACK_COMMIT public final class Choreographer { // 五种回调类型 public static final int CALLBACK_INPUT = 0; public static final int CALLBACK_ANIMATION = 1; public static final int CALLBACK_INSETS_ANIMATION = 2; public static final int CALLBACK_TRAVERSAL = 3; public static final int CALLBACK_COMMIT = 4; public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型 // 单例模式实现 private static final ThreadLocal<Choreographer> sThreadInstance = new ThreadLocal<Choreographer>() { @Override protected Choreographer initialValue() { Looper looper = Looper.myLooper(); return new Choreographer(looper, VSYNC_SOURCE_APP); } }; // 回调队列数组 private final CallbackQueue[] mCallbackQueues; // VSYNC 接收器 private final FrameDisplayEventReceiver mDisplayEventReceiver; // 处理消息的Handler private final FrameHandler mHandler; } 三、核心架构图解 ┌───────────────────────┐ ┌───────────────────────┐ │ VSYNC 信号源 │──────>│ FrameDisplayEventReceiver │ └───────────────────────┘ │ (接收硬件VSYNC信号) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ ┌───────────────────────┐ │ FrameHandler │<──────│ onVsync() │ │ (处理3类消息) │──────>│ scheduleVsync() │ └───────────┬───────────┘ └───────────────────────┘ │ ▼ ┌───────────────────────┐ │ doFrame() │ │ (帧处理核心方法) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ │ CallbackQueue[] │ │ (5种类型回调链表) │ └───────────────────────┘ 三、回调添加入口 1. 添加回调入口 public void postCallback(int callbackType, Runnable action, Object token) { postCallbackDelayed(callbackType, action, token, 0); } public void postCallbackDelayed(int callbackType, Runnable action, long delayMillis) { postCallbackDelayedInternal(callbackType, action, token, delayMillis); } 2. 内部添加实现 private void postCallbackDelayedInternal(int callbackType, Object action, Object token, long delayMillis) { synchronized (mLock) { final long now = SystemClock.uptimeMillis(); final long dueTime = now + delayMillis; // 1. 添加到对应的回调队列 mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token); // 2. 调度帧处理 if (dueTime <= now) { // 立即调度 scheduleFrameLocked(now); } else { // 延迟调度 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action); msg.arg1 = callbackType; msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, dueTime); } } } 3. 回调链表结构 private static final class CallbackQueue { private CallbackRecord mHead; public void addCallbackLocked(long dueTime, Object action, Object token) { CallbackRecord callback = obtainCallbackLocked(dueTime, action, token); if (mHead == null) { mHead = callback; return; } // 链表按照执行时间排序（小到大） if (dueTime < mHead.dueTime) { callback.next = mHead; mHead = callback; return; } CallbackRecord entry = mHead; while (entry.next != null) { if (dueTime < entry.next.dueTime) { callback.next = entry.next; entry.next = callback; return; } entry = entry.next; } entry.next = callback; } } // 链表节点定义 private static final class CallbackRecord { public CallbackRecord next; public long dueTime; public Object action; // Runnable 或 FrameCallback public Object token; } 四、VSYNC同步机制 1、 VSYNC请求 private void scheduleFrameLocked(long now) { if (!mFrameScheduled) { mFrameScheduled = true; if (USE_VSYNC) { // 通过 FrameDisplayEventReceiver 请求 VSYNC if (isRunningOnLooperThreadLocked()) { //注册 scheduleVsyncLocked(); } else { // 非UI线程发送消息到UI线程 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC); msg.setAsynchronous(true); mHandler.sendMessageAtFrontOfQueue(msg); } } else { // 无VSYNC直接安排帧 final long nextFrameTime = ...; Message msg = mHandler.obtainMessage(MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, nextFrameTime); } } } private void scheduleVsyncLocked() { mDisplayEventReceiver.scheduleVsync(); } 2. VSYNC接收与处理 private final class FrameDisplayEventReceiver extends DisplayEventReceiver { @Override public void onVsync(long timestampNanos, long physicalDisplayId, int frame) { // 1. 计算正确的帧时间 long now = System.nanoTime(); long intendedFrameTimeNanos = ...; // 2. 发送MSG_DO_FRAME消息 Message msg = Message.obtain(mHandler, MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, intendedFrameTimeNanos / NANOS_PER_MS); } } 3. 帧处理核心 - doFrame() void doFrame(long frameTimeNanos, int frame) { final long startNanos; synchronized (mLock) { // 检查帧调度状态 if (!mFrameScheduled) return; // 计算跳帧情况 long jitterNanos = startNanos - frameTimeNanos; if (jitterNanos >= mFrameIntervalNanos) { final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 超过阈值打印警告日志 if (skippedFrames >= SKIPPED_FRAME_WARNING_LIMIT) { Log.i(TAG, "Skipped " + skippedFrames + " frames!"); } frameTimeNanos = ...; // 调整帧时间 } mLastFrameTimeNanos = frameTimeNanos; mFrameScheduled = false; } try { // 按优先级顺序执行回调 mFrameInfo.markInputHandlingStart(); doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos); mFrameInfo.markAnimationsStart(); doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos); mFrameInfo.markPerformTraversalsStart(); doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos); doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos); } finally { // 清理工作 } } 五、回调执行处理 1. 执行回调核心逻辑 void doCallbacks(int callbackType, long frameTimeNanos) { CallbackRecord callbacks; synchronized (mLock) { // 提取所有到期的回调 final long now = frameTimeNanos / NANOS_PER_MS; callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now); if (callbacks == null) return; mCallbacksRunning = true; } try { // 执行链表中的所有回调 for (CallbackRecord c = callbacks; c != null; c = c.next) { // 执行回调 if (c.action instanceof Runnable) { ((Runnable) c.action).run(); } else { ((FrameCallback) c.action).doFrame(frameTimeNanos); } } } finally { synchronized (mLock) { // 回收CallbackRecord对象 recycleCallbackRecordsLocked(callbacks); mCallbacksRunning = false; } } } 2.到期回调提取算法 CallbackRecord extractDueCallbacksLocked(long now) { CallbackRecord callbacks = null; CallbackRecord next = mHead; // 遍历链表，找出所有dueTime<=now的节点 while (next != null && next.dueTime <= now) { CallbackRecord temp = next; next = next.next; temp.next = callbacks; // 新节点插入链表头部 callbacks = temp; // 新链表头 } // 更新原链表 mHead = next; // 返回的是倒序链表（最近加入的先执行） return callbacks; } 六、Choreographer的其他作用 1. 帧率监控 开发者可以通过postFrameCallback实现帧率监控：'><meta property="og:locale" content="zh_cn"><meta property="og:type" content="article"><meta property="article:section" content="android-develop"><meta property="article:published_time" content="2025-06-16T06:49:21+08:00"><meta property="article:modified_time" content="2025-06-16T06:49:21+08:00"><meta itemprop=name content="Choreographer类解析"><meta itemprop=description content='一、核心作用 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
-二、关键概念 VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧 Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行 Callback Types（按执行顺序排序） CALLBACK_INPUT CALLBACK_ANIMATION CALLBACK_INSETS_ANIMATION CALLBACK_TRAVERSAL CALLBACK_COMMIT public final class Choreographer { // 五种回调类型 public static final int CALLBACK_INPUT = 0; public static final int CALLBACK_ANIMATION = 1; public static final int CALLBACK_INSETS_ANIMATION = 2; public static final int CALLBACK_TRAVERSAL = 3; public static final int CALLBACK_COMMIT = 4; public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型 // 单例模式实现 private static final ThreadLocal<Choreographer> sThreadInstance = new ThreadLocal<Choreographer>() { @Override protected Choreographer initialValue() { Looper looper = Looper.myLooper(); return new Choreographer(looper, VSYNC_SOURCE_APP); } }; // 回调队列数组 private final CallbackQueue[] mCallbackQueues; // VSYNC 接收器 private final FrameDisplayEventReceiver mDisplayEventReceiver; // 处理消息的Handler private final FrameHandler mHandler; } 三、核心架构图解 ┌───────────────────────┐ ┌───────────────────────┐ │ VSYNC 信号源 │──────>│ FrameDisplayEventReceiver │ └───────────────────────┘ │ (接收硬件VSYNC信号) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ ┌───────────────────────┐ │ FrameHandler │<──────│ onVsync() │ │ (处理3类消息) │──────>│ scheduleVsync() │ └───────────┬───────────┘ └───────────────────────┘ │ ▼ ┌───────────────────────┐ │ doFrame() │ │ (帧处理核心方法) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ │ CallbackQueue[] │ │ (5种类型回调链表) │ └───────────────────────┘ 三、回调添加入口 1. 添加回调入口 public void postCallback(int callbackType, Runnable action, Object token) { postCallbackDelayed(callbackType, action, token, 0); } public void postCallbackDelayed(int callbackType, Runnable action, long delayMillis) { postCallbackDelayedInternal(callbackType, action, token, delayMillis); } 2. 内部添加实现 private void postCallbackDelayedInternal(int callbackType, Object action, Object token, long delayMillis) { synchronized (mLock) { final long now = SystemClock.uptimeMillis(); final long dueTime = now + delayMillis; // 1. 添加到对应的回调队列 mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token); // 2. 调度帧处理 if (dueTime <= now) { // 立即调度 scheduleFrameLocked(now); } else { // 延迟调度 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action); msg.arg1 = callbackType; msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, dueTime); } } } 3. 回调链表结构 private static final class CallbackQueue { private CallbackRecord mHead; public void addCallbackLocked(long dueTime, Object action, Object token) { CallbackRecord callback = obtainCallbackLocked(dueTime, action, token); if (mHead == null) { mHead = callback; return; } // 链表按照执行时间排序（小到大） if (dueTime < mHead.dueTime) { callback.next = mHead; mHead = callback; return; } CallbackRecord entry = mHead; while (entry.next != null) { if (dueTime < entry.next.dueTime) { callback.next = entry.next; entry.next = callback; return; } entry = entry.next; } entry.next = callback; } } // 链表节点定义 private static final class CallbackRecord { public CallbackRecord next; public long dueTime; public Object action; // Runnable 或 FrameCallback public Object token; } 四、VSYNC同步机制 1、 VSYNC请求 private void scheduleFrameLocked(long now) { if (!mFrameScheduled) { mFrameScheduled = true; if (USE_VSYNC) { // 通过 FrameDisplayEventReceiver 请求 VSYNC if (isRunningOnLooperThreadLocked()) { //注册 scheduleVsyncLocked(); } else { // 非UI线程发送消息到UI线程 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC); msg.setAsynchronous(true); mHandler.sendMessageAtFrontOfQueue(msg); } } else { // 无VSYNC直接安排帧 final long nextFrameTime = ...; Message msg = mHandler.obtainMessage(MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, nextFrameTime); } } } private void scheduleVsyncLocked() { mDisplayEventReceiver.scheduleVsync(); } 2. VSYNC接收与处理 private final class FrameDisplayEventReceiver extends DisplayEventReceiver { @Override public void onVsync(long timestampNanos, long physicalDisplayId, int frame) { // 1. 计算正确的帧时间 long now = System.nanoTime(); long intendedFrameTimeNanos = ...; // 2. 发送MSG_DO_FRAME消息 Message msg = Message.obtain(mHandler, MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, intendedFrameTimeNanos / NANOS_PER_MS); } } 3. 帧处理核心 - doFrame() void doFrame(long frameTimeNanos, int frame) { final long startNanos; synchronized (mLock) { // 检查帧调度状态 if (!mFrameScheduled) return; // 计算跳帧情况 long jitterNanos = startNanos - frameTimeNanos; if (jitterNanos >= mFrameIntervalNanos) { final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 超过阈值打印警告日志 if (skippedFrames >= SKIPPED_FRAME_WARNING_LIMIT) { Log.i(TAG, "Skipped " + skippedFrames + " frames!"); } frameTimeNanos = ...; // 调整帧时间 } mLastFrameTimeNanos = frameTimeNanos; mFrameScheduled = false; } try { // 按优先级顺序执行回调 mFrameInfo.markInputHandlingStart(); doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos); mFrameInfo.markAnimationsStart(); doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos); mFrameInfo.markPerformTraversalsStart(); doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos); doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos); } finally { // 清理工作 } } 五、回调执行处理 1. 执行回调核心逻辑 void doCallbacks(int callbackType, long frameTimeNanos) { CallbackRecord callbacks; synchronized (mLock) { // 提取所有到期的回调 final long now = frameTimeNanos / NANOS_PER_MS; callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now); if (callbacks == null) return; mCallbacksRunning = true; } try { // 执行链表中的所有回调 for (CallbackRecord c = callbacks; c != null; c = c.next) { // 执行回调 if (c.action instanceof Runnable) { ((Runnable) c.action).run(); } else { ((FrameCallback) c.action).doFrame(frameTimeNanos); } } } finally { synchronized (mLock) { // 回收CallbackRecord对象 recycleCallbackRecordsLocked(callbacks); mCallbacksRunning = false; } } } 2.到期回调提取算法 CallbackRecord extractDueCallbacksLocked(long now) { CallbackRecord callbacks = null; CallbackRecord next = mHead; // 遍历链表，找出所有dueTime<=now的节点 while (next != null && next.dueTime <= now) { CallbackRecord temp = next; next = next.next; temp.next = callbacks; // 新节点插入链表头部 callbacks = temp; // 新链表头 } // 更新原链表 mHead = next; // 返回的是倒序链表（最近加入的先执行） return callbacks; } 六、Choreographer的其他作用 1. 帧率监控 开发者可以通过postFrameCallback实现帧率监控：'><meta itemprop=datePublished content="2025-06-16T06:49:21+08:00"><meta itemprop=dateModified content="2025-06-16T06:49:21+08:00"><meta itemprop=wordCount content="806"><meta itemprop=keywords content="Android-Develop"><meta name=twitter:card content="summary"><meta name=twitter:title content="Choreographer类解析"><meta name=twitter:description content='一、核心作用 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
-二、关键概念 VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧 Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行 Callback Types（按执行顺序排序） CALLBACK_INPUT CALLBACK_ANIMATION CALLBACK_INSETS_ANIMATION CALLBACK_TRAVERSAL CALLBACK_COMMIT public final class Choreographer { // 五种回调类型 public static final int CALLBACK_INPUT = 0; public static final int CALLBACK_ANIMATION = 1; public static final int CALLBACK_INSETS_ANIMATION = 2; public static final int CALLBACK_TRAVERSAL = 3; public static final int CALLBACK_COMMIT = 4; public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型 // 单例模式实现 private static final ThreadLocal<Choreographer> sThreadInstance = new ThreadLocal<Choreographer>() { @Override protected Choreographer initialValue() { Looper looper = Looper.myLooper(); return new Choreographer(looper, VSYNC_SOURCE_APP); } }; // 回调队列数组 private final CallbackQueue[] mCallbackQueues; // VSYNC 接收器 private final FrameDisplayEventReceiver mDisplayEventReceiver; // 处理消息的Handler private final FrameHandler mHandler; } 三、核心架构图解 ┌───────────────────────┐ ┌───────────────────────┐ │ VSYNC 信号源 │──────>│ FrameDisplayEventReceiver │ └───────────────────────┘ │ (接收硬件VSYNC信号) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ ┌───────────────────────┐ │ FrameHandler │<──────│ onVsync() │ │ (处理3类消息) │──────>│ scheduleVsync() │ └───────────┬───────────┘ └───────────────────────┘ │ ▼ ┌───────────────────────┐ │ doFrame() │ │ (帧处理核心方法) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ │ CallbackQueue[] │ │ (5种类型回调链表) │ └───────────────────────┘ 三、回调添加入口 1. 添加回调入口 public void postCallback(int callbackType, Runnable action, Object token) { postCallbackDelayed(callbackType, action, token, 0); } public void postCallbackDelayed(int callbackType, Runnable action, long delayMillis) { postCallbackDelayedInternal(callbackType, action, token, delayMillis); } 2. 内部添加实现 private void postCallbackDelayedInternal(int callbackType, Object action, Object token, long delayMillis) { synchronized (mLock) { final long now = SystemClock.uptimeMillis(); final long dueTime = now + delayMillis; // 1. 添加到对应的回调队列 mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token); // 2. 调度帧处理 if (dueTime <= now) { // 立即调度 scheduleFrameLocked(now); } else { // 延迟调度 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action); msg.arg1 = callbackType; msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, dueTime); } } } 3. 回调链表结构 private static final class CallbackQueue { private CallbackRecord mHead; public void addCallbackLocked(long dueTime, Object action, Object token) { CallbackRecord callback = obtainCallbackLocked(dueTime, action, token); if (mHead == null) { mHead = callback; return; } // 链表按照执行时间排序（小到大） if (dueTime < mHead.dueTime) { callback.next = mHead; mHead = callback; return; } CallbackRecord entry = mHead; while (entry.next != null) { if (dueTime < entry.next.dueTime) { callback.next = entry.next; entry.next = callback; return; } entry = entry.next; } entry.next = callback; } } // 链表节点定义 private static final class CallbackRecord { public CallbackRecord next; public long dueTime; public Object action; // Runnable 或 FrameCallback public Object token; } 四、VSYNC同步机制 1、 VSYNC请求 private void scheduleFrameLocked(long now) { if (!mFrameScheduled) { mFrameScheduled = true; if (USE_VSYNC) { // 通过 FrameDisplayEventReceiver 请求 VSYNC if (isRunningOnLooperThreadLocked()) { //注册 scheduleVsyncLocked(); } else { // 非UI线程发送消息到UI线程 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC); msg.setAsynchronous(true); mHandler.sendMessageAtFrontOfQueue(msg); } } else { // 无VSYNC直接安排帧 final long nextFrameTime = ...; Message msg = mHandler.obtainMessage(MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, nextFrameTime); } } } private void scheduleVsyncLocked() { mDisplayEventReceiver.scheduleVsync(); } 2. VSYNC接收与处理 private final class FrameDisplayEventReceiver extends DisplayEventReceiver { @Override public void onVsync(long timestampNanos, long physicalDisplayId, int frame) { // 1. 计算正确的帧时间 long now = System.nanoTime(); long intendedFrameTimeNanos = ...; // 2. 发送MSG_DO_FRAME消息 Message msg = Message.obtain(mHandler, MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, intendedFrameTimeNanos / NANOS_PER_MS); } } 3. 帧处理核心 - doFrame() void doFrame(long frameTimeNanos, int frame) { final long startNanos; synchronized (mLock) { // 检查帧调度状态 if (!mFrameScheduled) return; // 计算跳帧情况 long jitterNanos = startNanos - frameTimeNanos; if (jitterNanos >= mFrameIntervalNanos) { final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 超过阈值打印警告日志 if (skippedFrames >= SKIPPED_FRAME_WARNING_LIMIT) { Log.i(TAG, "Skipped " + skippedFrames + " frames!"); } frameTimeNanos = ...; // 调整帧时间 } mLastFrameTimeNanos = frameTimeNanos; mFrameScheduled = false; } try { // 按优先级顺序执行回调 mFrameInfo.markInputHandlingStart(); doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos); mFrameInfo.markAnimationsStart(); doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos); mFrameInfo.markPerformTraversalsStart(); doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos); doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos); } finally { // 清理工作 } } 五、回调执行处理 1. 执行回调核心逻辑 void doCallbacks(int callbackType, long frameTimeNanos) { CallbackRecord callbacks; synchronized (mLock) { // 提取所有到期的回调 final long now = frameTimeNanos / NANOS_PER_MS; callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now); if (callbacks == null) return; mCallbacksRunning = true; } try { // 执行链表中的所有回调 for (CallbackRecord c = callbacks; c != null; c = c.next) { // 执行回调 if (c.action instanceof Runnable) { ((Runnable) c.action).run(); } else { ((FrameCallback) c.action).doFrame(frameTimeNanos); } } } finally { synchronized (mLock) { // 回收CallbackRecord对象 recycleCallbackRecordsLocked(callbacks); mCallbacksRunning = false; } } } 2.到期回调提取算法 CallbackRecord extractDueCallbacksLocked(long now) { CallbackRecord callbacks = null; CallbackRecord next = mHead; // 遍历链表，找出所有dueTime<=now的节点 while (next != null && next.dueTime <= now) { CallbackRecord temp = next; next = next.next; temp.next = callbacks; // 新节点插入链表头部 callbacks = temp; // 新链表头 } // 更新原链表 mHead = next; // 返回的是倒序链表（最近加入的先执行） return callbacks; } 六、Choreographer的其他作用 1. 帧率监控 开发者可以通过postFrameCallback实现帧率监控：'></head><body class="ma0 avenir bg-near-white production"><header><div class=bg-black><nav class="pv3 ph3 ph4-ns" role=navigation><div class="flex-l center items-center justify-between"><a href=/ class="f3 fw2 hover-white white-90 dib no-underline">zed的博客</a><div class="flex-l items-center"><ul class="pl0 mr3"><li class="list f5 f4-ns fw4 dib pr3"><a class="hover-white white-90 no-underline" href=/android-develop/ title>Android-Develops</a></li><li class="list f5 f4-ns fw4 dib pr3"><a class="hover-white white-90 no-underline" href=/tutorials/ title>Tutorials</a></li></ul><div class=ananke-socials></div></div></div></nav></div></header><main class=pb7 role=main><article class="flex-l mw8 center ph3 flex-wrap justify-between"><header class="mt4 w-100"><aside class="instapaper_ignoref b helvetica tracked ttu">Android-Develops</aside><div id=sharing class="mt3 ananke-socials"></div><h1 class="f1 athelas mt3 mb1">Choreographer类解析</h1><time class="f6 mv4 dib tracked" datetime=2025-06-16T06:49:21+08:00>June 16, 2025</time></header><div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><h4 id=一核心作用>一、核心作用</h4><p>Choreographer是Android系统<strong>协调动画、输入和绘制操作的核心调度器</strong>。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。</p><h4 id=二关键概念>二、关键概念</h4><ul><li>VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧</li><li>Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行</li><li>Callback Types（按执行顺序排序）<ul><li>CALLBACK_INPUT</li><li>CALLBACK_ANIMATION</li><li>CALLBACK_INSETS_ANIMATION</li><li>CALLBACK_TRAVERSAL</li><li>CALLBACK_COMMIT</li></ul></li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Choreographer</span> {
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 五种回调类型</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> CALLBACK_INPUT <span style=color:#f92672>=</span> 0;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> CALLBACK_ANIMATION <span style=color:#f92672>=</span> 1;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> CALLBACK_INSETS_ANIMATION <span style=color:#f92672>=</span> 2;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> CALLBACK_TRAVERSAL <span style=color:#f92672>=</span> 3;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> CALLBACK_COMMIT <span style=color:#f92672>=</span> 4;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> CALLBACK_LAST <span style=color:#f92672>=</span> CALLBACK_COMMIT; <span style=color:#75715e>// 最后一种类型</span>
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 单例模式实现</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> ThreadLocal<span style=color:#f92672>&lt;</span>Choreographer<span style=color:#f92672>&gt;</span> sThreadInstance <span style=color:#f92672>=</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>new</span> ThreadLocal<span style=color:#f92672>&lt;</span>Choreographer<span style=color:#f92672>&gt;</span>() {
-</span></span><span style=display:flex><span>            <span style=color:#a6e22e>@Override</span>
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>protected</span> Choreographer <span style=color:#a6e22e>initialValue</span>() {
-</span></span><span style=display:flex><span>                Looper looper <span style=color:#f92672>=</span> Looper.<span style=color:#a6e22e>myLooper</span>();
-</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>new</span> Choreographer(looper, VSYNC_SOURCE_APP);
-</span></span><span style=display:flex><span>            }
-</span></span><span style=display:flex><span>        };
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 回调队列数组</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> CallbackQueue<span style=color:#f92672>[]</span> mCallbackQueues;
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// VSYNC 接收器</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> FrameDisplayEventReceiver mDisplayEventReceiver;
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 处理消息的Handler</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> FrameHandler mHandler;
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h4 id=三核心架构图解>三、核心架构图解</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-tex data-lang=tex><span style=display:flex><span>┌───────────────────────┐       ┌───────────────────────┐
-</span></span><span style=display:flex><span>│    VSYNC 信号源        │──────&gt;│ FrameDisplayEventReceiver │
-</span></span><span style=display:flex><span>└───────────────────────┘       │  (接收硬件VSYNC信号)     │
-</span></span><span style=display:flex><span>                                └───────────┬───────────┘
-</span></span><span style=display:flex><span>                                            │
-</span></span><span style=display:flex><span>                                            ▼
-</span></span><span style=display:flex><span>┌───────────────────────┐       ┌───────────────────────┐
-</span></span><span style=display:flex><span>│     FrameHandler       │&lt;──────│    onVsync()          │
-</span></span><span style=display:flex><span>│   (处理3类消息)        │──────&gt;│    scheduleVsync()    │
-</span></span><span style=display:flex><span>└───────────┬───────────┘       └───────────────────────┘
-</span></span><span style=display:flex><span>            │
-</span></span><span style=display:flex><span>            ▼
-</span></span><span style=display:flex><span>┌───────────────────────┐
-</span></span><span style=display:flex><span>│      doFrame()         │
-</span></span><span style=display:flex><span>│ (帧处理核心方法)       │
-</span></span><span style=display:flex><span>└───────────┬───────────┘
-</span></span><span style=display:flex><span>            │
-</span></span><span style=display:flex><span>            ▼
-</span></span><span style=display:flex><span>┌───────────────────────┐
-</span></span><span style=display:flex><span>│   CallbackQueue[]      │
-</span></span><span style=display:flex><span>│ (5种类型回调链表)      │
-</span></span><span style=display:flex><span>└───────────────────────┘
-</span></span></code></pre></div><h4 id=三回调添加入口>三、回调添加入口</h4><h5 id=1-添加回调入口>1. 添加回调入口</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>postCallback</span>(<span style=color:#66d9ef>int</span> callbackType, Runnable action, Object token) {
-</span></span><span style=display:flex><span>    postCallbackDelayed(callbackType, action, token, 0);
-</span></span><span style=display:flex><span>}
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>postCallbackDelayed</span>(<span style=color:#66d9ef>int</span> callbackType, Runnable action, <span style=color:#66d9ef>long</span> delayMillis) {
-</span></span><span style=display:flex><span>    postCallbackDelayedInternal(callbackType, action, token, delayMillis);
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h5 id=2-内部添加实现>2. 内部添加实现</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>postCallbackDelayedInternal</span>(<span style=color:#66d9ef>int</span> callbackType,
-</span></span><span style=display:flex><span>        Object action, Object token, <span style=color:#66d9ef>long</span> delayMillis) {
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>synchronized</span> (mLock) {
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>long</span> now <span style=color:#f92672>=</span> SystemClock.<span style=color:#a6e22e>uptimeMillis</span>();
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>long</span> dueTime <span style=color:#f92672>=</span> now <span style=color:#f92672>+</span> delayMillis;
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 1. 添加到对应的回调队列</span>
-</span></span><span style=display:flex><span>        mCallbackQueues<span style=color:#f92672>[</span>callbackType<span style=color:#f92672>]</span>.<span style=color:#a6e22e>addCallbackLocked</span>(dueTime, action, token);
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 2. 调度帧处理</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (dueTime <span style=color:#f92672>&lt;=</span> now) {
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 立即调度</span>
-</span></span><span style=display:flex><span>            scheduleFrameLocked(now);
-</span></span><span style=display:flex><span>        } <span style=color:#66d9ef>else</span> {
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 延迟调度</span>
-</span></span><span style=display:flex><span>            Message msg <span style=color:#f92672>=</span> mHandler.<span style=color:#a6e22e>obtainMessage</span>(MSG_DO_SCHEDULE_CALLBACK, action);
-</span></span><span style=display:flex><span>            msg.<span style=color:#a6e22e>arg1</span> <span style=color:#f92672>=</span> callbackType;
-</span></span><span style=display:flex><span>            msg.<span style=color:#a6e22e>setAsynchronous</span>(<span style=color:#66d9ef>true</span>);
-</span></span><span style=display:flex><span>            mHandler.<span style=color:#a6e22e>sendMessageAtTime</span>(msg, dueTime);
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h5 id=3-回调链表结构>3. 回调链表结构</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CallbackQueue</span> {
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> CallbackRecord mHead;
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>addCallbackLocked</span>(<span style=color:#66d9ef>long</span> dueTime, Object action, Object token) {
-</span></span><span style=display:flex><span>        CallbackRecord callback <span style=color:#f92672>=</span> obtainCallbackLocked(dueTime, action, token);
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (mHead <span style=color:#f92672>==</span> <span style=color:#66d9ef>null</span>) {
-</span></span><span style=display:flex><span>            mHead <span style=color:#f92672>=</span> callback;
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 链表按照执行时间排序（小到大）</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (dueTime <span style=color:#f92672>&lt;</span> mHead.<span style=color:#a6e22e>dueTime</span>) {
-</span></span><span style=display:flex><span>            callback.<span style=color:#a6e22e>next</span> <span style=color:#f92672>=</span> mHead;
-</span></span><span style=display:flex><span>            mHead <span style=color:#f92672>=</span> callback;
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        CallbackRecord entry <span style=color:#f92672>=</span> mHead;
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>while</span> (entry.<span style=color:#a6e22e>next</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>null</span>) {
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (dueTime <span style=color:#f92672>&lt;</span> entry.<span style=color:#a6e22e>next</span>.<span style=color:#a6e22e>dueTime</span>) {
-</span></span><span style=display:flex><span>                callback.<span style=color:#a6e22e>next</span> <span style=color:#f92672>=</span> entry.<span style=color:#a6e22e>next</span>;
-</span></span><span style=display:flex><span>                entry.<span style=color:#a6e22e>next</span> <span style=color:#f92672>=</span> callback;
-</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span>;
-</span></span><span style=display:flex><span>            }
-</span></span><span style=display:flex><span>            entry <span style=color:#f92672>=</span> entry.<span style=color:#a6e22e>next</span>;
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>        entry.<span style=color:#a6e22e>next</span> <span style=color:#f92672>=</span> callback;
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>}
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#75715e>// 链表节点定义</span>
-</span></span><span style=display:flex><span><span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CallbackRecord</span> {
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> CallbackRecord next;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>long</span> dueTime;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> Object action; <span style=color:#75715e>// Runnable 或 FrameCallback</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> Object token;
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h4 id=四vsync同步机制>四、VSYNC同步机制</h4><h5 id=1-vsync请求>1、 VSYNC请求</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>scheduleFrameLocked</span>(<span style=color:#66d9ef>long</span> now) {
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>mFrameScheduled) {
-</span></span><span style=display:flex><span>        mFrameScheduled <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (USE_VSYNC) {
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 通过 FrameDisplayEventReceiver 请求 VSYNC</span>
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (isRunningOnLooperThreadLocked()) {
-</span></span><span style=display:flex><span>              <span style=color:#75715e>//注册</span>
-</span></span><span style=display:flex><span>                scheduleVsyncLocked();
-</span></span><span style=display:flex><span>            } <span style=color:#66d9ef>else</span> {
-</span></span><span style=display:flex><span>                <span style=color:#75715e>// 非UI线程发送消息到UI线程</span>
-</span></span><span style=display:flex><span>                Message msg <span style=color:#f92672>=</span> mHandler.<span style=color:#a6e22e>obtainMessage</span>(MSG_DO_SCHEDULE_VSYNC);
-</span></span><span style=display:flex><span>                msg.<span style=color:#a6e22e>setAsynchronous</span>(<span style=color:#66d9ef>true</span>);
-</span></span><span style=display:flex><span>                mHandler.<span style=color:#a6e22e>sendMessageAtFrontOfQueue</span>(msg);
-</span></span><span style=display:flex><span>            }
-</span></span><span style=display:flex><span>        } <span style=color:#66d9ef>else</span> {
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 无VSYNC直接安排帧</span>
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>long</span> nextFrameTime <span style=color:#f92672>=</span> ...;
-</span></span><span style=display:flex><span>            Message msg <span style=color:#f92672>=</span> mHandler.<span style=color:#a6e22e>obtainMessage</span>(MSG_DO_FRAME);
-</span></span><span style=display:flex><span>            msg.<span style=color:#a6e22e>setAsynchronous</span>(<span style=color:#66d9ef>true</span>);
-</span></span><span style=display:flex><span>            mHandler.<span style=color:#a6e22e>sendMessageAtTime</span>(msg, nextFrameTime);
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>}
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span><span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>scheduleVsyncLocked</span>() {
-</span></span><span style=display:flex><span>    mDisplayEventReceiver.<span style=color:#a6e22e>scheduleVsync</span>();
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h5 id=2-vsync接收与处理>2. VSYNC接收与处理</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FrameDisplayEventReceiver</span> <span style=color:#66d9ef>extends</span> DisplayEventReceiver {
-</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onVsync</span>(<span style=color:#66d9ef>long</span> timestampNanos, <span style=color:#66d9ef>long</span> physicalDisplayId, <span style=color:#66d9ef>int</span> frame) {
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 1. 计算正确的帧时间</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>long</span> now <span style=color:#f92672>=</span> System.<span style=color:#a6e22e>nanoTime</span>();
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>long</span> intendedFrameTimeNanos <span style=color:#f92672>=</span> ...;
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 2. 发送MSG_DO_FRAME消息</span>
-</span></span><span style=display:flex><span>        Message msg <span style=color:#f92672>=</span> Message.<span style=color:#a6e22e>obtain</span>(mHandler, MSG_DO_FRAME);
-</span></span><span style=display:flex><span>        msg.<span style=color:#a6e22e>setAsynchronous</span>(<span style=color:#66d9ef>true</span>);
-</span></span><span style=display:flex><span>        mHandler.<span style=color:#a6e22e>sendMessageAtTime</span>(msg, intendedFrameTimeNanos <span style=color:#f92672>/</span> NANOS_PER_MS);
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h5 id=3-帧处理核心---doframe>3. 帧处理核心 - doFrame()</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>doFrame</span>(<span style=color:#66d9ef>long</span> frameTimeNanos, <span style=color:#66d9ef>int</span> frame) {
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>long</span> startNanos;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>synchronized</span> (mLock) {
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 检查帧调度状态</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>mFrameScheduled) <span style=color:#66d9ef>return</span>;
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 计算跳帧情况</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>long</span> jitterNanos <span style=color:#f92672>=</span> startNanos <span style=color:#f92672>-</span> frameTimeNanos;
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (jitterNanos <span style=color:#f92672>&gt;=</span> mFrameIntervalNanos) {
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>long</span> skippedFrames <span style=color:#f92672>=</span> jitterNanos <span style=color:#f92672>/</span> mFrameIntervalNanos;
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 超过阈值打印警告日志</span>
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (skippedFrames <span style=color:#f92672>&gt;=</span> SKIPPED_FRAME_WARNING_LIMIT) {
-</span></span><span style=display:flex><span>                Log.<span style=color:#a6e22e>i</span>(TAG, <span style=color:#e6db74>&#34;Skipped &#34;</span> <span style=color:#f92672>+</span> skippedFrames <span style=color:#f92672>+</span> <span style=color:#e6db74>&#34; frames!&#34;</span>);
-</span></span><span style=display:flex><span>            }
-</span></span><span style=display:flex><span>            frameTimeNanos <span style=color:#f92672>=</span> ...; <span style=color:#75715e>// 调整帧时间</span>
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        mLastFrameTimeNanos <span style=color:#f92672>=</span> frameTimeNanos;
-</span></span><span style=display:flex><span>        mFrameScheduled <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span>;
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>try</span> {
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 按优先级顺序执行回调</span>
-</span></span><span style=display:flex><span>        mFrameInfo.<span style=color:#a6e22e>markInputHandlingStart</span>();
-</span></span><span style=display:flex><span>        doCallbacks(Choreographer.<span style=color:#a6e22e>CALLBACK_INPUT</span>, frameTimeNanos);
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>        mFrameInfo.<span style=color:#a6e22e>markAnimationsStart</span>();
-</span></span><span style=display:flex><span>        doCallbacks(Choreographer.<span style=color:#a6e22e>CALLBACK_ANIMATION</span>, frameTimeNanos);
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>        mFrameInfo.<span style=color:#a6e22e>markPerformTraversalsStart</span>();
-</span></span><span style=display:flex><span>        doCallbacks(Choreographer.<span style=color:#a6e22e>CALLBACK_TRAVERSAL</span>, frameTimeNanos);
-</span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>        doCallbacks(Choreographer.<span style=color:#a6e22e>CALLBACK_COMMIT</span>, frameTimeNanos);
-</span></span><span style=display:flex><span>    } <span style=color:#66d9ef>finally</span> {
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 清理工作</span>
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h4 id=五回调执行处理>五、回调执行处理</h4><h5 id=1-执行回调核心逻辑>1. 执行回调核心逻辑</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>doCallbacks</span>(<span style=color:#66d9ef>int</span> callbackType, <span style=color:#66d9ef>long</span> frameTimeNanos) {
-</span></span><span style=display:flex><span>    CallbackRecord callbacks;
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>synchronized</span> (mLock) {
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 提取所有到期的回调</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>long</span> now <span style=color:#f92672>=</span> frameTimeNanos <span style=color:#f92672>/</span> NANOS_PER_MS;
-</span></span><span style=display:flex><span>        callbacks <span style=color:#f92672>=</span> mCallbackQueues<span style=color:#f92672>[</span>callbackType<span style=color:#f92672>]</span>.<span style=color:#a6e22e>extractDueCallbacksLocked</span>(now);
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (callbacks <span style=color:#f92672>==</span> <span style=color:#66d9ef>null</span>) <span style=color:#66d9ef>return</span>;
-</span></span><span style=display:flex><span>        mCallbacksRunning <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>try</span> {
-</span></span><span style=display:flex><span>        <span style=color:#75715e>// 执行链表中的所有回调</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>for</span> (CallbackRecord c <span style=color:#f92672>=</span> callbacks; c <span style=color:#f92672>!=</span> <span style=color:#66d9ef>null</span>; c <span style=color:#f92672>=</span> c.<span style=color:#a6e22e>next</span>) {
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 执行回调</span>
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (c.<span style=color:#a6e22e>action</span> <span style=color:#66d9ef>instanceof</span> Runnable) {
-</span></span><span style=display:flex><span>                ((Runnable) c.<span style=color:#a6e22e>action</span>).<span style=color:#a6e22e>run</span>();
-</span></span><span style=display:flex><span>            } <span style=color:#66d9ef>else</span> {
-</span></span><span style=display:flex><span>                ((FrameCallback) c.<span style=color:#a6e22e>action</span>).<span style=color:#a6e22e>doFrame</span>(frameTimeNanos);
-</span></span><span style=display:flex><span>            }
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>    } <span style=color:#66d9ef>finally</span> {
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>synchronized</span> (mLock) {
-</span></span><span style=display:flex><span>            <span style=color:#75715e>// 回收CallbackRecord对象</span>
-</span></span><span style=display:flex><span>            recycleCallbackRecordsLocked(callbacks);
-</span></span><span style=display:flex><span>            mCallbacksRunning <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span>;
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h5 id=2到期回调提取算法>2.到期回调提取算法</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>CallbackRecord <span style=color:#a6e22e>extractDueCallbacksLocked</span>(<span style=color:#66d9ef>long</span> now) {
-</span></span><span style=display:flex><span>    CallbackRecord callbacks <span style=color:#f92672>=</span> <span style=color:#66d9ef>null</span>;
-</span></span><span style=display:flex><span>    CallbackRecord next <span style=color:#f92672>=</span> mHead;
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 遍历链表，找出所有dueTime&lt;=now的节点</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>while</span> (next <span style=color:#f92672>!=</span> <span style=color:#66d9ef>null</span> <span style=color:#f92672>&amp;&amp;</span> next.<span style=color:#a6e22e>dueTime</span> <span style=color:#f92672>&lt;=</span> now) {
-</span></span><span style=display:flex><span>        CallbackRecord temp <span style=color:#f92672>=</span> next;
-</span></span><span style=display:flex><span>        next <span style=color:#f92672>=</span> next.<span style=color:#a6e22e>next</span>;
-</span></span><span style=display:flex><span>        temp.<span style=color:#a6e22e>next</span> <span style=color:#f92672>=</span> callbacks;  <span style=color:#75715e>// 新节点插入链表头部</span>
-</span></span><span style=display:flex><span>        callbacks <span style=color:#f92672>=</span> temp;       <span style=color:#75715e>// 新链表头</span>
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 更新原链表</span>
-</span></span><span style=display:flex><span>    mHead <span style=color:#f92672>=</span> next;
-</span></span><span style=display:flex><span>    
-</span></span><span style=display:flex><span>    <span style=color:#75715e>// 返回的是倒序链表（最近加入的先执行）</span>
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> callbacks;
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h4 id=六choreographer的其他作用>六、Choreographer的其他作用</h4><h5 id=1-帧率监控>1. 帧率监控</h5><p>开发者可以通过postFrameCallback实现帧率监控：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>startMonitoring</span>() {
-</span></span><span style=display:flex><span>    Choreographer.<span style=color:#a6e22e>getInstance</span>().<span style=color:#a6e22e>postFrameCallback</span>(<span style=color:#66d9ef>new</span> FrameCallback() {
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>long</span> lastFrameTime <span style=color:#f92672>=</span> 0;
-</span></span><span style=display:flex><span>        
-</span></span><span style=display:flex><span>        <span style=color:#a6e22e>@Override</span>
-</span></span><span style=display:flex><span>        <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>doFrame</span>(<span style=color:#66d9ef>long</span> frameTimeNanos) {
-</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (lastFrameTime <span style=color:#f92672>!=</span> 0) {
-</span></span><span style=display:flex><span>                <span style=color:#66d9ef>long</span> frameInterval <span style=color:#f92672>=</span> (frameTimeNanos <span style=color:#f92672>-</span> lastFrameTime) <span style=color:#f92672>/</span> 1000000;
-</span></span><span style=display:flex><span>                <span style=color:#66d9ef>if</span> (frameInterval <span style=color:#f92672>&gt;</span> 16) {
-</span></span><span style=display:flex><span>                    <span style=color:#75715e>// 记录掉帧情况</span>
-</span></span><span style=display:flex><span>                }
-</span></span><span style=display:flex><span>            }
-</span></span><span style=display:flex><span>            lastFrameTime <span style=color:#f92672>=</span> frameTimeNanos;
-</span></span><span style=display:flex><span>            Choreographer.<span style=color:#a6e22e>getInstance</span>().<span style=color:#a6e22e>postFrameCallback</span>(<span style=color:#66d9ef>this</span>);
-</span></span><span style=display:flex><span>        }
-</span></span><span style=display:flex><span>    });
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><h4 id=七总结>七、总结</h4><p>Choreographer 是 Android 渲染系统的核心协调器，其工作原理可以概括为：</p><ol><li><p><strong>任务管理</strong>：通过 5 个链表队列管理不同优先级的回调任务</p><ul><li>输入 > 动画 > 插入动画 > 视图遍历 > 提交</li></ul></li><li><p><strong>VSYNC 同步</strong>：</p><pre tabindex=0><code>scheduleVsync() → DisplayEventReceiver → onVsync() → doFrame()
-</code></pre></li><li><p><strong>帧生命周期</strong>：</p><pre tabindex=0><code>doFrame() → 
+开发者可以通过postFrameCallback实现帧率监控：">
+    <meta name="generator" content="Hugo 0.147.8">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+
+    
+
+
+    
+      
+
+    
+
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/">
+  <meta property="og:site_name" content="zed的博客">
+  <meta property="og:title" content="Choreographer类解析">
+  <meta property="og:description" content="一、核心作用 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
+二、关键概念 VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧 Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行 Callback Types（按执行顺序排序） CALLBACK_INPUT CALLBACK_ANIMATION CALLBACK_INSETS_ANIMATION CALLBACK_TRAVERSAL CALLBACK_COMMIT public final class Choreographer { // 五种回调类型 public static final int CALLBACK_INPUT = 0; public static final int CALLBACK_ANIMATION = 1; public static final int CALLBACK_INSETS_ANIMATION = 2; public static final int CALLBACK_TRAVERSAL = 3; public static final int CALLBACK_COMMIT = 4; public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型 // 单例模式实现 private static final ThreadLocal&lt;Choreographer&gt; sThreadInstance = new ThreadLocal&lt;Choreographer&gt;() { @Override protected Choreographer initialValue() { Looper looper = Looper.myLooper(); return new Choreographer(looper, VSYNC_SOURCE_APP); } }; // 回调队列数组 private final CallbackQueue[] mCallbackQueues; // VSYNC 接收器 private final FrameDisplayEventReceiver mDisplayEventReceiver; // 处理消息的Handler private final FrameHandler mHandler; } 三、核心架构图解 ┌───────────────────────┐ ┌───────────────────────┐ │ VSYNC 信号源 │──────&gt;│ FrameDisplayEventReceiver │ └───────────────────────┘ │ (接收硬件VSYNC信号) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ ┌───────────────────────┐ │ FrameHandler │&lt;──────│ onVsync() │ │ (处理3类消息) │──────&gt;│ scheduleVsync() │ └───────────┬───────────┘ └───────────────────────┘ │ ▼ ┌───────────────────────┐ │ doFrame() │ │ (帧处理核心方法) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ │ CallbackQueue[] │ │ (5种类型回调链表) │ └───────────────────────┘ 三、回调添加入口 1. 添加回调入口 public void postCallback(int callbackType, Runnable action, Object token) { postCallbackDelayed(callbackType, action, token, 0); } public void postCallbackDelayed(int callbackType, Runnable action, long delayMillis) { postCallbackDelayedInternal(callbackType, action, token, delayMillis); } 2. 内部添加实现 private void postCallbackDelayedInternal(int callbackType, Object action, Object token, long delayMillis) { synchronized (mLock) { final long now = SystemClock.uptimeMillis(); final long dueTime = now &#43; delayMillis; // 1. 添加到对应的回调队列 mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token); // 2. 调度帧处理 if (dueTime &lt;= now) { // 立即调度 scheduleFrameLocked(now); } else { // 延迟调度 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action); msg.arg1 = callbackType; msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, dueTime); } } } 3. 回调链表结构 private static final class CallbackQueue { private CallbackRecord mHead; public void addCallbackLocked(long dueTime, Object action, Object token) { CallbackRecord callback = obtainCallbackLocked(dueTime, action, token); if (mHead == null) { mHead = callback; return; } // 链表按照执行时间排序（小到大） if (dueTime &lt; mHead.dueTime) { callback.next = mHead; mHead = callback; return; } CallbackRecord entry = mHead; while (entry.next != null) { if (dueTime &lt; entry.next.dueTime) { callback.next = entry.next; entry.next = callback; return; } entry = entry.next; } entry.next = callback; } } // 链表节点定义 private static final class CallbackRecord { public CallbackRecord next; public long dueTime; public Object action; // Runnable 或 FrameCallback public Object token; } 四、VSYNC同步机制 1、 VSYNC请求 private void scheduleFrameLocked(long now) { if (!mFrameScheduled) { mFrameScheduled = true; if (USE_VSYNC) { // 通过 FrameDisplayEventReceiver 请求 VSYNC if (isRunningOnLooperThreadLocked()) { //注册 scheduleVsyncLocked(); } else { // 非UI线程发送消息到UI线程 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC); msg.setAsynchronous(true); mHandler.sendMessageAtFrontOfQueue(msg); } } else { // 无VSYNC直接安排帧 final long nextFrameTime = ...; Message msg = mHandler.obtainMessage(MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, nextFrameTime); } } } private void scheduleVsyncLocked() { mDisplayEventReceiver.scheduleVsync(); } 2. VSYNC接收与处理 private final class FrameDisplayEventReceiver extends DisplayEventReceiver { @Override public void onVsync(long timestampNanos, long physicalDisplayId, int frame) { // 1. 计算正确的帧时间 long now = System.nanoTime(); long intendedFrameTimeNanos = ...; // 2. 发送MSG_DO_FRAME消息 Message msg = Message.obtain(mHandler, MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, intendedFrameTimeNanos / NANOS_PER_MS); } } 3. 帧处理核心 - doFrame() void doFrame(long frameTimeNanos, int frame) { final long startNanos; synchronized (mLock) { // 检查帧调度状态 if (!mFrameScheduled) return; // 计算跳帧情况 long jitterNanos = startNanos - frameTimeNanos; if (jitterNanos &gt;= mFrameIntervalNanos) { final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 超过阈值打印警告日志 if (skippedFrames &gt;= SKIPPED_FRAME_WARNING_LIMIT) { Log.i(TAG, &#34;Skipped &#34; &#43; skippedFrames &#43; &#34; frames!&#34;); } frameTimeNanos = ...; // 调整帧时间 } mLastFrameTimeNanos = frameTimeNanos; mFrameScheduled = false; } try { // 按优先级顺序执行回调 mFrameInfo.markInputHandlingStart(); doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos); mFrameInfo.markAnimationsStart(); doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos); mFrameInfo.markPerformTraversalsStart(); doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos); doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos); } finally { // 清理工作 } } 五、回调执行处理 1. 执行回调核心逻辑 void doCallbacks(int callbackType, long frameTimeNanos) { CallbackRecord callbacks; synchronized (mLock) { // 提取所有到期的回调 final long now = frameTimeNanos / NANOS_PER_MS; callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now); if (callbacks == null) return; mCallbacksRunning = true; } try { // 执行链表中的所有回调 for (CallbackRecord c = callbacks; c != null; c = c.next) { // 执行回调 if (c.action instanceof Runnable) { ((Runnable) c.action).run(); } else { ((FrameCallback) c.action).doFrame(frameTimeNanos); } } } finally { synchronized (mLock) { // 回收CallbackRecord对象 recycleCallbackRecordsLocked(callbacks); mCallbacksRunning = false; } } } 2.到期回调提取算法 CallbackRecord extractDueCallbacksLocked(long now) { CallbackRecord callbacks = null; CallbackRecord next = mHead; // 遍历链表，找出所有dueTime&lt;=now的节点 while (next != null &amp;&amp; next.dueTime &lt;= now) { CallbackRecord temp = next; next = next.next; temp.next = callbacks; // 新节点插入链表头部 callbacks = temp; // 新链表头 } // 更新原链表 mHead = next; // 返回的是倒序链表（最近加入的先执行） return callbacks; } 六、Choreographer的其他作用 1. 帧率监控 开发者可以通过postFrameCallback实现帧率监控：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="android-develop">
+    <meta property="article:published_time" content="2025-06-16T06:49:21+08:00">
+    <meta property="article:modified_time" content="2025-06-16T06:49:21+08:00">
+
+  <meta itemprop="name" content="Choreographer类解析">
+  <meta itemprop="description" content="一、核心作用 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
+二、关键概念 VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧 Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行 Callback Types（按执行顺序排序） CALLBACK_INPUT CALLBACK_ANIMATION CALLBACK_INSETS_ANIMATION CALLBACK_TRAVERSAL CALLBACK_COMMIT public final class Choreographer { // 五种回调类型 public static final int CALLBACK_INPUT = 0; public static final int CALLBACK_ANIMATION = 1; public static final int CALLBACK_INSETS_ANIMATION = 2; public static final int CALLBACK_TRAVERSAL = 3; public static final int CALLBACK_COMMIT = 4; public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型 // 单例模式实现 private static final ThreadLocal&lt;Choreographer&gt; sThreadInstance = new ThreadLocal&lt;Choreographer&gt;() { @Override protected Choreographer initialValue() { Looper looper = Looper.myLooper(); return new Choreographer(looper, VSYNC_SOURCE_APP); } }; // 回调队列数组 private final CallbackQueue[] mCallbackQueues; // VSYNC 接收器 private final FrameDisplayEventReceiver mDisplayEventReceiver; // 处理消息的Handler private final FrameHandler mHandler; } 三、核心架构图解 ┌───────────────────────┐ ┌───────────────────────┐ │ VSYNC 信号源 │──────&gt;│ FrameDisplayEventReceiver │ └───────────────────────┘ │ (接收硬件VSYNC信号) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ ┌───────────────────────┐ │ FrameHandler │&lt;──────│ onVsync() │ │ (处理3类消息) │──────&gt;│ scheduleVsync() │ └───────────┬───────────┘ └───────────────────────┘ │ ▼ ┌───────────────────────┐ │ doFrame() │ │ (帧处理核心方法) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ │ CallbackQueue[] │ │ (5种类型回调链表) │ └───────────────────────┘ 三、回调添加入口 1. 添加回调入口 public void postCallback(int callbackType, Runnable action, Object token) { postCallbackDelayed(callbackType, action, token, 0); } public void postCallbackDelayed(int callbackType, Runnable action, long delayMillis) { postCallbackDelayedInternal(callbackType, action, token, delayMillis); } 2. 内部添加实现 private void postCallbackDelayedInternal(int callbackType, Object action, Object token, long delayMillis) { synchronized (mLock) { final long now = SystemClock.uptimeMillis(); final long dueTime = now &#43; delayMillis; // 1. 添加到对应的回调队列 mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token); // 2. 调度帧处理 if (dueTime &lt;= now) { // 立即调度 scheduleFrameLocked(now); } else { // 延迟调度 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action); msg.arg1 = callbackType; msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, dueTime); } } } 3. 回调链表结构 private static final class CallbackQueue { private CallbackRecord mHead; public void addCallbackLocked(long dueTime, Object action, Object token) { CallbackRecord callback = obtainCallbackLocked(dueTime, action, token); if (mHead == null) { mHead = callback; return; } // 链表按照执行时间排序（小到大） if (dueTime &lt; mHead.dueTime) { callback.next = mHead; mHead = callback; return; } CallbackRecord entry = mHead; while (entry.next != null) { if (dueTime &lt; entry.next.dueTime) { callback.next = entry.next; entry.next = callback; return; } entry = entry.next; } entry.next = callback; } } // 链表节点定义 private static final class CallbackRecord { public CallbackRecord next; public long dueTime; public Object action; // Runnable 或 FrameCallback public Object token; } 四、VSYNC同步机制 1、 VSYNC请求 private void scheduleFrameLocked(long now) { if (!mFrameScheduled) { mFrameScheduled = true; if (USE_VSYNC) { // 通过 FrameDisplayEventReceiver 请求 VSYNC if (isRunningOnLooperThreadLocked()) { //注册 scheduleVsyncLocked(); } else { // 非UI线程发送消息到UI线程 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC); msg.setAsynchronous(true); mHandler.sendMessageAtFrontOfQueue(msg); } } else { // 无VSYNC直接安排帧 final long nextFrameTime = ...; Message msg = mHandler.obtainMessage(MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, nextFrameTime); } } } private void scheduleVsyncLocked() { mDisplayEventReceiver.scheduleVsync(); } 2. VSYNC接收与处理 private final class FrameDisplayEventReceiver extends DisplayEventReceiver { @Override public void onVsync(long timestampNanos, long physicalDisplayId, int frame) { // 1. 计算正确的帧时间 long now = System.nanoTime(); long intendedFrameTimeNanos = ...; // 2. 发送MSG_DO_FRAME消息 Message msg = Message.obtain(mHandler, MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, intendedFrameTimeNanos / NANOS_PER_MS); } } 3. 帧处理核心 - doFrame() void doFrame(long frameTimeNanos, int frame) { final long startNanos; synchronized (mLock) { // 检查帧调度状态 if (!mFrameScheduled) return; // 计算跳帧情况 long jitterNanos = startNanos - frameTimeNanos; if (jitterNanos &gt;= mFrameIntervalNanos) { final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 超过阈值打印警告日志 if (skippedFrames &gt;= SKIPPED_FRAME_WARNING_LIMIT) { Log.i(TAG, &#34;Skipped &#34; &#43; skippedFrames &#43; &#34; frames!&#34;); } frameTimeNanos = ...; // 调整帧时间 } mLastFrameTimeNanos = frameTimeNanos; mFrameScheduled = false; } try { // 按优先级顺序执行回调 mFrameInfo.markInputHandlingStart(); doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos); mFrameInfo.markAnimationsStart(); doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos); mFrameInfo.markPerformTraversalsStart(); doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos); doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos); } finally { // 清理工作 } } 五、回调执行处理 1. 执行回调核心逻辑 void doCallbacks(int callbackType, long frameTimeNanos) { CallbackRecord callbacks; synchronized (mLock) { // 提取所有到期的回调 final long now = frameTimeNanos / NANOS_PER_MS; callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now); if (callbacks == null) return; mCallbacksRunning = true; } try { // 执行链表中的所有回调 for (CallbackRecord c = callbacks; c != null; c = c.next) { // 执行回调 if (c.action instanceof Runnable) { ((Runnable) c.action).run(); } else { ((FrameCallback) c.action).doFrame(frameTimeNanos); } } } finally { synchronized (mLock) { // 回收CallbackRecord对象 recycleCallbackRecordsLocked(callbacks); mCallbacksRunning = false; } } } 2.到期回调提取算法 CallbackRecord extractDueCallbacksLocked(long now) { CallbackRecord callbacks = null; CallbackRecord next = mHead; // 遍历链表，找出所有dueTime&lt;=now的节点 while (next != null &amp;&amp; next.dueTime &lt;= now) { CallbackRecord temp = next; next = next.next; temp.next = callbacks; // 新节点插入链表头部 callbacks = temp; // 新链表头 } // 更新原链表 mHead = next; // 返回的是倒序链表（最近加入的先执行） return callbacks; } 六、Choreographer的其他作用 1. 帧率监控 开发者可以通过postFrameCallback实现帧率监控：">
+  <meta itemprop="datePublished" content="2025-06-16T06:49:21+08:00">
+  <meta itemprop="dateModified" content="2025-06-16T06:49:21+08:00">
+  <meta itemprop="wordCount" content="806">
+  <meta itemprop="keywords" content="Android-Develop">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Choreographer类解析">
+  <meta name="twitter:description" content="一、核心作用 Choreographer是Android系统协调动画、输入和绘制操作的核心调度器。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
+二、关键概念 VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧 Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行 Callback Types（按执行顺序排序） CALLBACK_INPUT CALLBACK_ANIMATION CALLBACK_INSETS_ANIMATION CALLBACK_TRAVERSAL CALLBACK_COMMIT public final class Choreographer { // 五种回调类型 public static final int CALLBACK_INPUT = 0; public static final int CALLBACK_ANIMATION = 1; public static final int CALLBACK_INSETS_ANIMATION = 2; public static final int CALLBACK_TRAVERSAL = 3; public static final int CALLBACK_COMMIT = 4; public static final int CALLBACK_LAST = CALLBACK_COMMIT; // 最后一种类型 // 单例模式实现 private static final ThreadLocal&lt;Choreographer&gt; sThreadInstance = new ThreadLocal&lt;Choreographer&gt;() { @Override protected Choreographer initialValue() { Looper looper = Looper.myLooper(); return new Choreographer(looper, VSYNC_SOURCE_APP); } }; // 回调队列数组 private final CallbackQueue[] mCallbackQueues; // VSYNC 接收器 private final FrameDisplayEventReceiver mDisplayEventReceiver; // 处理消息的Handler private final FrameHandler mHandler; } 三、核心架构图解 ┌───────────────────────┐ ┌───────────────────────┐ │ VSYNC 信号源 │──────&gt;│ FrameDisplayEventReceiver │ └───────────────────────┘ │ (接收硬件VSYNC信号) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ ┌───────────────────────┐ │ FrameHandler │&lt;──────│ onVsync() │ │ (处理3类消息) │──────&gt;│ scheduleVsync() │ └───────────┬───────────┘ └───────────────────────┘ │ ▼ ┌───────────────────────┐ │ doFrame() │ │ (帧处理核心方法) │ └───────────┬───────────┘ │ ▼ ┌───────────────────────┐ │ CallbackQueue[] │ │ (5种类型回调链表) │ └───────────────────────┘ 三、回调添加入口 1. 添加回调入口 public void postCallback(int callbackType, Runnable action, Object token) { postCallbackDelayed(callbackType, action, token, 0); } public void postCallbackDelayed(int callbackType, Runnable action, long delayMillis) { postCallbackDelayedInternal(callbackType, action, token, delayMillis); } 2. 内部添加实现 private void postCallbackDelayedInternal(int callbackType, Object action, Object token, long delayMillis) { synchronized (mLock) { final long now = SystemClock.uptimeMillis(); final long dueTime = now &#43; delayMillis; // 1. 添加到对应的回调队列 mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token); // 2. 调度帧处理 if (dueTime &lt;= now) { // 立即调度 scheduleFrameLocked(now); } else { // 延迟调度 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action); msg.arg1 = callbackType; msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, dueTime); } } } 3. 回调链表结构 private static final class CallbackQueue { private CallbackRecord mHead; public void addCallbackLocked(long dueTime, Object action, Object token) { CallbackRecord callback = obtainCallbackLocked(dueTime, action, token); if (mHead == null) { mHead = callback; return; } // 链表按照执行时间排序（小到大） if (dueTime &lt; mHead.dueTime) { callback.next = mHead; mHead = callback; return; } CallbackRecord entry = mHead; while (entry.next != null) { if (dueTime &lt; entry.next.dueTime) { callback.next = entry.next; entry.next = callback; return; } entry = entry.next; } entry.next = callback; } } // 链表节点定义 private static final class CallbackRecord { public CallbackRecord next; public long dueTime; public Object action; // Runnable 或 FrameCallback public Object token; } 四、VSYNC同步机制 1、 VSYNC请求 private void scheduleFrameLocked(long now) { if (!mFrameScheduled) { mFrameScheduled = true; if (USE_VSYNC) { // 通过 FrameDisplayEventReceiver 请求 VSYNC if (isRunningOnLooperThreadLocked()) { //注册 scheduleVsyncLocked(); } else { // 非UI线程发送消息到UI线程 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC); msg.setAsynchronous(true); mHandler.sendMessageAtFrontOfQueue(msg); } } else { // 无VSYNC直接安排帧 final long nextFrameTime = ...; Message msg = mHandler.obtainMessage(MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, nextFrameTime); } } } private void scheduleVsyncLocked() { mDisplayEventReceiver.scheduleVsync(); } 2. VSYNC接收与处理 private final class FrameDisplayEventReceiver extends DisplayEventReceiver { @Override public void onVsync(long timestampNanos, long physicalDisplayId, int frame) { // 1. 计算正确的帧时间 long now = System.nanoTime(); long intendedFrameTimeNanos = ...; // 2. 发送MSG_DO_FRAME消息 Message msg = Message.obtain(mHandler, MSG_DO_FRAME); msg.setAsynchronous(true); mHandler.sendMessageAtTime(msg, intendedFrameTimeNanos / NANOS_PER_MS); } } 3. 帧处理核心 - doFrame() void doFrame(long frameTimeNanos, int frame) { final long startNanos; synchronized (mLock) { // 检查帧调度状态 if (!mFrameScheduled) return; // 计算跳帧情况 long jitterNanos = startNanos - frameTimeNanos; if (jitterNanos &gt;= mFrameIntervalNanos) { final long skippedFrames = jitterNanos / mFrameIntervalNanos; // 超过阈值打印警告日志 if (skippedFrames &gt;= SKIPPED_FRAME_WARNING_LIMIT) { Log.i(TAG, &#34;Skipped &#34; &#43; skippedFrames &#43; &#34; frames!&#34;); } frameTimeNanos = ...; // 调整帧时间 } mLastFrameTimeNanos = frameTimeNanos; mFrameScheduled = false; } try { // 按优先级顺序执行回调 mFrameInfo.markInputHandlingStart(); doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos); mFrameInfo.markAnimationsStart(); doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos); mFrameInfo.markPerformTraversalsStart(); doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos); doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos); } finally { // 清理工作 } } 五、回调执行处理 1. 执行回调核心逻辑 void doCallbacks(int callbackType, long frameTimeNanos) { CallbackRecord callbacks; synchronized (mLock) { // 提取所有到期的回调 final long now = frameTimeNanos / NANOS_PER_MS; callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now); if (callbacks == null) return; mCallbacksRunning = true; } try { // 执行链表中的所有回调 for (CallbackRecord c = callbacks; c != null; c = c.next) { // 执行回调 if (c.action instanceof Runnable) { ((Runnable) c.action).run(); } else { ((FrameCallback) c.action).doFrame(frameTimeNanos); } } } finally { synchronized (mLock) { // 回收CallbackRecord对象 recycleCallbackRecordsLocked(callbacks); mCallbacksRunning = false; } } } 2.到期回调提取算法 CallbackRecord extractDueCallbacksLocked(long now) { CallbackRecord callbacks = null; CallbackRecord next = mHead; // 遍历链表，找出所有dueTime&lt;=now的节点 while (next != null &amp;&amp; next.dueTime &lt;= now) { CallbackRecord temp = next; next = next.next; temp.next = callbacks; // 新节点插入链表头部 callbacks = temp; // 新链表头 } // 更新原链表 mHead = next; // 返回的是倒序链表（最近加入的先执行） return callbacks; } 六、Choreographer的其他作用 1. 帧率监控 开发者可以通过postFrameCallback实现帧率监控：">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l center items-center justify-between">
+    <a href="/" class="f3 fw2 hover-white white-90 dib no-underline">
+      
+        zed的博客
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+        <ul class="pl0 mr3">
+          
+          <li class="list f5 f4-ns fw4 dib pr3">
+            <a class="hover-white white-90 no-underline" href="/android-develop/" title="">
+              Android-Develops
+            </a>
+          </li>
+          
+          <li class="list f5 f4-ns fw4 dib pr3">
+            <a class="hover-white white-90 no-underline" href="/tutorials/" title="">
+              Tutorials
+            </a>
+          </li>
+          
+        </ul>
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  
+  <article class="flex-l mw8 center ph3 flex-wrap justify-between">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked ttu">
+          
+        Android-Develops
+      </aside><div id="sharing" class="mt3 ananke-socials"></div>
+<h1 class="f1 athelas mt3 mb1">Choreographer类解析</h1>
+      
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2025-06-16T06:49:21+08:00">June 16, 2025</time>
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><h4 id="一核心作用">一、核心作用</h4>
+<p>Choreographer是Android系统<strong>协调动画、输入和绘制操作的核心调度器</strong>。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。</p>
+<h4 id="二关键概念">二、关键概念</h4>
+<ul>
+<li>VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧</li>
+<li>Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行</li>
+<li>Callback Types（按执行顺序排序）
+<ul>
+<li>CALLBACK_INPUT</li>
+<li>CALLBACK_ANIMATION</li>
+<li>CALLBACK_INSETS_ANIMATION</li>
+<li>CALLBACK_TRAVERSAL</li>
+<li>CALLBACK_COMMIT</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Choreographer</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 五种回调类型</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_INPUT <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_ANIMATION <span style="color:#f92672">=</span> 1;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_INSETS_ANIMATION <span style="color:#f92672">=</span> 2;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_TRAVERSAL <span style="color:#f92672">=</span> 3;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_COMMIT <span style="color:#f92672">=</span> 4;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_LAST <span style="color:#f92672">=</span> CALLBACK_COMMIT; <span style="color:#75715e">// 最后一种类型</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 单例模式实现</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> ThreadLocal<span style="color:#f92672">&lt;</span>Choreographer<span style="color:#f92672">&gt;</span> sThreadInstance <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> ThreadLocal<span style="color:#f92672">&lt;</span>Choreographer<span style="color:#f92672">&gt;</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">protected</span> Choreographer <span style="color:#a6e22e">initialValue</span>() {
+</span></span><span style="display:flex;"><span>                Looper looper <span style="color:#f92672">=</span> Looper.<span style="color:#a6e22e">myLooper</span>();
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> Choreographer(looper, VSYNC_SOURCE_APP);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        };
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 回调队列数组</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> CallbackQueue<span style="color:#f92672">[]</span> mCallbackQueues;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// VSYNC 接收器</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> FrameDisplayEventReceiver mDisplayEventReceiver;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 处理消息的Handler</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> FrameHandler mHandler;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="三核心架构图解">三、核心架构图解</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tex" data-lang="tex"><span style="display:flex;"><span>┌───────────────────────┐       ┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│    VSYNC 信号源        │──────&gt;│ FrameDisplayEventReceiver │
+</span></span><span style="display:flex;"><span>└───────────────────────┘       │  (接收硬件VSYNC信号)     │
+</span></span><span style="display:flex;"><span>                                └───────────┬───────────┘
+</span></span><span style="display:flex;"><span>                                            │
+</span></span><span style="display:flex;"><span>                                            ▼
+</span></span><span style="display:flex;"><span>┌───────────────────────┐       ┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│     FrameHandler       │&lt;──────│    onVsync()          │
+</span></span><span style="display:flex;"><span>│   (处理3类消息)        │──────&gt;│    scheduleVsync()    │
+</span></span><span style="display:flex;"><span>└───────────┬───────────┘       └───────────────────────┘
+</span></span><span style="display:flex;"><span>            │
+</span></span><span style="display:flex;"><span>            ▼
+</span></span><span style="display:flex;"><span>┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│      doFrame()         │
+</span></span><span style="display:flex;"><span>│ (帧处理核心方法)       │
+</span></span><span style="display:flex;"><span>└───────────┬───────────┘
+</span></span><span style="display:flex;"><span>            │
+</span></span><span style="display:flex;"><span>            ▼
+</span></span><span style="display:flex;"><span>┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│   CallbackQueue[]      │
+</span></span><span style="display:flex;"><span>│ (5种类型回调链表)      │
+</span></span><span style="display:flex;"><span>└───────────────────────┘
+</span></span></code></pre></div><h4 id="三回调添加入口">三、回调添加入口</h4>
+<h5 id="1-添加回调入口">1. 添加回调入口</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postCallback</span>(<span style="color:#66d9ef">int</span> callbackType, Runnable action, Object token) {
+</span></span><span style="display:flex;"><span>    postCallbackDelayed(callbackType, action, token, 0);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postCallbackDelayed</span>(<span style="color:#66d9ef">int</span> callbackType, Runnable action, <span style="color:#66d9ef">long</span> delayMillis) {
+</span></span><span style="display:flex;"><span>    postCallbackDelayedInternal(callbackType, action, token, delayMillis);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-内部添加实现">2. 内部添加实现</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postCallbackDelayedInternal</span>(<span style="color:#66d9ef">int</span> callbackType,
+</span></span><span style="display:flex;"><span>        Object action, Object token, <span style="color:#66d9ef">long</span> delayMillis) {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> now <span style="color:#f92672">=</span> SystemClock.<span style="color:#a6e22e">uptimeMillis</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> dueTime <span style="color:#f92672">=</span> now <span style="color:#f92672">+</span> delayMillis;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 添加到对应的回调队列</span>
+</span></span><span style="display:flex;"><span>        mCallbackQueues<span style="color:#f92672">[</span>callbackType<span style="color:#f92672">]</span>.<span style="color:#a6e22e">addCallbackLocked</span>(dueTime, action, token);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 调度帧处理</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (dueTime <span style="color:#f92672">&lt;=</span> now) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 立即调度</span>
+</span></span><span style="display:flex;"><span>            scheduleFrameLocked(now);
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 延迟调度</span>
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> mHandler.<span style="color:#a6e22e">obtainMessage</span>(MSG_DO_SCHEDULE_CALLBACK, action);
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">arg1</span> <span style="color:#f92672">=</span> callbackType;
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>            mHandler.<span style="color:#a6e22e">sendMessageAtTime</span>(msg, dueTime);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-回调链表结构">3. 回调链表结构</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CallbackQueue</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> CallbackRecord mHead;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">addCallbackLocked</span>(<span style="color:#66d9ef">long</span> dueTime, Object action, Object token) {
+</span></span><span style="display:flex;"><span>        CallbackRecord callback <span style="color:#f92672">=</span> obtainCallbackLocked(dueTime, action, token);
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mHead <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            mHead <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 链表按照执行时间排序（小到大）</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (dueTime <span style="color:#f92672">&lt;</span> mHead.<span style="color:#a6e22e">dueTime</span>) {
+</span></span><span style="display:flex;"><span>            callback.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> mHead;
+</span></span><span style="display:flex;"><span>            mHead <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        CallbackRecord entry <span style="color:#f92672">=</span> mHead;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> (entry.<span style="color:#a6e22e">next</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (dueTime <span style="color:#f92672">&lt;</span> entry.<span style="color:#a6e22e">next</span>.<span style="color:#a6e22e">dueTime</span>) {
+</span></span><span style="display:flex;"><span>                callback.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> entry.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>                entry.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            entry <span style="color:#f92672">=</span> entry.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        entry.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 链表节点定义</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CallbackRecord</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> CallbackRecord next;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">long</span> dueTime;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object action; <span style="color:#75715e">// Runnable 或 FrameCallback</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object token;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="四vsync同步机制">四、VSYNC同步机制</h4>
+<h5 id="1-vsync请求">1、 VSYNC请求</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">scheduleFrameLocked</span>(<span style="color:#66d9ef">long</span> now) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mFrameScheduled) {
+</span></span><span style="display:flex;"><span>        mFrameScheduled <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (USE_VSYNC) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 通过 FrameDisplayEventReceiver 请求 VSYNC</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (isRunningOnLooperThreadLocked()) {
+</span></span><span style="display:flex;"><span>              <span style="color:#75715e">//注册</span>
+</span></span><span style="display:flex;"><span>                scheduleVsyncLocked();
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 非UI线程发送消息到UI线程</span>
+</span></span><span style="display:flex;"><span>                Message msg <span style="color:#f92672">=</span> mHandler.<span style="color:#a6e22e">obtainMessage</span>(MSG_DO_SCHEDULE_VSYNC);
+</span></span><span style="display:flex;"><span>                msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>                mHandler.<span style="color:#a6e22e">sendMessageAtFrontOfQueue</span>(msg);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 无VSYNC直接安排帧</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> nextFrameTime <span style="color:#f92672">=</span> ...;
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> mHandler.<span style="color:#a6e22e">obtainMessage</span>(MSG_DO_FRAME);
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>            mHandler.<span style="color:#a6e22e">sendMessageAtTime</span>(msg, nextFrameTime);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">scheduleVsyncLocked</span>() {
+</span></span><span style="display:flex;"><span>    mDisplayEventReceiver.<span style="color:#a6e22e">scheduleVsync</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-vsync接收与处理">2. VSYNC接收与处理</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FrameDisplayEventReceiver</span> <span style="color:#66d9ef">extends</span> DisplayEventReceiver {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onVsync</span>(<span style="color:#66d9ef">long</span> timestampNanos, <span style="color:#66d9ef">long</span> physicalDisplayId, <span style="color:#66d9ef">int</span> frame) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 计算正确的帧时间</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> now <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">nanoTime</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> intendedFrameTimeNanos <span style="color:#f92672">=</span> ...;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 发送MSG_DO_FRAME消息</span>
+</span></span><span style="display:flex;"><span>        Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>(mHandler, MSG_DO_FRAME);
+</span></span><span style="display:flex;"><span>        msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>        mHandler.<span style="color:#a6e22e">sendMessageAtTime</span>(msg, intendedFrameTimeNanos <span style="color:#f92672">/</span> NANOS_PER_MS);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-帧处理核心---doframe">3. 帧处理核心 - doFrame()</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doFrame</span>(<span style="color:#66d9ef">long</span> frameTimeNanos, <span style="color:#66d9ef">int</span> frame) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> startNanos;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 检查帧调度状态</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mFrameScheduled) <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 计算跳帧情况</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> jitterNanos <span style="color:#f92672">=</span> startNanos <span style="color:#f92672">-</span> frameTimeNanos;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (jitterNanos <span style="color:#f92672">&gt;=</span> mFrameIntervalNanos) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> skippedFrames <span style="color:#f92672">=</span> jitterNanos <span style="color:#f92672">/</span> mFrameIntervalNanos;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 超过阈值打印警告日志</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (skippedFrames <span style="color:#f92672">&gt;=</span> SKIPPED_FRAME_WARNING_LIMIT) {
+</span></span><span style="display:flex;"><span>                Log.<span style="color:#a6e22e">i</span>(TAG, <span style="color:#e6db74">&#34;Skipped &#34;</span> <span style="color:#f92672">+</span> skippedFrames <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; frames!&#34;</span>);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            frameTimeNanos <span style="color:#f92672">=</span> ...; <span style="color:#75715e">// 调整帧时间</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        mLastFrameTimeNanos <span style="color:#f92672">=</span> frameTimeNanos;
+</span></span><span style="display:flex;"><span>        mFrameScheduled <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 按优先级顺序执行回调</span>
+</span></span><span style="display:flex;"><span>        mFrameInfo.<span style="color:#a6e22e">markInputHandlingStart</span>();
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_INPUT</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        mFrameInfo.<span style="color:#a6e22e">markAnimationsStart</span>();
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_ANIMATION</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        mFrameInfo.<span style="color:#a6e22e">markPerformTraversalsStart</span>();
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_TRAVERSAL</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_COMMIT</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 清理工作</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="五回调执行处理">五、回调执行处理</h4>
+<h5 id="1-执行回调核心逻辑">1. 执行回调核心逻辑</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doCallbacks</span>(<span style="color:#66d9ef">int</span> callbackType, <span style="color:#66d9ef">long</span> frameTimeNanos) {
+</span></span><span style="display:flex;"><span>    CallbackRecord callbacks;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 提取所有到期的回调</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> now <span style="color:#f92672">=</span> frameTimeNanos <span style="color:#f92672">/</span> NANOS_PER_MS;
+</span></span><span style="display:flex;"><span>        callbacks <span style="color:#f92672">=</span> mCallbackQueues<span style="color:#f92672">[</span>callbackType<span style="color:#f92672">]</span>.<span style="color:#a6e22e">extractDueCallbacksLocked</span>(now);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (callbacks <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        mCallbacksRunning <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 执行链表中的所有回调</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (CallbackRecord c <span style="color:#f92672">=</span> callbacks; c <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>; c <span style="color:#f92672">=</span> c.<span style="color:#a6e22e">next</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 执行回调</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (c.<span style="color:#a6e22e">action</span> <span style="color:#66d9ef">instanceof</span> Runnable) {
+</span></span><span style="display:flex;"><span>                ((Runnable) c.<span style="color:#a6e22e">action</span>).<span style="color:#a6e22e">run</span>();
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                ((FrameCallback) c.<span style="color:#a6e22e">action</span>).<span style="color:#a6e22e">doFrame</span>(frameTimeNanos);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 回收CallbackRecord对象</span>
+</span></span><span style="display:flex;"><span>            recycleCallbackRecordsLocked(callbacks);
+</span></span><span style="display:flex;"><span>            mCallbacksRunning <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2到期回调提取算法">2.到期回调提取算法</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>CallbackRecord <span style="color:#a6e22e">extractDueCallbacksLocked</span>(<span style="color:#66d9ef">long</span> now) {
+</span></span><span style="display:flex;"><span>    CallbackRecord callbacks <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>    CallbackRecord next <span style="color:#f92672">=</span> mHead;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 遍历链表，找出所有dueTime&lt;=now的节点</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (next <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> next.<span style="color:#a6e22e">dueTime</span> <span style="color:#f92672">&lt;=</span> now) {
+</span></span><span style="display:flex;"><span>        CallbackRecord temp <span style="color:#f92672">=</span> next;
+</span></span><span style="display:flex;"><span>        next <span style="color:#f92672">=</span> next.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>        temp.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> callbacks;  <span style="color:#75715e">// 新节点插入链表头部</span>
+</span></span><span style="display:flex;"><span>        callbacks <span style="color:#f92672">=</span> temp;       <span style="color:#75715e">// 新链表头</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 更新原链表</span>
+</span></span><span style="display:flex;"><span>    mHead <span style="color:#f92672">=</span> next;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 返回的是倒序链表（最近加入的先执行）</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> callbacks;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="六choreographer的其他作用">六、Choreographer的其他作用</h4>
+<h5 id="1-帧率监控">1. 帧率监控</h5>
+<p>开发者可以通过postFrameCallback实现帧率监控：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">startMonitoring</span>() {
+</span></span><span style="display:flex;"><span>    Choreographer.<span style="color:#a6e22e">getInstance</span>().<span style="color:#a6e22e">postFrameCallback</span>(<span style="color:#66d9ef">new</span> FrameCallback() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> lastFrameTime <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doFrame</span>(<span style="color:#66d9ef">long</span> frameTimeNanos) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (lastFrameTime <span style="color:#f92672">!=</span> 0) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">long</span> frameInterval <span style="color:#f92672">=</span> (frameTimeNanos <span style="color:#f92672">-</span> lastFrameTime) <span style="color:#f92672">/</span> 1000000;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> (frameInterval <span style="color:#f92672">&gt;</span> 16) {
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 记录掉帧情况</span>
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            lastFrameTime <span style="color:#f92672">=</span> frameTimeNanos;
+</span></span><span style="display:flex;"><span>            Choreographer.<span style="color:#a6e22e">getInstance</span>().<span style="color:#a6e22e">postFrameCallback</span>(<span style="color:#66d9ef">this</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="七总结">七、总结</h4>
+<p>Choreographer 是 Android 渲染系统的核心协调器，其工作原理可以概括为：</p>
+<ol>
+<li>
+<p><strong>任务管理</strong>：通过 5 个链表队列管理不同优先级的回调任务</p>
+<ul>
+<li>输入 &gt; 动画 &gt; 插入动画 &gt; 视图遍历 &gt; 提交</li>
+</ul>
+</li>
+<li>
+<p><strong>VSYNC 同步</strong>：</p>
+<pre tabindex="0"><code>scheduleVsync() → DisplayEventReceiver → onVsync() → doFrame()
+</code></pre></li>
+<li>
+<p><strong>帧生命周期</strong>：</p>
+<pre tabindex="0"><code>doFrame() → 
   doCallbacks(INPUT) → 
   doCallbacks(ANIMATION) → 
   doCallbacks(TRAVERSAL) → 
   doCallbacks(COMMIT)
-</code></pre></li><li><p><strong>性能监控</strong>：内置跳帧检测和警告机制</p></li><li><p><strong>系统协调</strong>：作为动画系统、UI 系统、输入系统的同步中枢</p></li></ol><p>整个设计体现了 Android 系统对以下关键目标的平衡：</p><ul><li><strong>精确性</strong>：通过 VSYNC 精准同步</li><li><strong>高效性</strong>：链表结构和对象复用</li><li><strong>优先级</strong>：严格的分级回调顺序</li><li><strong>扩展性</strong>：支持多种回调类型</li><li><strong>监控能力</strong>：内置性能检测机制</li></ul><p><strong><code>scheduleVsync()</code> 的唯一目的就是在 VSYNC 到来时触发 <code>doFrame()</code></strong>，而整个 Choreographer 的核心任务就是确保所有帧处理操作完美对齐 VSYNC 时间序列。</p><ul class=pa0></ul><div class="mt6 instapaper_ignoref"></div></div><aside class="w-30-l mt6-l"></aside></article></main><footer class="bg-black bottom-0 w-100 pa3" role=contentinfo><div class="flex justify-between"><a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href=https://www.dust-zed.site/>&copy; zed的博客 2025</a><div><div class=ananke-socials></div></div></div></footer></body></html>
+</code></pre></li>
+<li>
+<p><strong>性能监控</strong>：内置跳帧检测和警告机制</p>
+</li>
+<li>
+<p><strong>系统协调</strong>：作为动画系统、UI 系统、输入系统的同步中枢</p>
+</li>
+</ol>
+<p>整个设计体现了 Android 系统对以下关键目标的平衡：</p>
+<ul>
+<li><strong>精确性</strong>：通过 VSYNC 精准同步</li>
+<li><strong>高效性</strong>：链表结构和对象复用</li>
+<li><strong>优先级</strong>：严格的分级回调顺序</li>
+<li><strong>扩展性</strong>：支持多种回调类型</li>
+<li><strong>监控能力</strong>：内置性能检测机制</li>
+</ul>
+<p><strong><code>scheduleVsync()</code> 的唯一目的就是在 VSYNC 到来时触发 <code>doFrame()</code></strong>，而整个 Choreographer 的核心任务就是确保所有帧处理操作完美对齐 VSYNC 时间序列。</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="http://localhost:1313/" >
+    &copy;  zed的博客 2025 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>
