@@ -1,27 +1,93 @@
-.category-grid {
+/* 卡片容器 */
+.card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
   margin-top: 2rem;
 }
 
-.category-card {
-  display: block;
-  background: #1a1a1a;
-  padding: 1.5rem;
+.post-card {
+  background: white;
   border-radius: 8px;
-  transition: transform 0.3s ease, background 0.3s ease;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+/* 图片区域 */
+.post-image {
+  height: 200px;
+  overflow: hidden;
+}
+
+.post-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.post-card:hover .post-image img {
+  transform: scale(1.05);
+}
+
+/* 内容区域 */
+.post-content {
+  padding: 1.5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-title {
+  font-size: 1.3rem;
+  margin: 0 0 0.8rem;
+}
+
+.post-title a {
+  color: #333;
   text-decoration: none;
-  color: #f0f0f0;
 }
 
-.category-card:hover {
-  transform: translateY(-5px);
-  background: #2a2a2a;
+.post-summary {
+  color: #555;
+  line-height: 1.6;
+  flex-grow: 1;
 }
 
-.category-card h2 {
-  margin: 0 0 0.5rem 0;
-  color: #f0f0f0;
+/* 元信息 */
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  color: #777;
 }
 
+.post-tags {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tag {
+  background: #f0f0f0;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+/* 页面标题 */
+.page-title {
+  font-size: 2.2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #2d3748;
+}

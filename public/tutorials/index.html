@@ -77,7 +77,7 @@
           
           <li class="list f5 f4-ns fw4 dib pr3">
             <a class="hover-white white-90 no-underline" href="/android-develop/" title="">
-              Android开发
+              Android-Develops
             </a>
           </li>
           
@@ -107,79 +107,253 @@
 
     <main class="pb7" role="main">
       
-  <article class="pa3 pa4-ns nested-copy-line-height">
-    <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy nested-links mid-gray"></section>
-    <section class="flex-ns mt5 flex-wrap justify-around">
-      
-        <div class="w-100 w-30-l mb4 relative bg-white">
-          <div class="w-100 mb4 nested-copy-line-height relative bg-white">
-  <div class="mb3 pa4 gray overflow-hidden bg-white">
-    <span class="f6 db">Tutorials</span>
-    <h1 class="f3 near-black">
-      <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/" class="link black dim">
-        Hugo Vercel博客配置
-      </a>
-    </h1>
-    <div class="nested-links f5 lh-copy nested-copy-line-height">
-      <h4 id="前期准备">前期准备</h4>
-<ol>
-<li>
-<p>安装 Hugo</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># macOS (Homebrew)</span>
-</span></span><span style="display:flex;"><span>brew install hugo
-</span></span></code></pre></div></li>
-<li>
-<p>注册Vercel账号</p>
-</li>
-</ol>
-<h4 id="创建本地博客">创建本地博客</h4>
-<h5 id="11-生成新站点">1.1 生成新站点</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hugo new site myblog
-</span></span><span style="display:flex;"><span>cd myblog
-</span></span></code></pre></div><h5 id="12-添加主题">1.2 添加主题</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
-</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;theme = &#39;ananke&#39;&#34;</span> &gt;&gt; config.toml  <span style="color:#75715e"># 配置主题</span>
-</span></span></code></pre></div><h4 id="自定义域名">自定义域名</h4>
-<ol>
-<li>在Vercel控制控制台 -&gt; <strong>Settings</strong> -&gt; <strong>Domains</strong></li>
-<li>输入自己的域名(<code>dust-zed.site</code>,可在阿里云购买)</li>
-<li>按提示配置DNS解析</li>
-</ol>
-<h4 id="管理不同类型的文章">管理不同类型的文章</h4>
-<h5 id="31-使用物理目录分类">3.1 使用物理目录分类</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>content/
-</span></span><span style="display:flex;"><span>├── blog/           <span style="color:#75715e"># 常规博客</span>
-</span></span><span style="display:flex;"><span>├── tutorials/      <span style="color:#75715e"># 教程类</span>
-</span></span><span style="display:flex;"><span>├── reviews/        <span style="color:#75715e"># 产品评测</span>
-</span></span><span style="display:flex;"><span>└── notes/          <span style="color:#75715e"># 学习笔记</span>
-</span></span></code></pre></div><h5 id="32-创建对应类型文章">3.2 创建对应类型文章</h5>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hugo new tutorials/hugo-vercel博客配置.md
-</span></span></code></pre></div><h5 id="33-统一配置文件">3.3 统一配置文件</h5>
-<p>在<code>config.toml</code>中集中管理URL规则</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span><span style="color:#75715e"># 所有文章默认路径</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># :slug动态代表内容的URL友好版本标题</span>
-</span></span><span style="display:flex;"><span>[<span style="color:#a6e22e">permalinks</span>]
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">posts</span> = <span style="color:#e6db74">&#34;/blog/:year/:month/:slug/&#34;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">tutorials</span> = <span style="color:#e6db74">&#34;/learn/:slug/&#34;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">reviews</span> = <span style="color:#e6db74">&#34;/products/:category/:slug/&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 分类页面路径</span>
-</span></span><span style="display:flex;"><span>[<span style="color:#a6e22e">taxonomies</span>]
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">category</span> = <span style="color:#e6db74">&#34;categories&#34;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">tag</span> = <span style="color:#e6db74">&#34;tags&#34;</span>
-</span></span></code></pre></div><h5 id="34-自动生成分类列表">3.4 自动生成分类列表</h5>
-<h4 id="升级维护">升级维护</h4>
-<ul>
-<li>
-<p>更新主题：<code>git submodule update --remote --merge</code></p>
-    </div>
-    <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
-  </div>
-</div>
+<style>
+   
+  :root {
+    --card-padding: 1.2rem;
+    --card-border-radius: 10px;
+    --card-spacing: 1.5rem;
+    --primary-color: #1e40af;
+    --accent-color: #3b82f6;
+    --text-color: #2d3748;
+    --light-text: #718096;
+  }
+  
+   
+  .compact-header {
+    text-align: center;
+    padding: 2rem 1rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .compact-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.6rem;
+    color: var(--primary-color);
+    position: relative;
+    display: inline-block;
+  }
+  
+  .compact-header p {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+    color: var(--light-text);
+    line-height: 1.6;
+  }
+  
+   
+  .compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--card-spacing);
+    margin-top: 1.5rem;
+  }
+  
+   
+  .compact-card {
+    background: white;
+    border-radius: var(--card-border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e2e8f0;
+    padding: var(--card-padding);
+  }
+  
+  .compact-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e0;
+  }
+  
+   
+  .compact-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .compact-title {
+    font-size: 1.15rem;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+  }
+  
+  .compact-title a {
+    color: var(--text-color);
+    transition: color 0.2s ease;
+  }
+  
+  .compact-card:hover .compact-title a {
+    color: var(--accent-color);
+  }
+  
+  .compact-excerpt {
+    color: var(--light-text);
+    font-size: 0.93rem;
+    line-height: 1.6;
+    flex-grow: 1;
+    margin-bottom: 1rem;
+  }
+  
+  .compact-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.8rem;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+    color: #a0aec0;
+  }
+  
+  .read-more-link {
+    color: var(--accent-color);
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  
+  .article-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .article-date svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+   
+  .compact-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+    margin: 1.2rem 0 1.5rem;
+  }
+  
+  .tag-item {
+    background: #f7fafc;
+    padding: 0.4rem 0.8rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    color: #4a5568;
+    transition: all 0.2s ease;
+  }
+  
+  .tag-item:hover {
+    background: #edf2f7;
+    color: var(--primary-color);
+  }
+  
+   
+  .no-articles {
+    text-align: center;
+    padding: 2rem;
+    grid-column: 1 / -1;
+  }
+  
+  .no-articles-icon {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+  }
+  
+  .no-articles-text {
+    font-size: 1.2rem;
+    color: #718096;
+  }
+  
+   
+  @media (min-width: 1024px) {
+    .compact-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (max-width: 1023px) and (min-width: 768px) {
+    .compact-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 767px) and (min-width: 480px) {
+    .compact-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 479px) {
+    .compact-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .compact-header h1 {
+      font-size: 1.7rem;
+    }
+    
+    .compact-header p {
+      font-size: 0.95rem;
+    }
+  }
+  
+   
+  .pagination {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #edf2f7;
+  }
+</style>
 
-        </div>
+<article class="pa3 pa4-ns nested-copy-line-height">    
+    
+    <div class="compact-tags">
       
-    </section></article>
+    </div>
+  </header>
+
+  <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy nested-links mid-gray"></section>
+  
+  
+  <section class="compact-grid">
+    
+      <article class="compact-card">
+        <div class="compact-content">
+          <h3 class="compact-title">
+            <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/" class="nested-links">
+              Hugo Vercel博客配置
+            </a>
+          </h3>
+          
+          <div class="compact-excerpt">
+            
+              利用Hugo搭建博客并通过Vercel自动部署
+            
+          </div>
+          
+          <div class="compact-meta">
+            <div class="article-date">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              25/06/11
+            </div>
+          </div>
+        </div>
+      </article>
+    
+  </section>
+  
+  
+  <div class="pagination"></div>
+</article>
 
     </main>
     <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
