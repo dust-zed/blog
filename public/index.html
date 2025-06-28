@@ -49,8 +49,8 @@
 
   <meta itemprop="name" content="zed的博客">
   <meta itemprop="description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta itemprop="datePublished" content="2025-06-13T09:30:56+08:00">
-  <meta itemprop="dateModified" content="2025-06-13T09:30:56+08:00">
+  <meta itemprop="datePublished" content="2025-06-16T06:49:21+08:00">
+  <meta itemprop="dateModified" content="2025-06-16T06:49:21+08:00">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="zed的博客">
   <meta name="twitter:description" content="The last theme you&#39;ll ever need. Maybe.">
@@ -132,266 +132,286 @@
       
       <div class="blah w-100">
         <h1 class="f3 fw1 athelas mt0 lh-title">
-          <a href="/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/" class="color-inherit dim link">
-            面试问题收集
+          <a href="/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/" class="color-inherit dim link">
+            Choreographer类解析
             </a>
         </h1>
         <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
-          <h4 id="一bitmap内存优化">一、Bitmap内存优化</h4>
-<p>Bitmap是内存消耗大户，通过以下方法减少占用：</p>
-<ol>
-<li><strong>降低色彩解析模式</strong><br>
-使用RGB565等低色彩模式，将单个像素的字节大小从32位（ARGB8888）减少到16位，显著节省内存。</li>
-<li><strong>合理放置资源文件</strong><br>
-高分辨率图片应放置在高密度目录（如<code>drawable-xxhdpi</code>），避免系统自动缩放导致内存浪费。</li>
-<li><strong>缩小图片尺寸</strong><br>
-加载时通过<code>BitmapFactory.Options</code>动态调整采样率（<code>inSampleSize</code>），或使用<code>createScaledBitmap()</code>减少宽高尺寸。</li>
-</ol>
-<hr>
-<h4 id="二viewmodel与livedata机制">二、ViewModel与LiveData机制</h4>
-<p>ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应式UI更新。</p>
-<ol>
-<li>
-<p><strong>粘性事件（Sticky Event）</strong></p>
+          <h4 id="一核心作用">一、核心作用</h4>
+<p>Choreographer是Android系统<strong>协调动画、输入和绘制操作的核心调度器</strong>。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。</p>
+<h4 id="二关键概念">二、关键概念</h4>
 <ul>
-<li>
-<p><strong>定义</strong>：当新观察者订阅<code>LiveData</code>时，若已有存储值，会立即收到最后一次更新（旧数据）。</p>
+<li>VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧</li>
+<li>Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行</li>
+<li>Callback Types（按执行顺序排序）
+<ul>
+<li>CALLBACK_INPUT</li>
+<li>CALLBACK_ANIMATION</li>
+<li>CALLBACK_INSETS_ANIMATION</li>
+<li>CALLBACK_TRAVERSAL</li>
+<li>CALLBACK_COMMIT</li>
+</ul>
 </li>
-<li>
-<p><strong>示例</strong>：屏幕旋转后，新Activity观察LiveData时触发UI更新（旧数据）。</p>
-</li>
-<li>
-<p><strong>来源</strong>：基于LiveData的版本号对比机制。代码关键部分如下：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">abstract</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LiveData</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">int</span> mVersion <span style="color:#f92672">=</span> START_VERSION; <span style="color:#75715e">// LiveData当前版本（初始-1）</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LifecycleBoundObserver</span> <span style="color:#66d9ef">implements</span> ObserverWrapper {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">int</span> mLastVersion <span style="color:#f92672">=</span> START_VERSION;
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">considerNotify</span>(ObserverWrapper observer) {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (observer.<span style="color:#a6e22e">mLastVersion</span> <span style="color:#f92672">&lt;</span> mVersion) { <span style="color:#75715e">// 核心判断：版本号落后才分发</span>
-</span></span><span style="display:flex;"><span>      observer.<span style="color:#a6e22e">mLastVersion</span> <span style="color:#f92672">=</span> mVersion;
-</span></span><span style="display:flex;"><span>      observer.<span style="color:#a6e22e">mObserver</span>.<span style="color:#a6e22e">onChanged</span>((T)data);
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>  }
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Choreographer</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 五种回调类型</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_INPUT <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_ANIMATION <span style="color:#f92672">=</span> 1;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_INSETS_ANIMATION <span style="color:#f92672">=</span> 2;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_TRAVERSAL <span style="color:#f92672">=</span> 3;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_COMMIT <span style="color:#f92672">=</span> 4;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CALLBACK_LAST <span style="color:#f92672">=</span> CALLBACK_COMMIT; <span style="color:#75715e">// 最后一种类型</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 单例模式实现</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> ThreadLocal<span style="color:#f92672">&lt;</span>Choreographer<span style="color:#f92672">&gt;</span> sThreadInstance <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> ThreadLocal<span style="color:#f92672">&lt;</span>Choreographer<span style="color:#f92672">&gt;</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">protected</span> Choreographer <span style="color:#a6e22e">initialValue</span>() {
+</span></span><span style="display:flex;"><span>                Looper looper <span style="color:#f92672">=</span> Looper.<span style="color:#a6e22e">myLooper</span>();
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> Choreographer(looper, VSYNC_SOURCE_APP);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        };
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 回调队列数组</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> CallbackQueue<span style="color:#f92672">[]</span> mCallbackQueues;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// VSYNC 接收器</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> FrameDisplayEventReceiver mDisplayEventReceiver;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 处理消息的Handler</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> FrameHandler mHandler;
 </span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div></li>
-<li>
-<p><strong>简单解法</strong>：使用<code>Event</code>包装数据。事件消费后置空值，避免旧数据触发更新。</p>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>ViewModel临时数据保存机制</strong></p>
-<ul>
-<li><strong>内存中保存</strong><br>
-ViewModel对象存储在<code>ViewModelStore</code>中。当配置变更（如屏幕旋转）时：
-<ul>
-<li>Activity/Fragment被销毁重建。</li>
-<li><code>ViewModelStore</code>被系统保留（绑定到<code>NonConfigurationInstances</code>）。</li>
-<li>新建Activity/Fragment时自动恢复ViewModel实例。</li>
-</ul>
-</li>
-<li><strong>数据范围与最佳实践</strong>
-<ul>
-<li><strong>保留场景</strong>：屏幕旋转、分屏切换、系统语言更改。</li>
-<li><strong>不保留场景</strong>：用户退出应用、系统资源不足杀死进程、Activity被finish()。</li>
-<li><strong>最佳实践</strong>：
-<ol>
-<li>ViewModel解决配置变更的<strong>临时数据保存</strong>（内存级）。</li>
-<li><code>SavedStateHandle</code>解决进程被杀死时的<strong>关键数据持久化</strong>。</li>
-<li>复杂数据应使用数据库等持久化方案。</li>
-<li>避免内存泄漏：勿在ViewModel持有Context/View引用，必要时用<code>Application Context</code>代替。</li>
-</ol>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<hr>
-<h4 id="三view基础原理">三、View基础原理</h4>
-<p>深入理解View的测量、布局、绘制机制，是优化UI性能的核心。</p>
-<ol>
-<li><strong>MeasureSpec计算与布局优化</strong>
-<ul>
-<li><strong>MeasureSpec原理</strong>：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。
-<ul>
-<li>父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用<code>children.measure()</code>，最终确定自身尺寸。</li>
-</ul>
-</li>
-<li><strong>布局性能优化</strong>：
-<ul>
-<li>缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用<code>setMeasuredDimension()</code>设置宽高。</li>
-<li>优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。</li>
-<li>避免无效重绘：使用局部刷新机制。</li>
-<li>精确控制绘制范围：通过<code>Canvas.clipRect()</code>限制绘制区域。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>getMeasuredWidth()与getWidth()区别</strong>
-<ul>
-<li><strong>getMeasuredWidth()</strong>：测量阶段后分配的宽度（含内边距）。
-<ul>
-<li>使用时机：<code>onMeasure()</code>后或<code>layout()</code>前。</li>
-<li>特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与<code>getWidth</code>相同。</li>
-</ul>
-</li>
-<li><strong>getWidth()</strong>：布局阶段后的最终可见宽度（屏幕实际值）。
-<ul>
-<li>使用时机：<code>onLayout</code>后。</li>
-<li>计算方式：<code>width = right - left</code>。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>requestLayout()与invalidate()区别</strong>
-<ul>
-<li><strong>requestLayout()</strong>：请求整个视图树的测量（measure）和布局（layout）流程。
-<ul>
-<li>触发场景：视图尺寸/位置变化、动态添加/移除子视图、<code>setVisibility()</code>导致布局结构变化。</li>
-<li>执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。</li>
-</ul>
-</li>
-<li><strong>invalidate()</strong>：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。
-<ul>
-<li>触发场景：视图内容变化但不影响尺寸/位置（如<code>onDraw()</code>依赖数据更新）。</li>
-<li>执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用<code>onDraw()</code>。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>View坐标体系</strong>
-<ul>
-<li><strong>getX()/getY()</strong>：相对当前View左上角的局部坐标（触摸点在View内的位置）。
-<ul>
-<li>特点：与父容器无关；值可为负（如滑动超出View边界）。</li>
-</ul>
-</li>
-<li><strong>getRawX()/getRawY()</strong>：相对屏幕左上角的全局坐标。
-<ul>
-<li>特点：包含状态栏高度（<code>getRawY()</code>从屏幕顶部算起）。</li>
-</ul>
-</li>
-<li><strong>getLocationOnScreen()</strong>：获取View左上角在屏幕上的绝对坐标。</li>
-</ul>
-</li>
-<li><strong>View生命周期关键方法</strong>
-<ul>
-<li><strong>构造函数</strong>：通过代码或XML创建View实例。</li>
-<li><strong>onAttachedToWindow()</strong>：View被添加到窗口时调用。
-<ul>
-<li>用途：初始化资源、注册监听器、启动动画。</li>
-</ul>
-</li>
-<li><strong>onDetachedFromWindow()</strong>：View从窗口移除时调用（如Activity销毁）。
-<ul>
-<li>关键作用：释放资源、停止动画、注销监听器。</li>
-</ul>
-</li>
-<li><strong>注意事项</strong>：
-<ul>
-<li><code>onVisibilityChanged()</code>可能在<code>onAttachedToWindow()</code>前/后调用（如View初始化为<code>GONE</code>）。</li>
-<li><code>onWindowFocusChanged()</code>可能在<code>onDetachedFromWindow()</code>后调用（避免在此访问资源）。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>View性能优化</strong>
-<ol>
-<li>过度绘制：todo</li>
-<li>布局优化：todo</li>
-<li>绘制优化：todo</li>
-</ol>
-</li>
-<li><strong>高级机制与原理</strong>
-<ol>
-<li>硬件加速：将绘制指令交给GPU，但是部分api不支持</li>
-<li>SurfaceView与TextureView：todo</li>
-<li>view.post与Handler：todo</li>
-</ol>
-</li>
-</ol>
-<hr>
-<h4 id="四事件分发机制">四、事件分发机制</h4>
-<ol>
-<li><strong>滑动实现方式</strong>
-<ul>
-<li><strong><code>scrollTo()</code>/<code>scrollBy()</code></strong>: todo</li>
-<li>通过<code>ViewDragHelper</code>实现复杂拖拽: todo</li>
-</ul>
-</li>
-<li><strong>自定义下拉刷新控件</strong>
-<ul>
-<li>todo</li>
-</ul>
-</li>
-<li><strong>事件分发机制如何提升效率</strong>
-<ul>
-<li>todo</li>
-</ul>
-</li>
-<li><strong>嵌套滑动处理</strong>
-<ul>
-<li>todo</li>
-</ul>
-</li>
-<li><strong>RecyclerView的滑动冲突处理</strong>
-<ul>
-<li>todo</li>
-</ul>
-</li>
-</ol>
-<hr>
-<h4 id="五handler">五、Handler</h4>
-<ol>
-<li></li>
-</ol>
-<hr>
-<h4 id="六性能优化-todo">六、性能优化 （todo）</h4>
-<pre><code>1. **内存管理与泄漏排查**
-1. **UI渲染性能(卡顿优化)**
-1. **启动速度优化**
-1. **功耗优化基础**
-1. **包体积优化**
-</code></pre>
-<hr>
-<h4 id="七常用库与框架todo">七、常用库与框架（todo）</h4>
-<ol>
-<li><strong>网络请求(如Retrofit)</strong></li>
-<li><strong>图片加载(如Glide / Picasso)</strong></li>
-<li><strong>Gradle基础</strong></li>
-</ol>
-<hr>
-<h4 id="八网络与后台">八、网络与后台</h4>
-<ol>
-<li><strong>RESTful API概念与使用</strong></li>
-<li><strong>异步处理深入（线程安全、后台限制）</strong></li>
-<li><strong>缓存策略</strong></li>
-</ol>
-<hr>
-<h4 id="九架构设计">九、架构设计</h4>
-<ol>
-<li>MVVM/MVI理解与实践</li>
-<li>模块化 / 组件化</li>
-<li>设计模式应用</li>
-</ol>
-<hr>
-<h4 id="十新技术与趋势">十、新技术与趋势</h4>
-<ol>
-<li>Compose</li>
-<li>KMM / Flutter</li>
-</ol>
-<hr>
-<h4 id="十一jvm--内存模型基础">十一、JVM / 内存模型基础</h4>
-<ol>
-<li>JVM内存结构</li>
-<li>垃圾回收机制基础</li>
-<li>常见数据结构与基础算法</li>
-</ol>
+</span></span></code></pre></div><h4 id="三核心架构图解">三、核心架构图解</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-tex" data-lang="tex"><span style="display:flex;"><span>┌───────────────────────┐       ┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│    VSYNC 信号源        │──────&gt;│ FrameDisplayEventReceiver │
+</span></span><span style="display:flex;"><span>└───────────────────────┘       │  (接收硬件VSYNC信号)     │
+</span></span><span style="display:flex;"><span>                                └───────────┬───────────┘
+</span></span><span style="display:flex;"><span>                                            │
+</span></span><span style="display:flex;"><span>                                            ▼
+</span></span><span style="display:flex;"><span>┌───────────────────────┐       ┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│     FrameHandler       │&lt;──────│    onVsync()          │
+</span></span><span style="display:flex;"><span>│   (处理3类消息)        │──────&gt;│    scheduleVsync()    │
+</span></span><span style="display:flex;"><span>└───────────┬───────────┘       └───────────────────────┘
+</span></span><span style="display:flex;"><span>            │
+</span></span><span style="display:flex;"><span>            ▼
+</span></span><span style="display:flex;"><span>┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│      doFrame()         │
+</span></span><span style="display:flex;"><span>│ (帧处理核心方法)       │
+</span></span><span style="display:flex;"><span>└───────────┬───────────┘
+</span></span><span style="display:flex;"><span>            │
+</span></span><span style="display:flex;"><span>            ▼
+</span></span><span style="display:flex;"><span>┌───────────────────────┐
+</span></span><span style="display:flex;"><span>│   CallbackQueue[]      │
+</span></span><span style="display:flex;"><span>│ (5种类型回调链表)      │
+</span></span><span style="display:flex;"><span>└───────────────────────┘
+</span></span></code></pre></div><h4 id="三回调添加入口">三、回调添加入口</h4>
+<h5 id="1-添加回调入口">1. 添加回调入口</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postCallback</span>(<span style="color:#66d9ef">int</span> callbackType, Runnable action, Object token) {
+</span></span><span style="display:flex;"><span>    postCallbackDelayed(callbackType, action, token, 0);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postCallbackDelayed</span>(<span style="color:#66d9ef">int</span> callbackType, Runnable action, <span style="color:#66d9ef">long</span> delayMillis) {
+</span></span><span style="display:flex;"><span>    postCallbackDelayedInternal(callbackType, action, token, delayMillis);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-内部添加实现">2. 内部添加实现</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postCallbackDelayedInternal</span>(<span style="color:#66d9ef">int</span> callbackType,
+</span></span><span style="display:flex;"><span>        Object action, Object token, <span style="color:#66d9ef">long</span> delayMillis) {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> now <span style="color:#f92672">=</span> SystemClock.<span style="color:#a6e22e">uptimeMillis</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> dueTime <span style="color:#f92672">=</span> now <span style="color:#f92672">+</span> delayMillis;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 添加到对应的回调队列</span>
+</span></span><span style="display:flex;"><span>        mCallbackQueues<span style="color:#f92672">[</span>callbackType<span style="color:#f92672">]</span>.<span style="color:#a6e22e">addCallbackLocked</span>(dueTime, action, token);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 调度帧处理</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (dueTime <span style="color:#f92672">&lt;=</span> now) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 立即调度</span>
+</span></span><span style="display:flex;"><span>            scheduleFrameLocked(now);
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 延迟调度</span>
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> mHandler.<span style="color:#a6e22e">obtainMessage</span>(MSG_DO_SCHEDULE_CALLBACK, action);
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">arg1</span> <span style="color:#f92672">=</span> callbackType;
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>            mHandler.<span style="color:#a6e22e">sendMessageAtTime</span>(msg, dueTime);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-回调链表结构">3. 回调链表结构</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CallbackQueue</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> CallbackRecord mHead;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">addCallbackLocked</span>(<span style="color:#66d9ef">long</span> dueTime, Object action, Object token) {
+</span></span><span style="display:flex;"><span>        CallbackRecord callback <span style="color:#f92672">=</span> obtainCallbackLocked(dueTime, action, token);
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mHead <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            mHead <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 链表按照执行时间排序（小到大）</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (dueTime <span style="color:#f92672">&lt;</span> mHead.<span style="color:#a6e22e">dueTime</span>) {
+</span></span><span style="display:flex;"><span>            callback.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> mHead;
+</span></span><span style="display:flex;"><span>            mHead <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        CallbackRecord entry <span style="color:#f92672">=</span> mHead;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> (entry.<span style="color:#a6e22e">next</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (dueTime <span style="color:#f92672">&lt;</span> entry.<span style="color:#a6e22e">next</span>.<span style="color:#a6e22e">dueTime</span>) {
+</span></span><span style="display:flex;"><span>                callback.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> entry.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>                entry.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            entry <span style="color:#f92672">=</span> entry.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        entry.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 链表节点定义</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CallbackRecord</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> CallbackRecord next;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">long</span> dueTime;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object action; <span style="color:#75715e">// Runnable 或 FrameCallback</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Object token;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="四vsync同步机制">四、VSYNC同步机制</h4>
+<h5 id="1-vsync请求">1、 VSYNC请求</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">scheduleFrameLocked</span>(<span style="color:#66d9ef">long</span> now) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mFrameScheduled) {
+</span></span><span style="display:flex;"><span>        mFrameScheduled <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (USE_VSYNC) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 通过 FrameDisplayEventReceiver 请求 VSYNC</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (isRunningOnLooperThreadLocked()) {
+</span></span><span style="display:flex;"><span>              <span style="color:#75715e">//注册</span>
+</span></span><span style="display:flex;"><span>                scheduleVsyncLocked();
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 非UI线程发送消息到UI线程</span>
+</span></span><span style="display:flex;"><span>                Message msg <span style="color:#f92672">=</span> mHandler.<span style="color:#a6e22e">obtainMessage</span>(MSG_DO_SCHEDULE_VSYNC);
+</span></span><span style="display:flex;"><span>                msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>                mHandler.<span style="color:#a6e22e">sendMessageAtFrontOfQueue</span>(msg);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 无VSYNC直接安排帧</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> nextFrameTime <span style="color:#f92672">=</span> ...;
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> mHandler.<span style="color:#a6e22e">obtainMessage</span>(MSG_DO_FRAME);
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>            mHandler.<span style="color:#a6e22e">sendMessageAtTime</span>(msg, nextFrameTime);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">scheduleVsyncLocked</span>() {
+</span></span><span style="display:flex;"><span>    mDisplayEventReceiver.<span style="color:#a6e22e">scheduleVsync</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-vsync接收与处理">2. VSYNC接收与处理</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FrameDisplayEventReceiver</span> <span style="color:#66d9ef">extends</span> DisplayEventReceiver {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onVsync</span>(<span style="color:#66d9ef">long</span> timestampNanos, <span style="color:#66d9ef">long</span> physicalDisplayId, <span style="color:#66d9ef">int</span> frame) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 计算正确的帧时间</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> now <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">nanoTime</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> intendedFrameTimeNanos <span style="color:#f92672">=</span> ...;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 发送MSG_DO_FRAME消息</span>
+</span></span><span style="display:flex;"><span>        Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>(mHandler, MSG_DO_FRAME);
+</span></span><span style="display:flex;"><span>        msg.<span style="color:#a6e22e">setAsynchronous</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>        mHandler.<span style="color:#a6e22e">sendMessageAtTime</span>(msg, intendedFrameTimeNanos <span style="color:#f92672">/</span> NANOS_PER_MS);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-帧处理核心---doframe">3. 帧处理核心 - doFrame()</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doFrame</span>(<span style="color:#66d9ef">long</span> frameTimeNanos, <span style="color:#66d9ef">int</span> frame) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> startNanos;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 检查帧调度状态</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mFrameScheduled) <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 计算跳帧情况</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> jitterNanos <span style="color:#f92672">=</span> startNanos <span style="color:#f92672">-</span> frameTimeNanos;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (jitterNanos <span style="color:#f92672">&gt;=</span> mFrameIntervalNanos) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> skippedFrames <span style="color:#f92672">=</span> jitterNanos <span style="color:#f92672">/</span> mFrameIntervalNanos;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 超过阈值打印警告日志</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (skippedFrames <span style="color:#f92672">&gt;=</span> SKIPPED_FRAME_WARNING_LIMIT) {
+</span></span><span style="display:flex;"><span>                Log.<span style="color:#a6e22e">i</span>(TAG, <span style="color:#e6db74">&#34;Skipped &#34;</span> <span style="color:#f92672">+</span> skippedFrames <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; frames!&#34;</span>);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            frameTimeNanos <span style="color:#f92672">=</span> ...; <span style="color:#75715e">// 调整帧时间</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        mLastFrameTimeNanos <span style="color:#f92672">=</span> frameTimeNanos;
+</span></span><span style="display:flex;"><span>        mFrameScheduled <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 按优先级顺序执行回调</span>
+</span></span><span style="display:flex;"><span>        mFrameInfo.<span style="color:#a6e22e">markInputHandlingStart</span>();
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_INPUT</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        mFrameInfo.<span style="color:#a6e22e">markAnimationsStart</span>();
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_ANIMATION</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        mFrameInfo.<span style="color:#a6e22e">markPerformTraversalsStart</span>();
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_TRAVERSAL</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        doCallbacks(Choreographer.<span style="color:#a6e22e">CALLBACK_COMMIT</span>, frameTimeNanos);
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 清理工作</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="五回调执行处理">五、回调执行处理</h4>
+<h5 id="1-执行回调核心逻辑">1. 执行回调核心逻辑</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doCallbacks</span>(<span style="color:#66d9ef">int</span> callbackType, <span style="color:#66d9ef">long</span> frameTimeNanos) {
+</span></span><span style="display:flex;"><span>    CallbackRecord callbacks;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 提取所有到期的回调</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> now <span style="color:#f92672">=</span> frameTimeNanos <span style="color:#f92672">/</span> NANOS_PER_MS;
+</span></span><span style="display:flex;"><span>        callbacks <span style="color:#f92672">=</span> mCallbackQueues<span style="color:#f92672">[</span>callbackType<span style="color:#f92672">]</span>.<span style="color:#a6e22e">extractDueCallbacksLocked</span>(now);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (callbacks <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>        mCallbacksRunning <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 执行链表中的所有回调</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (CallbackRecord c <span style="color:#f92672">=</span> callbacks; c <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>; c <span style="color:#f92672">=</span> c.<span style="color:#a6e22e">next</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 执行回调</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (c.<span style="color:#a6e22e">action</span> <span style="color:#66d9ef">instanceof</span> Runnable) {
+</span></span><span style="display:flex;"><span>                ((Runnable) c.<span style="color:#a6e22e">action</span>).<span style="color:#a6e22e">run</span>();
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                ((FrameCallback) c.<span style="color:#a6e22e">action</span>).<span style="color:#a6e22e">doFrame</span>(frameTimeNanos);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">synchronized</span> (mLock) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 回收CallbackRecord对象</span>
+</span></span><span style="display:flex;"><span>            recycleCallbackRecordsLocked(callbacks);
+</span></span><span style="display:flex;"><span>            mCallbacksRunning <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2到期回调提取算法">2.到期回调提取算法</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>CallbackRecord <span style="color:#a6e22e">extractDueCallbacksLocked</span>(<span style="color:#66d9ef">long</span> now) {
+</span></span><span style="display:flex;"><span>    CallbackRecord callbacks <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>    CallbackRecord next <span style="color:#f92672">=</span> mHead;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 遍历链表，找出所有dueTime&lt;=now的节点</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (next <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> next.<span style="color:#a6e22e">dueTime</span> <span style="color:#f92672">&lt;=</span> now) {
+</span></span><span style="display:flex;"><span>        CallbackRecord temp <span style="color:#f92672">=</span> next;
+</span></span><span style="display:flex;"><span>        next <span style="color:#f92672">=</span> next.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>        temp.<span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> callbacks;  <span style="color:#75715e">// 新节点插入链表头部</span>
+</span></span><span style="display:flex;"><span>        callbacks <span style="color:#f92672">=</span> temp;       <span style="color:#75715e">// 新链表头</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 更新原链表</span>
+</span></span><span style="display:flex;"><span>    mHead <span style="color:#f92672">=</span> next;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 返回的是倒序链表（最近加入的先执行）</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> callbacks;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="六choreographer的其他作用">六、Choreographer的其他作用</h4>
+<h5 id="1-帧率监控">1. 帧率监控</h5>
+<p>开发者可以通过postFrameCallback实现帧率监控：</p>
         </div>
-        <a href="/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
+        <a href="/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
       </div>
     </div>
   </div>
@@ -407,55 +427,217 @@ ViewModel对象存储在<code>ViewModelStore</code>中。当配置变更（如�
       
       <div class="blah w-100">
         <h1 class="f3 fw1 athelas mt0 lh-title">
-          <a href="/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" class="color-inherit dim link">
-            RecyclerView缓存机制
+          <a href="/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/" class="color-inherit dim link">
+            包体积优化
             </a>
         </h1>
         <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
-          <p>RecyclerView缓存机制</p>
-<h4 id="多级缓存体系架构图"><strong>多级缓存体系架构图</strong></h4>
-<pre tabindex="0"><code>TEXT
-
-RecyclerView 缓存系统
-├── 1. 屏幕内缓存 (Attached Scrap)
-│   └── 存放当前可见的ViewHolder（快速复用）
-├── 2. 屏幕外缓存 (Cache)
-│   └── 保存最近离开屏幕的ViewHolder（默认容量=2）
-├── 3. 扩展缓存 (ViewCacheExtension)
-│   └── 开发者自定义缓存（特殊用途）
-└── 4. 回收池 (RecycledViewPool)
-    └── 全局共享的ViewHolder存储（不同类型独立缓存）
-</code></pre><p>根据<code>position</code>判断是否命中<code>Cache</code>，根据<code>viewType</code>判断是否命中<code>RecyclerViewPool</code>，会执行<code>onBindViewHolder</code></p>
-<p>在 <strong>RecyclerView</strong> 的回收复用机制中，<code>changedScrap</code> 和 <code>attachedScrap</code> 是两个关键临时缓存，而 <strong>Stable IDs</strong> 会改变 ViewHolder 获取的方式。以下是详细解释：</p>
-<hr>
-<h3 id="1"><strong>1. <code>changedScrap</code> 的作用</strong></h3>
+          <h4 id="包体积优化">包体积优化</h4>
+<h4 id="一apk结构分析工具">一、APK结构分析工具</h4>
+<ol>
+<li>Android Studio内置工具
 <ul>
-<li><strong>用途</strong>：专门配合 <code>notifyItemChanged()</code> 或 <code>notifyDataSetChanged()</code> 使用。</li>
-<li><strong>工作机制</strong>：
-<ul>
-<li>当调用 <code>notifyItemChanged(position)</code> 时，被标记更新的 item 会被临时移到 <code>changedScrap</code> 中。</li>
-<li>在布局阶段（如 <code>onLayout</code>），这些 ViewHolder 会被重新绑定数据（调用 <code>onBindViewHolder()</code>），然后放回原位置。</li>
+<li>使用 Build &gt; Analyze APK</li>
+<li>查看各模块占比(代码/资源/原生库/Assets)</li>
 </ul>
 </li>
-<li><strong>目的</strong>：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。</li>
-</ul>
-<hr>
-<h3 id="2"><strong>2. <code>attachedScrap</code> 的作用</strong></h3>
+<li>命令行工具</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>./gradlew :app:assembleRelease --scan
+</span></span></code></pre></div><h4 id="二代码优化">二、代码优化</h4>
+<ol>
+<li>启用代码混淆与优化</li>
+<li>移除未使用代码
 <ul>
-<li><strong>用途</strong>：用于 <strong>快速复用可见或即将可见的 ViewHolder</strong>。</li>
-<li><strong>工作机制</strong>：
-<ul>
-<li>在布局过程中（如 <code>LinearLayoutManager.fill()</code>），RecyclerView 会先将当前屏幕上的 ViewHolder <strong>临时移除</strong> 到 <code>attachedScrap</code>。</li>
-<li>遍历新布局时，直接从 <code>attachedScrap</code> 中按 <strong>position 匹配</strong> 取回 ViewHolder（无需创建或绑定）。</li>
+<li>使用android studio的lint分析未使用代码</li>
+<li>添加R8配置文件删除无引用代码</li>
 </ul>
 </li>
-<li><strong>目的</strong>：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。</li>
+<li>方法数优化
+<ul>
+<li>启用Multidex前优化</li>
+<li>使用D8编译器的dex优化</li>
 </ul>
-<hr>
-<h3 id="3-stable-ids-如何改变-viewholder-获取方式"><strong>3. Stable IDs 如何改变 ViewHolder 获取方式</strong></h3>
-<p>当启用 <strong>Stable IDs</strong>（通过 <code>setHasStableIds(true)</code> + 重写 <code>getItemId()</code>）时：</p>
+</li>
+</ol>
+<h4 id="三资源优化">三、资源优化</h4>
+<ol>
+<li>资源压缩与清理</li>
+<li>移除未使用资源</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 检测未使用资源</span>
+</span></span><span style="display:flex;"><span>./gradlew lintRelease
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 自动移除</span>
+</span></span><span style="display:flex;"><span>./gradlew removeUnusedResources
+</span></span></code></pre></div><ol start="3">
+<li>矢量图代替位图</li>
+<li>Webp格式转换</li>
+</ol>
+<h4 id="四库优化">四、库优化</h4>
+<ol>
+<li>仅保留必要ABI</li>
+<li>轻量库代替</li>
+</ol>
+<h4 id="五高级优化技术">五、高级优化技术</h4>
+<ol>
+<li>资源混淆</li>
+<li>资源分包加载</li>
+<li>按需加载功能模块</li>
+</ol>
+<h4 id="六--assets优化">六 、 Assets优化</h4>
+<ol>
+<li>压缩assets资源：存储时压缩，使用时解压</li>
+</ol>
+<h4 id="七知识补充">七、知识补充</h4>
+<ol>
+<li>D8、R8和代码混淆的关系
+<ul>
+<li>D8负责字节码到Dex的精确转换</li>
+<li>R8 = D8 + 裁剪 + 优化 + 混淆</li>
+<li>混淆是R8的战术武器：仅负责名称混淆（对体积影响小，对安全性关键）</li>
+<li><strong>开启R8 ≈ D8编译 + 三重优化(裁剪/优化/混淆)</strong></li>
+</ul>
+</li>
+</ol>
         </div>
-        <a href="/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
+        <a href="/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
+        
+          <div class="w-100 mb4 relative">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l dark-gray no-underline">
+    <div class="flex-column flex-row-ns flex">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="color-inherit dim link">
+            内存管理最佳实践
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+          <h4 id="一内存管理原则">一、内存管理原则</h4>
+<ol>
+<li>理解Android内存模型
+<ul>
+<li>基于JVM垃圾回收机制，采用分代回收策略</li>
+<li>内存不足是触发<code>onTrimMemory()</code>，开发者需响应此回调释放资源</li>
+</ul>
+</li>
+<li>避免内存泄漏根源
+<ul>
+<li>静态引用：禁止用static持有Activity/Context（用Application Context代替）</li>
+<li>非静态内部类：改用静态内部类+弱引用</li>
+<li>资源未释放：关闭Cursor、File、Bitmap等资源。gc只释放java对象本身，在jvm堆中，系统资源需要显示释放</li>
+<li>集合对象：及时清理无用的集合元素</li>
+</ul>
+</li>
+<li>优化关键组件
+<ul>
+<li>Activity/Fragment
+<ul>
+<li>在onDestroy中解除BroadcastReceiver、Handler注册，移除回调</li>
+<li>避免在异步任务中直接引用View</li>
+</ul>
+</li>
+<li>Handler
+<ul>
+<li>使用静态内部类 + WeakReference。</li>
+</ul>
+</li>
+<li>单例模式
+<ul>
+<li>传递Application Context，而非Activity Context</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>大对象优化
+<ul>
+<li>Bitmap
+<ul>
+<li>使用inSampleSize压缩图片，采用Glide等库管理内存</li>
+</ul>
+</li>
+<li>数据缓存
+<ul>
+<li>优先使用LruCache和DiskLruCache</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h4 id="二内存泄漏排查工具">二、内存泄漏排查工具</h4>
+<ol>
+<li>Android Profiler</li>
+<li>LeakCanary</li>
+<li>MAT</li>
+<li>StrictMode</li>
+</ol>
+<h3 id="二内存泄漏排查工具-1"><strong>二、内存泄漏排查工具</strong></h3>
+<ol>
+<li>
+<p><strong>Android Profiler（Android Studio）</strong></p>
+<ul>
+<li><strong>内存监控</strong>：实时查看堆内存使用情况。</li>
+<li><strong>Heap Dump</strong>：捕获堆快照，分析对象引用链。</li>
+<li><strong>Allocation Tracker</strong>：跟踪短时间内的内存分配。</li>
+</ul>
+</li>
+<li>
+<p><strong>LeakCanary（自动化检测）</strong></p>
+<ul>
+<li>
+<p>集成步骤：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>debugImplementation <span style="color:#e6db74">&#39;com.squareup.leakcanary:leakcanary-android:2.9.1&#39;</span>
+</span></span></code></pre></div></li>
+<li>
+<p>自动检测泄漏并生成报告，定位泄漏引用链。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>MAT（Memory Analyzer Tool）</strong></p>
+<ul>
+<li>
+<p>分析Heap Dump步骤：</p>
+<ul>
+<li>
+<p>用Android Profiler导出<code>.hprof</code>文件。</p>
+</li>
+<li>
+<p>通过<code>hprof-conv</code>转换格式（Android SDK工具）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>hprof-conv input.hprof output.hprof
+</span></span></code></pre></div></li>
+<li>
+<p>在MAT中打开，通过<strong>Dominator Tree</strong>和<strong>Path to GC Roots</strong>分析泄漏对象。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>StrictMode</strong></p>
+<ul>
+<li>
+<p>检测主线程磁盘/网络操作，间接避免内存问题：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>StrictMode.<span style="color:#a6e22e">setVmPolicy</span>(<span style="color:#66d9ef">new</span> VmPolicy.<span style="color:#a6e22e">Builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">detectActivityLeaks</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">detectLeakedClosableObjects</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">penaltyLog</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div></li>
+</ul>
+</li>
+</ol>
+        </div>
+        <a href="/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
       </div>
     </div>
   </div>
@@ -465,6 +647,36 @@ RecyclerView 缓存系统
         
       </section>
 
+      
+        <section class="w-100">
+          <h1 class="f3"></h1>
+          
+          
+            <h2 class="f5 fw4 mb4 dib mr3">
+              <a href="/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" class="link black dim">
+                View性能优化
+              </a>
+            </h2>
+          
+            <h2 class="f5 fw4 mb4 dib mr3">
+              <a href="/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/" class="link black dim">
+                关于硬件加速
+              </a>
+            </h2>
+          
+            <h2 class="f5 fw4 mb4 dib mr3">
+              <a href="/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/" class="link black dim">
+                面试问题收集
+              </a>
+            </h2>
+          
+            <h2 class="f5 fw4 mb4 dib mr3">
+              <a href="/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" class="link black dim">
+                RecyclerView缓存机制
+              </a>
+            </h2>
+          
+        </section>
       
 
     </div>

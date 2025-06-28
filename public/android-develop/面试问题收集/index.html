@@ -169,9 +169,44 @@ onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访
 
 View性能优化
 
-过度绘制：todo
-布局优化：todo
-绘制优化：todo
+过度绘制：
+
+概念：GPU在一个像素点上绘制了多次的现象。系统默认允许2.5次（1x绘制 &#43; 1.5x半透明混合）
+主要优化策略
+
+移除不必要的背景
+减少View的层级深度
+谨慎使用半透明或**setLayerType(LAYER_TYPE_HARDWARE)**
+优化clipRect和quickReject
+
+
+
+
+布局优化：
+
+概念：指测量和布局阶段的性能优化。CPU需要遍历View树计算每个View的大小和位置
+优化策略：
+
+减少嵌套层级
+使用高效布局标签（merge、include、ViewStub）
+优化onMeasure/onLayout
+
+
+
+
+绘制优化：
+
+概念：指实际调用View.onDraw方法渲染像素到屏幕的性能优化。CPU准备绘制指令 -&gt;GPU执行绘制
+优化策略
+
+优化onDraw()方法：避免内存分配(不在onDraw方法内实例化Paint、Path、Bitmap、Rect对象)，避免耗时操作、避免调用invalidate（避免递归/绘制请求），利用canvas.clipRect和canvas.quickReject(),优先使用矢量图代替位图，使用硬件加速支持的Canvas操作
+谨慎开启Hardware_Layer
+优化alpha通道和透明度
+优化Bitmap加载与显示
+
+
+
+
 
 
 高级机制与原理
@@ -187,7 +222,7 @@ view.post与Handler：todo
 
 滑动实现方式
 
-scrollTo()/scrollBy(): todo
+scrollTo()/scrollBy(): scrollTo()是直接跳转到指定位置，scrollBy是相对移动，基于当前位置滑动指定偏移量
 通过ViewDragHelper实现复杂拖拽: todo
 
 
@@ -219,11 +254,12 @@ todo
 
 
 六、性能优化 （todo）
-1. **内存管理与泄漏排查**
-1. **UI渲染性能(卡顿优化)**
-1. **启动速度优化**
-1. **功耗优化基础**
-1. **包体积优化**
+
+内存管理与泄漏排查
+UI渲染性能(卡顿优化)
+启动速度优化
+功耗优化基础
+包体积优化
 
 
 七、常用库与框架（todo）
@@ -303,7 +339,7 @@ public abstract class LiveData&lt;T&gt; { private int mVersion = START_VERSION; 
 ViewModel临时数据保存机制
 内存中保存
 ViewModel对象存储在ViewModelStore中。当配置变更（如屏幕旋转）时： Activity/Fragment被销毁重建。 ViewModelStore被系统保留（绑定到NonConfigurationInstances）。 新建Activity/Fragment时自动恢复ViewModel实例。 数据范围与最佳实践 保留场景：屏幕旋转、分屏切换、系统语言更改。 不保留场景：用户退出应用、系统资源不足杀死进程、Activity被finish()。 最佳实践： ViewModel解决配置变更的临时数据保存（内存级）。 SavedStateHandle解决进程被杀死时的关键数据持久化。 复杂数据应使用数据库等持久化方案。 避免内存泄漏：勿在ViewModel持有Context/View引用，必要时用Application Context代替。 三、View基础原理 深入理解View的测量、布局、绘制机制，是优化UI性能的核心。
-MeasureSpec计算与布局优化 MeasureSpec原理：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。 父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用children.measure()，最终确定自身尺寸。 布局性能优化： 缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用setMeasuredDimension()设置宽高。 优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。 避免无效重绘：使用局部刷新机制。 精确控制绘制范围：通过Canvas.clipRect()限制绘制区域。 getMeasuredWidth()与getWidth()区别 getMeasuredWidth()：测量阶段后分配的宽度（含内边距）。 使用时机：onMeasure()后或layout()前。 特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与getWidth相同。 getWidth()：布局阶段后的最终可见宽度（屏幕实际值）。 使用时机：onLayout后。 计算方式：width = right - left。 requestLayout()与invalidate()区别 requestLayout()：请求整个视图树的测量（measure）和布局（layout）流程。 触发场景：视图尺寸/位置变化、动态添加/移除子视图、setVisibility()导致布局结构变化。 执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。 invalidate()：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。 触发场景：视图内容变化但不影响尺寸/位置（如onDraw()依赖数据更新）。 执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用onDraw()。 View坐标体系 getX()/getY()：相对当前View左上角的局部坐标（触摸点在View内的位置）。 特点：与父容器无关；值可为负（如滑动超出View边界）。 getRawX()/getRawY()：相对屏幕左上角的全局坐标。 特点：包含状态栏高度（getRawY()从屏幕顶部算起）。 getLocationOnScreen()：获取View左上角在屏幕上的绝对坐标。 View生命周期关键方法 构造函数：通过代码或XML创建View实例。 onAttachedToWindow()：View被添加到窗口时调用。 用途：初始化资源、注册监听器、启动动画。 onDetachedFromWindow()：View从窗口移除时调用（如Activity销毁）。 关键作用：释放资源、停止动画、注销监听器。 注意事项： onVisibilityChanged()可能在onAttachedToWindow()前/后调用（如View初始化为GONE）。 onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访问资源）。 View性能优化 过度绘制：todo 布局优化：todo 绘制优化：todo 高级机制与原理 硬件加速：将绘制指令交给GPU，但是部分api不支持 SurfaceView与TextureView：todo view.post与Handler：todo 四、事件分发机制 滑动实现方式 scrollTo()/scrollBy(): todo 通过ViewDragHelper实现复杂拖拽: todo 自定义下拉刷新控件 todo 事件分发机制如何提升效率 todo 嵌套滑动处理 todo RecyclerView的滑动冲突处理 todo 五、Handler 六、性能优化 （todo） 1. **内存管理与泄漏排查** 1. **UI渲染性能(卡顿优化)** 1. **启动速度优化** 1. **功耗优化基础** 1. **包体积优化** 七、常用库与框架（todo） 网络请求(如Retrofit) 图片加载(如Glide / Picasso) Gradle基础 八、网络与后台 RESTful API概念与使用 异步处理深入（线程安全、后台限制） 缓存策略 九、架构设计 MVVM/MVI理解与实践 模块化 / 组件化 设计模式应用 十、新技术与趋势 Compose KMM / Flutter 十一、JVM / 内存模型基础 JVM内存结构 垃圾回收机制基础 常见数据结构与基础算法">
+MeasureSpec计算与布局优化 MeasureSpec原理：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。 父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用children.measure()，最终确定自身尺寸。 布局性能优化： 缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用setMeasuredDimension()设置宽高。 优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。 避免无效重绘：使用局部刷新机制。 精确控制绘制范围：通过Canvas.clipRect()限制绘制区域。 getMeasuredWidth()与getWidth()区别 getMeasuredWidth()：测量阶段后分配的宽度（含内边距）。 使用时机：onMeasure()后或layout()前。 特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与getWidth相同。 getWidth()：布局阶段后的最终可见宽度（屏幕实际值）。 使用时机：onLayout后。 计算方式：width = right - left。 requestLayout()与invalidate()区别 requestLayout()：请求整个视图树的测量（measure）和布局（layout）流程。 触发场景：视图尺寸/位置变化、动态添加/移除子视图、setVisibility()导致布局结构变化。 执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。 invalidate()：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。 触发场景：视图内容变化但不影响尺寸/位置（如onDraw()依赖数据更新）。 执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用onDraw()。 View坐标体系 getX()/getY()：相对当前View左上角的局部坐标（触摸点在View内的位置）。 特点：与父容器无关；值可为负（如滑动超出View边界）。 getRawX()/getRawY()：相对屏幕左上角的全局坐标。 特点：包含状态栏高度（getRawY()从屏幕顶部算起）。 getLocationOnScreen()：获取View左上角在屏幕上的绝对坐标。 View生命周期关键方法 构造函数：通过代码或XML创建View实例。 onAttachedToWindow()：View被添加到窗口时调用。 用途：初始化资源、注册监听器、启动动画。 onDetachedFromWindow()：View从窗口移除时调用（如Activity销毁）。 关键作用：释放资源、停止动画、注销监听器。 注意事项： onVisibilityChanged()可能在onAttachedToWindow()前/后调用（如View初始化为GONE）。 onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访问资源）。 View性能优化 过度绘制： 概念：GPU在一个像素点上绘制了多次的现象。系统默认允许2.5次（1x绘制 &#43; 1.5x半透明混合） 主要优化策略 移除不必要的背景 减少View的层级深度 谨慎使用半透明或**setLayerType(LAYER_TYPE_HARDWARE)** 优化clipRect和quickReject 布局优化： 概念：指测量和布局阶段的性能优化。CPU需要遍历View树计算每个View的大小和位置 优化策略： 减少嵌套层级 使用高效布局标签（merge、include、ViewStub） 优化onMeasure/onLayout 绘制优化： 概念：指实际调用View.onDraw方法渲染像素到屏幕的性能优化。CPU准备绘制指令 -&gt;GPU执行绘制 优化策略 优化onDraw()方法：避免内存分配(不在onDraw方法内实例化Paint、Path、Bitmap、Rect对象)，避免耗时操作、避免调用invalidate（避免递归/绘制请求），利用canvas.clipRect和canvas.quickReject(),优先使用矢量图代替位图，使用硬件加速支持的Canvas操作 谨慎开启Hardware_Layer 优化alpha通道和透明度 优化Bitmap加载与显示 高级机制与原理 硬件加速：将绘制指令交给GPU，但是部分api不支持 SurfaceView与TextureView：todo view.post与Handler：todo 四、事件分发机制 滑动实现方式 scrollTo()/scrollBy(): scrollTo()是直接跳转到指定位置，scrollBy是相对移动，基于当前位置滑动指定偏移量 通过ViewDragHelper实现复杂拖拽: todo 自定义下拉刷新控件 todo 事件分发机制如何提升效率 todo 嵌套滑动处理 todo RecyclerView的滑动冲突处理 todo 五、Handler 六、性能优化 （todo） 内存管理与泄漏排查 UI渲染性能(卡顿优化) 启动速度优化 功耗优化基础 包体积优化 七、常用库与框架（todo） 网络请求(如Retrofit) 图片加载(如Glide / Picasso) Gradle基础 八、网络与后台 RESTful API概念与使用 异步处理深入（线程安全、后台限制） 缓存策略 九、架构设计 MVVM/MVI理解与实践 模块化 / 组件化 设计模式应用 十、新技术与趋势 Compose KMM / Flutter 十一、JVM / 内存模型基础 JVM内存结构 垃圾回收机制基础 常见数据结构与基础算法">
   <meta property="og:locale" content="zh_cn">
   <meta property="og:type" content="article">
     <meta property="article:section" content="android-develop">
@@ -324,10 +360,10 @@ public abstract class LiveData&lt;T&gt; { private int mVersion = START_VERSION; 
 ViewModel临时数据保存机制
 内存中保存
 ViewModel对象存储在ViewModelStore中。当配置变更（如屏幕旋转）时： Activity/Fragment被销毁重建。 ViewModelStore被系统保留（绑定到NonConfigurationInstances）。 新建Activity/Fragment时自动恢复ViewModel实例。 数据范围与最佳实践 保留场景：屏幕旋转、分屏切换、系统语言更改。 不保留场景：用户退出应用、系统资源不足杀死进程、Activity被finish()。 最佳实践： ViewModel解决配置变更的临时数据保存（内存级）。 SavedStateHandle解决进程被杀死时的关键数据持久化。 复杂数据应使用数据库等持久化方案。 避免内存泄漏：勿在ViewModel持有Context/View引用，必要时用Application Context代替。 三、View基础原理 深入理解View的测量、布局、绘制机制，是优化UI性能的核心。
-MeasureSpec计算与布局优化 MeasureSpec原理：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。 父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用children.measure()，最终确定自身尺寸。 布局性能优化： 缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用setMeasuredDimension()设置宽高。 优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。 避免无效重绘：使用局部刷新机制。 精确控制绘制范围：通过Canvas.clipRect()限制绘制区域。 getMeasuredWidth()与getWidth()区别 getMeasuredWidth()：测量阶段后分配的宽度（含内边距）。 使用时机：onMeasure()后或layout()前。 特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与getWidth相同。 getWidth()：布局阶段后的最终可见宽度（屏幕实际值）。 使用时机：onLayout后。 计算方式：width = right - left。 requestLayout()与invalidate()区别 requestLayout()：请求整个视图树的测量（measure）和布局（layout）流程。 触发场景：视图尺寸/位置变化、动态添加/移除子视图、setVisibility()导致布局结构变化。 执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。 invalidate()：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。 触发场景：视图内容变化但不影响尺寸/位置（如onDraw()依赖数据更新）。 执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用onDraw()。 View坐标体系 getX()/getY()：相对当前View左上角的局部坐标（触摸点在View内的位置）。 特点：与父容器无关；值可为负（如滑动超出View边界）。 getRawX()/getRawY()：相对屏幕左上角的全局坐标。 特点：包含状态栏高度（getRawY()从屏幕顶部算起）。 getLocationOnScreen()：获取View左上角在屏幕上的绝对坐标。 View生命周期关键方法 构造函数：通过代码或XML创建View实例。 onAttachedToWindow()：View被添加到窗口时调用。 用途：初始化资源、注册监听器、启动动画。 onDetachedFromWindow()：View从窗口移除时调用（如Activity销毁）。 关键作用：释放资源、停止动画、注销监听器。 注意事项： onVisibilityChanged()可能在onAttachedToWindow()前/后调用（如View初始化为GONE）。 onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访问资源）。 View性能优化 过度绘制：todo 布局优化：todo 绘制优化：todo 高级机制与原理 硬件加速：将绘制指令交给GPU，但是部分api不支持 SurfaceView与TextureView：todo view.post与Handler：todo 四、事件分发机制 滑动实现方式 scrollTo()/scrollBy(): todo 通过ViewDragHelper实现复杂拖拽: todo 自定义下拉刷新控件 todo 事件分发机制如何提升效率 todo 嵌套滑动处理 todo RecyclerView的滑动冲突处理 todo 五、Handler 六、性能优化 （todo） 1. **内存管理与泄漏排查** 1. **UI渲染性能(卡顿优化)** 1. **启动速度优化** 1. **功耗优化基础** 1. **包体积优化** 七、常用库与框架（todo） 网络请求(如Retrofit) 图片加载(如Glide / Picasso) Gradle基础 八、网络与后台 RESTful API概念与使用 异步处理深入（线程安全、后台限制） 缓存策略 九、架构设计 MVVM/MVI理解与实践 模块化 / 组件化 设计模式应用 十、新技术与趋势 Compose KMM / Flutter 十一、JVM / 内存模型基础 JVM内存结构 垃圾回收机制基础 常见数据结构与基础算法">
+MeasureSpec计算与布局优化 MeasureSpec原理：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。 父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用children.measure()，最终确定自身尺寸。 布局性能优化： 缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用setMeasuredDimension()设置宽高。 优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。 避免无效重绘：使用局部刷新机制。 精确控制绘制范围：通过Canvas.clipRect()限制绘制区域。 getMeasuredWidth()与getWidth()区别 getMeasuredWidth()：测量阶段后分配的宽度（含内边距）。 使用时机：onMeasure()后或layout()前。 特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与getWidth相同。 getWidth()：布局阶段后的最终可见宽度（屏幕实际值）。 使用时机：onLayout后。 计算方式：width = right - left。 requestLayout()与invalidate()区别 requestLayout()：请求整个视图树的测量（measure）和布局（layout）流程。 触发场景：视图尺寸/位置变化、动态添加/移除子视图、setVisibility()导致布局结构变化。 执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。 invalidate()：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。 触发场景：视图内容变化但不影响尺寸/位置（如onDraw()依赖数据更新）。 执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用onDraw()。 View坐标体系 getX()/getY()：相对当前View左上角的局部坐标（触摸点在View内的位置）。 特点：与父容器无关；值可为负（如滑动超出View边界）。 getRawX()/getRawY()：相对屏幕左上角的全局坐标。 特点：包含状态栏高度（getRawY()从屏幕顶部算起）。 getLocationOnScreen()：获取View左上角在屏幕上的绝对坐标。 View生命周期关键方法 构造函数：通过代码或XML创建View实例。 onAttachedToWindow()：View被添加到窗口时调用。 用途：初始化资源、注册监听器、启动动画。 onDetachedFromWindow()：View从窗口移除时调用（如Activity销毁）。 关键作用：释放资源、停止动画、注销监听器。 注意事项： onVisibilityChanged()可能在onAttachedToWindow()前/后调用（如View初始化为GONE）。 onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访问资源）。 View性能优化 过度绘制： 概念：GPU在一个像素点上绘制了多次的现象。系统默认允许2.5次（1x绘制 &#43; 1.5x半透明混合） 主要优化策略 移除不必要的背景 减少View的层级深度 谨慎使用半透明或**setLayerType(LAYER_TYPE_HARDWARE)** 优化clipRect和quickReject 布局优化： 概念：指测量和布局阶段的性能优化。CPU需要遍历View树计算每个View的大小和位置 优化策略： 减少嵌套层级 使用高效布局标签（merge、include、ViewStub） 优化onMeasure/onLayout 绘制优化： 概念：指实际调用View.onDraw方法渲染像素到屏幕的性能优化。CPU准备绘制指令 -&gt;GPU执行绘制 优化策略 优化onDraw()方法：避免内存分配(不在onDraw方法内实例化Paint、Path、Bitmap、Rect对象)，避免耗时操作、避免调用invalidate（避免递归/绘制请求），利用canvas.clipRect和canvas.quickReject(),优先使用矢量图代替位图，使用硬件加速支持的Canvas操作 谨慎开启Hardware_Layer 优化alpha通道和透明度 优化Bitmap加载与显示 高级机制与原理 硬件加速：将绘制指令交给GPU，但是部分api不支持 SurfaceView与TextureView：todo view.post与Handler：todo 四、事件分发机制 滑动实现方式 scrollTo()/scrollBy(): scrollTo()是直接跳转到指定位置，scrollBy是相对移动，基于当前位置滑动指定偏移量 通过ViewDragHelper实现复杂拖拽: todo 自定义下拉刷新控件 todo 事件分发机制如何提升效率 todo 嵌套滑动处理 todo RecyclerView的滑动冲突处理 todo 五、Handler 六、性能优化 （todo） 内存管理与泄漏排查 UI渲染性能(卡顿优化) 启动速度优化 功耗优化基础 包体积优化 七、常用库与框架（todo） 网络请求(如Retrofit) 图片加载(如Glide / Picasso) Gradle基础 八、网络与后台 RESTful API概念与使用 异步处理深入（线程安全、后台限制） 缓存策略 九、架构设计 MVVM/MVI理解与实践 模块化 / 组件化 设计模式应用 十、新技术与趋势 Compose KMM / Flutter 十一、JVM / 内存模型基础 JVM内存结构 垃圾回收机制基础 常见数据结构与基础算法">
   <meta itemprop="datePublished" content="2025-06-13T09:30:56+08:00">
   <meta itemprop="dateModified" content="2025-06-13T09:30:56+08:00">
-  <meta itemprop="wordCount" content="186">
+  <meta itemprop="wordCount" content="201">
   <meta itemprop="keywords" content="Android-Develop">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="面试问题收集">
@@ -344,7 +380,7 @@ public abstract class LiveData&lt;T&gt; { private int mVersion = START_VERSION; 
 ViewModel临时数据保存机制
 内存中保存
 ViewModel对象存储在ViewModelStore中。当配置变更（如屏幕旋转）时： Activity/Fragment被销毁重建。 ViewModelStore被系统保留（绑定到NonConfigurationInstances）。 新建Activity/Fragment时自动恢复ViewModel实例。 数据范围与最佳实践 保留场景：屏幕旋转、分屏切换、系统语言更改。 不保留场景：用户退出应用、系统资源不足杀死进程、Activity被finish()。 最佳实践： ViewModel解决配置变更的临时数据保存（内存级）。 SavedStateHandle解决进程被杀死时的关键数据持久化。 复杂数据应使用数据库等持久化方案。 避免内存泄漏：勿在ViewModel持有Context/View引用，必要时用Application Context代替。 三、View基础原理 深入理解View的测量、布局、绘制机制，是优化UI性能的核心。
-MeasureSpec计算与布局优化 MeasureSpec原理：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。 父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用children.measure()，最终确定自身尺寸。 布局性能优化： 缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用setMeasuredDimension()设置宽高。 优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。 避免无效重绘：使用局部刷新机制。 精确控制绘制范围：通过Canvas.clipRect()限制绘制区域。 getMeasuredWidth()与getWidth()区别 getMeasuredWidth()：测量阶段后分配的宽度（含内边距）。 使用时机：onMeasure()后或layout()前。 特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与getWidth相同。 getWidth()：布局阶段后的最终可见宽度（屏幕实际值）。 使用时机：onLayout后。 计算方式：width = right - left。 requestLayout()与invalidate()区别 requestLayout()：请求整个视图树的测量（measure）和布局（layout）流程。 触发场景：视图尺寸/位置变化、动态添加/移除子视图、setVisibility()导致布局结构变化。 执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。 invalidate()：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。 触发场景：视图内容变化但不影响尺寸/位置（如onDraw()依赖数据更新）。 执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用onDraw()。 View坐标体系 getX()/getY()：相对当前View左上角的局部坐标（触摸点在View内的位置）。 特点：与父容器无关；值可为负（如滑动超出View边界）。 getRawX()/getRawY()：相对屏幕左上角的全局坐标。 特点：包含状态栏高度（getRawY()从屏幕顶部算起）。 getLocationOnScreen()：获取View左上角在屏幕上的绝对坐标。 View生命周期关键方法 构造函数：通过代码或XML创建View实例。 onAttachedToWindow()：View被添加到窗口时调用。 用途：初始化资源、注册监听器、启动动画。 onDetachedFromWindow()：View从窗口移除时调用（如Activity销毁）。 关键作用：释放资源、停止动画、注销监听器。 注意事项： onVisibilityChanged()可能在onAttachedToWindow()前/后调用（如View初始化为GONE）。 onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访问资源）。 View性能优化 过度绘制：todo 布局优化：todo 绘制优化：todo 高级机制与原理 硬件加速：将绘制指令交给GPU，但是部分api不支持 SurfaceView与TextureView：todo view.post与Handler：todo 四、事件分发机制 滑动实现方式 scrollTo()/scrollBy(): todo 通过ViewDragHelper实现复杂拖拽: todo 自定义下拉刷新控件 todo 事件分发机制如何提升效率 todo 嵌套滑动处理 todo RecyclerView的滑动冲突处理 todo 五、Handler 六、性能优化 （todo） 1. **内存管理与泄漏排查** 1. **UI渲染性能(卡顿优化)** 1. **启动速度优化** 1. **功耗优化基础** 1. **包体积优化** 七、常用库与框架（todo） 网络请求(如Retrofit) 图片加载(如Glide / Picasso) Gradle基础 八、网络与后台 RESTful API概念与使用 异步处理深入（线程安全、后台限制） 缓存策略 九、架构设计 MVVM/MVI理解与实践 模块化 / 组件化 设计模式应用 十、新技术与趋势 Compose KMM / Flutter 十一、JVM / 内存模型基础 JVM内存结构 垃圾回收机制基础 常见数据结构与基础算法">
+MeasureSpec计算与布局优化 MeasureSpec原理：父容器传递给子View的测量要求，由大小和模式组成，取决于父容器的MeasureSpec和子View的LayoutParams。 父布局根据自身MeasureSpec和子View LayoutParams，确定子View的MeasureSpec，再调用children.measure()，最终确定自身尺寸。 布局性能优化： 缓存MeasureSpec计算结果：固定尺寸View（如按钮）直接调用setMeasuredDimension()设置宽高。 优化布局流程：减少嵌套层级、懒加载布局、合并重复布局。 避免无效重绘：使用局部刷新机制。 精确控制绘制范围：通过Canvas.clipRect()限制绘制区域。 getMeasuredWidth()与getWidth()区别 getMeasuredWidth()：测量阶段后分配的宽度（含内边距）。 使用时机：onMeasure()后或layout()前。 特点：反映视图的期望宽度；若布局未强制改变尺寸，可能与getWidth相同。 getWidth()：布局阶段后的最终可见宽度（屏幕实际值）。 使用时机：onLayout后。 计算方式：width = right - left。 requestLayout()与invalidate()区别 requestLayout()：请求整个视图树的测量（measure）和布局（layout）流程。 触发场景：视图尺寸/位置变化、动态添加/移除子视图、setVisibility()导致布局结构变化。 执行流程：从当前视图向上回溯到根视图（如ViewRootImpl），依次执行measure → layout。 invalidate()：仅标记视图的局部区域为“脏区”，请求下一帧重绘该区域。 触发场景：视图内容变化但不影响尺寸/位置（如onDraw()依赖数据更新）。 执行流程：标记脏区 → 加入重绘队列 → 下一帧VSync信号时调用onDraw()。 View坐标体系 getX()/getY()：相对当前View左上角的局部坐标（触摸点在View内的位置）。 特点：与父容器无关；值可为负（如滑动超出View边界）。 getRawX()/getRawY()：相对屏幕左上角的全局坐标。 特点：包含状态栏高度（getRawY()从屏幕顶部算起）。 getLocationOnScreen()：获取View左上角在屏幕上的绝对坐标。 View生命周期关键方法 构造函数：通过代码或XML创建View实例。 onAttachedToWindow()：View被添加到窗口时调用。 用途：初始化资源、注册监听器、启动动画。 onDetachedFromWindow()：View从窗口移除时调用（如Activity销毁）。 关键作用：释放资源、停止动画、注销监听器。 注意事项： onVisibilityChanged()可能在onAttachedToWindow()前/后调用（如View初始化为GONE）。 onWindowFocusChanged()可能在onDetachedFromWindow()后调用（避免在此访问资源）。 View性能优化 过度绘制： 概念：GPU在一个像素点上绘制了多次的现象。系统默认允许2.5次（1x绘制 &#43; 1.5x半透明混合） 主要优化策略 移除不必要的背景 减少View的层级深度 谨慎使用半透明或**setLayerType(LAYER_TYPE_HARDWARE)** 优化clipRect和quickReject 布局优化： 概念：指测量和布局阶段的性能优化。CPU需要遍历View树计算每个View的大小和位置 优化策略： 减少嵌套层级 使用高效布局标签（merge、include、ViewStub） 优化onMeasure/onLayout 绘制优化： 概念：指实际调用View.onDraw方法渲染像素到屏幕的性能优化。CPU准备绘制指令 -&gt;GPU执行绘制 优化策略 优化onDraw()方法：避免内存分配(不在onDraw方法内实例化Paint、Path、Bitmap、Rect对象)，避免耗时操作、避免调用invalidate（避免递归/绘制请求），利用canvas.clipRect和canvas.quickReject(),优先使用矢量图代替位图，使用硬件加速支持的Canvas操作 谨慎开启Hardware_Layer 优化alpha通道和透明度 优化Bitmap加载与显示 高级机制与原理 硬件加速：将绘制指令交给GPU，但是部分api不支持 SurfaceView与TextureView：todo view.post与Handler：todo 四、事件分发机制 滑动实现方式 scrollTo()/scrollBy(): scrollTo()是直接跳转到指定位置，scrollBy是相对移动，基于当前位置滑动指定偏移量 通过ViewDragHelper实现复杂拖拽: todo 自定义下拉刷新控件 todo 事件分发机制如何提升效率 todo 嵌套滑动处理 todo RecyclerView的滑动冲突处理 todo 五、Handler 六、性能优化 （todo） 内存管理与泄漏排查 UI渲染性能(卡顿优化) 启动速度优化 功耗优化基础 包体积优化 七、常用库与框架（todo） 网络请求(如Retrofit) 图片加载(如Glide / Picasso) Gradle基础 八、网络与后台 RESTful API概念与使用 异步处理深入（线程安全、后台限制） 缓存策略 九、架构设计 MVVM/MVI理解与实践 模块化 / 组件化 设计模式应用 十、新技术与趋势 Compose KMM / Flutter 十一、JVM / 内存模型基础 JVM内存结构 垃圾回收机制基础 常见数据结构与基础算法">
 
 	
   </head><body class="ma0 avenir bg-near-white development">
@@ -576,9 +612,44 @@ ViewModel对象存储在<code>ViewModelStore</code>中。当配置变更（如�
 </li>
 <li><strong>View性能优化</strong>
 <ol>
-<li>过度绘制：todo</li>
-<li>布局优化：todo</li>
-<li>绘制优化：todo</li>
+<li><strong>过度绘制：</strong>
+<ul>
+<li>概念：GPU在一个像素点上绘制了多次的现象。系统默认允许2.5次（1x绘制 + 1.5x半透明混合）</li>
+<li>主要优化策略
+<ul>
+<li>移除不必要的背景</li>
+<li>减少View的层级深度</li>
+<li>谨慎使用半透明或**<code>setLayerType(LAYER_TYPE_HARDWARE)</code>**</li>
+<li>优化<code>clipRect</code>和<code>quickReject</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>布局优化：</strong>
+<ul>
+<li>概念：指测量和布局阶段的性能优化。CPU需要遍历View树计算每个View的大小和位置</li>
+<li>优化策略：
+<ul>
+<li>减少嵌套层级</li>
+<li>使用高效布局标签（merge、include、ViewStub）</li>
+<li>优化<code>onMeasure</code>/<code>onLayout</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>绘制优化：</strong>
+<ul>
+<li>概念：指实际调用View.onDraw方法渲染像素到屏幕的性能优化。CPU准备绘制指令 -&gt;GPU执行绘制</li>
+<li>优化策略
+<ul>
+<li>优化onDraw()方法：避免内存分配(不在onDraw方法内实例化Paint、Path、Bitmap、Rect对象)，避免耗时操作、避免调用invalidate（避免递归/绘制请求），利用canvas.clipRect和canvas.quickReject(),优先使用矢量图代替位图，使用硬件加速支持的Canvas操作</li>
+<li>谨慎开启Hardware_Layer</li>
+<li>优化alpha通道和透明度</li>
+<li>优化Bitmap加载与显示</li>
+</ul>
+</li>
+</ul>
+</li>
 </ol>
 </li>
 <li><strong>高级机制与原理</strong>
@@ -594,7 +665,7 @@ ViewModel对象存储在<code>ViewModelStore</code>中。当配置变更（如�
 <ol>
 <li><strong>滑动实现方式</strong>
 <ul>
-<li><strong><code>scrollTo()</code>/<code>scrollBy()</code></strong>: todo</li>
+<li><strong><code>scrollTo()</code>/<code>scrollBy()</code></strong>: scrollTo()是直接跳转到指定位置，scrollBy是相对移动，基于当前位置滑动指定偏移量</li>
 <li>通过<code>ViewDragHelper</code>实现复杂拖拽: todo</li>
 </ul>
 </li>
@@ -626,12 +697,13 @@ ViewModel对象存储在<code>ViewModelStore</code>中。当配置变更（如�
 </ol>
 <hr>
 <h4 id="六性能优化-todo">六、性能优化 （todo）</h4>
-<pre><code>1. **内存管理与泄漏排查**
-1. **UI渲染性能(卡顿优化)**
-1. **启动速度优化**
-1. **功耗优化基础**
-1. **包体积优化**
-</code></pre>
+<ol>
+<li><strong>内存管理与泄漏排查</strong></li>
+<li><strong>UI渲染性能(卡顿优化)</strong></li>
+<li><strong>启动速度优化</strong></li>
+<li><strong>功耗优化基础</strong></li>
+<li><strong>包体积优化</strong></li>
+</ol>
 <hr>
 <h4 id="七常用库与框架todo">七、常用库与框架（todo）</h4>
 <ol>
