@@ -5,23 +5,30 @@
   <!-- 遍历所有分类 -->
   {{ range $term, $pages := .Site.Taxonomies.categories }}
     <div class="category-card">
-      <!-- 分类标题（带链接） -->
-      <h3>
-        <a href="{{ .Page.RelPermalink }}">
-          {{ .Page.Title }} 
-          <span class="count">({{ .Count }})</span>
-        </a>
-      </h3>
+      <!-- 分类头部区域 -->
+      <div class="card-header">
+        <h3>
+          <a href="{{ .Page.RelPermalink }}">
+            {{ .Page.Title }} 
+            <span class="count">({{ .Count }})</span>
+          </a>
+        </h3>
+      </div>
       
-      <!-- 显示该分类下的最新5篇文章 -->
-      <ul class="post-preview">
-        {{ range first 5 .Pages }}
-          <li>
-            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-            <time>{{ .Date.Format "2006-01-02" }}</time>
-          </li>
-        {{ end }}
-      </ul>
+      <!-- 文章预览滚动区 -->
+      <div class="card-content">
+        <!-- 显示该分类下的最新5篇文章 -->
+        <div class="post-card-container">
+          {{ range first 5 .Pages }}
+            <div class="post-card">
+              <a href="{{ .RelPermalink }}">
+                <h4>{{ .Title }}</h4>
+                <time>{{ .Date.Format "2006-01-02" }}</time>
+              </a>
+            </div>
+          {{ end }}
+        </div>
+      </div>
     </div>
   {{ end }}
 </section>
@@ -33,38 +40,88 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
+
 .category-card {
   background: #f8f9fa;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0;
   transition: transform 0.3s;
+  height: auto; /* 调整为自动高度 */
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e9ecef;
+  overflow: hidden; /* 隐藏超出部分 */
 }
+
 .category-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
-.category-card h3 a {
+
+.card-header {
+  padding: 1rem;
+  background: #e9ecef;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-header h3 a {
   color: #2c3e50;
   text-decoration: none;
+  display: block;
+  font-size: 1.2rem;
 }
+
 .count {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #6c757d;
+  display: inline-block;
+  margin-left: 5px;
 }
-.post-preview {
-  margin-top: 10px;
-  list-style: none;
-  padding-left: 0;
-  border-top: 1px solid #eee;
-  padding-top: 10px;
+
+.card-content {
+  flex-grow: 1; /* 占据剩余高度 */
+  overflow-y: auto; /* 添加垂直滚动条 */
+  padding: 0.5rem 1rem;
 }
-.post-preview li {
-  margin-bottom: 8px;
+
+.post-card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.post-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+  transition: transform 0.3s;
+  height: 150px; /* 固定卡片高度 */
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
-.post-preview time {
+
+.post-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.post-card h4 {
+  margin-bottom: 0.5rem;
+  color: #495057;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.post-card h4:hover {
+  color: #0d6efd;
+}
+
+.post-card time {
   font-size: 0.8rem;
   color: #6c757d;
 }
 </style>
-

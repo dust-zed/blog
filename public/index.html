@@ -49,8 +49,8 @@
 
   <meta itemprop="name" content="zed的博客">
   <meta itemprop="description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta itemprop="datePublished" content="2025-06-16T06:49:21+08:00">
-  <meta itemprop="dateModified" content="2025-06-16T06:49:21+08:00">
+  <meta itemprop="datePublished" content="2025-06-28T12:15:42+08:00">
+  <meta itemprop="dateModified" content="2025-06-28T12:15:42+08:00">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="zed的博客">
   <meta name="twitter:description" content="The last theme you&#39;ll ever need. Maybe.">
@@ -123,6 +123,95 @@
 
       <section class="w-100 mw8">
         
+        
+          <div class="w-100 mb4 relative">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l dark-gray no-underline">
+    <div class="flex-column flex-row-ns flex">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/" class="color-inherit dim link">
+            Android打包apk流程
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+          <p>android应用的打包流程是将代码、资源文件、清单文件等编译和压缩成可在设备上安装的APK/AAB文件的过程。以下是详细步骤：</p>
+<h4 id="一主要流程">一、主要流程</h4>
+<h5 id="1-编写代码与资源管理">1. 编写代码与资源管理</h5>
+<ul>
+<li>创建<code>/src</code>目录存放Kotlin/Java源码</li>
+<li>在<code>/res</code>目录添加资源</li>
+<li>配置<code>AndroidManifest.xml</code>(声明组件、权限等)。</li>
+</ul>
+<h5 id="2-依赖管理">2. 依赖管理</h5>
+<ul>
+<li>在build.gradle中添加所需依赖库</li>
+</ul>
+<h5 id="3-编译过程">3. 编译过程</h5>
+<ul>
+<li>编译代码： kotlin源码 → <code>.class</code>字节码（javac/kotlinc）</li>
+<li>转换为Dex：<code>.class</code>文件→ <code>.dex</code>文件（<code>d8</code>/<code>dx</code>工具），用于Android的ART虚拟机</li>
+<li>编译资源：<code>AAPT2</code>编译资源文件（<code>res/</code> → 二进制格式），生成<code>R.java</code>和临时资源包(<code>.flat</code>)</li>
+</ul>
+<h5 id="4打包与签名">4.打包与签名</h5>
+<ul>
+<li>合并资源： AAPT2链接编译后的资源，生成resources.arsc（资源索引表）和优化后的res/目录</li>
+<li>打包成APK：APK Builder将以下文件合并为未签名的APK：
+<ul>
+<li>编译后的字节码(<code>.dex</code>)</li>
+<li>资源文件(<code>res/</code> + <code>resources.arsc</code>)</li>
+<li><code>AndroidManifest.xml</code></li>
+<li>原生库(<code>.so</code>，若有JNI)</li>
+</ul>
+</li>
+<li>签名APK：使用签名证书(keystore)进行V1/V2/V3签名(通过<code>apksigner</code> 或Gradle配置)</li>
+</ul>
+<h5 id="5优化与对齐">5.优化与对齐</h5>
+<ul>
+<li>ZIP对齐：<code>zipalign</code>优化APK文件结构(4字节对齐)，减少运行时内存占用</li>
+<li>生成最终的APK：输出<code>app-release.apk</code></li>
+</ul>
+<h4 id="二名词解释">二、名词解释</h4>
+<h5 id="1-临时资源包">1. 临时资源包</h5>
+<p>在AAPT2（<code>Android Asset Packaging Tool 2</code>）的资源预编译阶段会生成.flat文件，这些文件是中间产物</p>
+<ul>
+<li>独立编译：AAPT2将<code>/res</code>目录下的每个资源文件单独编译成二进制格式的<code>.flat</code>文件</li>
+<li>支持增量编译：若只修改了单个资源文件，只需重新编译该文件的.flat文件，避免全量编译，加快构建速度</li>
+<li>分阶段处理
+<ul>
+<li>编译阶段：资源→ <code>.flat</code>文件</li>
+<li>链接阶段：合并所有<code>.flat</code>文件 → 生成<code>resources.arsc</code>和最终的<code>res/</code>目录</li>
+</ul>
+</li>
+<li>优势
+<ul>
+<li>提升大型项目的编译速度</li>
+<li>支持资源混淆</li>
+<li>更严格的资源验证</li>
+</ul>
+</li>
+</ul>
+<h5 id="2-对齐">2. 对齐</h5>
+<ul>
+<li><strong>内存对齐</strong>：解决CPU访问效率问题（<code>数据项首地址 % n == 0</code>），但会增加数据结构大小</li>
+<li><strong>文件对齐(zipalign)</strong>:解决内存映射效率的问题（<code>文件偏移 % 4096 == 0</code>），通过消除跨页碎片减少运行时内存占用</li>
+<li><strong>内存页机制</strong>
+<ul>
+<li>系统内存管理以**页(通常4KB)**为单位</li>
+<li>对齐后，每次文件读取 = 整数倍内存页 → <strong>减少I/O次数</strong></li>
+</ul>
+</li>
+</ul>
+        </div>
+        <a href="/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
         
           <div class="w-100 mb4 relative">
             
@@ -509,148 +598,18 @@
 
           </div>
         
-          <div class="w-100 mb4 relative">
-            
-<article class="bb b--black-10">
-  <div class="db pv4 ph3 ph0-l dark-gray no-underline">
-    <div class="flex-column flex-row-ns flex">
-      
-      <div class="blah w-100">
-        <h1 class="f3 fw1 athelas mt0 lh-title">
-          <a href="/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="color-inherit dim link">
-            内存管理最佳实践
-            </a>
-        </h1>
-        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
-          <h4 id="一内存管理原则">一、内存管理原则</h4>
-<ol>
-<li>理解Android内存模型
-<ul>
-<li>基于JVM垃圾回收机制，采用分代回收策略</li>
-<li>内存不足是触发<code>onTrimMemory()</code>，开发者需响应此回调释放资源</li>
-</ul>
-</li>
-<li>避免内存泄漏根源
-<ul>
-<li>静态引用：禁止用static持有Activity/Context（用Application Context代替）</li>
-<li>非静态内部类：改用静态内部类+弱引用</li>
-<li>资源未释放：关闭Cursor、File、Bitmap等资源。gc只释放java对象本身，在jvm堆中，系统资源需要显示释放</li>
-<li>集合对象：及时清理无用的集合元素</li>
-</ul>
-</li>
-<li>优化关键组件
-<ul>
-<li>Activity/Fragment
-<ul>
-<li>在onDestroy中解除BroadcastReceiver、Handler注册，移除回调</li>
-<li>避免在异步任务中直接引用View</li>
-</ul>
-</li>
-<li>Handler
-<ul>
-<li>使用静态内部类 + WeakReference。</li>
-</ul>
-</li>
-<li>单例模式
-<ul>
-<li>传递Application Context，而非Activity Context</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>大对象优化
-<ul>
-<li>Bitmap
-<ul>
-<li>使用inSampleSize压缩图片，采用Glide等库管理内存</li>
-</ul>
-</li>
-<li>数据缓存
-<ul>
-<li>优先使用LruCache和DiskLruCache</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h4 id="二内存泄漏排查工具">二、内存泄漏排查工具</h4>
-<ol>
-<li>Android Profiler</li>
-<li>LeakCanary</li>
-<li>MAT</li>
-<li>StrictMode</li>
-</ol>
-<h3 id="二内存泄漏排查工具-1"><strong>二、内存泄漏排查工具</strong></h3>
-<ol>
-<li>
-<p><strong>Android Profiler（Android Studio）</strong></p>
-<ul>
-<li><strong>内存监控</strong>：实时查看堆内存使用情况。</li>
-<li><strong>Heap Dump</strong>：捕获堆快照，分析对象引用链。</li>
-<li><strong>Allocation Tracker</strong>：跟踪短时间内的内存分配。</li>
-</ul>
-</li>
-<li>
-<p><strong>LeakCanary（自动化检测）</strong></p>
-<ul>
-<li>
-<p>集成步骤：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>debugImplementation <span style="color:#e6db74">&#39;com.squareup.leakcanary:leakcanary-android:2.9.1&#39;</span>
-</span></span></code></pre></div></li>
-<li>
-<p>自动检测泄漏并生成报告，定位泄漏引用链。</p>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>MAT（Memory Analyzer Tool）</strong></p>
-<ul>
-<li>
-<p>分析Heap Dump步骤：</p>
-<ul>
-<li>
-<p>用Android Profiler导出<code>.hprof</code>文件。</p>
-</li>
-<li>
-<p>通过<code>hprof-conv</code>转换格式（Android SDK工具）：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>hprof-conv input.hprof output.hprof
-</span></span></code></pre></div></li>
-<li>
-<p>在MAT中打开，通过<strong>Dominator Tree</strong>和<strong>Path to GC Roots</strong>分析泄漏对象。</p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>StrictMode</strong></p>
-<ul>
-<li>
-<p>检测主线程磁盘/网络操作，间接避免内存问题：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>StrictMode.<span style="color:#a6e22e">setVmPolicy</span>(<span style="color:#66d9ef">new</span> VmPolicy.<span style="color:#a6e22e">Builder</span>()
-</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">detectActivityLeaks</span>()
-</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">detectLeakedClosableObjects</span>()
-</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">penaltyLog</span>()
-</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>());
-</span></span></code></pre></div></li>
-</ul>
-</li>
-</ol>
-        </div>
-        <a href="/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
-      </div>
-    </div>
-  </div>
-</article>
-
-          </div>
-        
       </section>
 
       
         <section class="w-100">
           <h1 class="f3"></h1>
           
+          
+            <h2 class="f5 fw4 mb4 dib mr3">
+              <a href="/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="link black dim">
+                内存管理最佳实践
+              </a>
+            </h2>
           
             <h2 class="f5 fw4 mb4 dib mr3">
               <a href="/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" class="link black dim">
@@ -667,12 +626,6 @@
             <h2 class="f5 fw4 mb4 dib mr3">
               <a href="/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/" class="link black dim">
                 面试问题收集
-              </a>
-            </h2>
-          
-            <h2 class="f5 fw4 mb4 dib mr3">
-              <a href="/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" class="link black dim">
-                RecyclerView缓存机制
               </a>
             </h2>
           

@@ -1,0 +1,72 @@
+{{ define "main" }}
+  <div class="content">
+    <!-- 自定义卡片列表区 -->
+    <div class="android-card-container mw9 center pa3">
+      <div class="flex flex-wrap">
+        {{ range .Pages }}
+          <div class="w-100 w-50-m w-33-l pa2">
+            <div class="custom-card ba b--light-gray br2 bg-white shadow-hover grow">
+              <!-- 卡片内容 -->
+              <div class="pa3">
+                <!-- 文章标题（点击跳转） -->
+                <h3 class="f4 mv0">
+                  <a href="{{ .RelPermalink }}" class="link primary-color dim">
+                    {{ .Title }}
+                  </a>
+                </h3>
+                
+                <!-- 文章元信息 -->
+                <div class="f6 gray mv2">
+                  发布于：{{ .Date.Format "2006-01-02" }} | 
+                  阅读：{{ .ReadingTime }}分钟
+                </div>
+                
+                <!-- 文章摘要 -->
+                <p class="f6 lh-copy measure">
+                  {{ .Summary | truncate 100 }}
+                </p>
+                
+                <!-- 分类标签 -->
+                {{ with .Params.categories }}
+                  <div class="mt2">
+                    {{ range . }}
+                      <span class="dib pa1 mr1 bg-light-gray f7">{{ . }}</span>
+                    {{ end }}
+                  </div>
+                {{ end }}
+              </div>
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  
+  <!-- 精简后的自定义样式 -->
+  <style>
+    .custom-card {
+      transition: transform 0.3s, box-shadow 0.3s;
+      height: 100%; /* 确保所有卡片高度一致 */
+    }
+    .shadow-hover:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .grow {
+      transform: scale(1);
+    }
+    .grow:hover {
+      transform: scale(1.02);
+    }
+    .primary-color {
+      color: #1e6bb8;
+    }
+    .android-card-container .w-100 { 
+      min-width: 320px; /* 确保最小宽度 */
+    }
+    .lh-copy {
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+  </style>
+{{ end }}
