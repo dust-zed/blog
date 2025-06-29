@@ -3,21 +3,26 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://localhost:1313/categories/android-develop/</loc>
-    <lastmod>2025-06-28T12:15:42+08:00</lastmod>
+    <lastmod>2025-06-29T15:26:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/android-develop/</loc>
-    <lastmod>2025-06-28T12:15:42+08:00</lastmod>
+    <lastmod>2025-06-29T15:26:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</loc>
-    <lastmod>2025-06-28T12:15:42+08:00</lastmod>
+    <loc>http://localhost:1313/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</loc>
+    <lastmod>2025-06-29T15:26:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/</loc>
+    <lastmod>2025-06-29T15:26:57+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</loc>
     <lastmod>2025-06-28T12:15:42+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

@@ -49,8 +49,8 @@
 
   <meta itemprop="name" content="Android-Develop">
   <meta itemprop="description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta itemprop="datePublished" content="2025-06-28T12:15:42+08:00">
-  <meta itemprop="dateModified" content="2025-06-28T12:15:42+08:00">
+  <meta itemprop="datePublished" content="2025-06-29T15:26:57+08:00">
+  <meta itemprop="dateModified" content="2025-06-29T15:26:57+08:00">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Android-Develop">
   <meta name="twitter:description" content="The last theme you&#39;ll ever need. Maybe.">
@@ -114,6 +114,87 @@
   </article>
   <div class="mw8 center">
     <section class="flex-ns mt5 flex-wrap justify-around">
+      
+        <div class="w-100 mb4 relative bg-white">
+          <div class="w-100 mb4 nested-copy-line-height relative bg-white">
+  <div class="mb3 pa4 gray overflow-hidden bg-white">
+    <span class="f6 db">Android-Develops</span>
+    <h1 class="f3 near-black">
+      <a href="/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/" class="link black dim">
+        gradle相关知识
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <h3 id="一插件plugins-vs-库libraries">一、插件(Plugins) vs 库(Libraries)</h3>
+<table>
+  <thead>
+      <tr>
+          <th><strong>特征</strong></th>
+          <th>插件 (Plugins)</th>
+          <th>库 (Libraries)</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>本质</strong></td>
+          <td>构建逻辑扩展工具</td>
+          <td>运行时依赖的代码组件</td>
+      </tr>
+      <tr>
+          <td><strong>作用</strong></td>
+          <td>添加任务/配置/目录结构</td>
+          <td>提供可调用的具体代码实现</td>
+      </tr>
+      <tr>
+          <td><strong>声明位置</strong></td>
+          <td><code>plugins {}</code> 块</td>
+          <td><code>dependencies {}</code> 块</td>
+      </tr>
+      <tr>
+          <td><strong>影响范围</strong></td>
+          <td>构建过程</td>
+          <td>运行时或编译时</td>
+      </tr>
+      <tr>
+          <td><strong>典型示例</strong></td>
+          <td><code>java</code>，<code>android</code></td>
+          <td><code>gson</code>, <code>junit</code></td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="1-插件详解">1. 插件详解</h4>
+<p><strong>核心作用</strong>：</p>
+<ul>
+<li>添加新任务（如 <code>compileJava</code>, <code>assemble</code>）</li>
+<li>定义默认目录结构（如 <code>src/main/java</code>）</li>
+<li>引入预置配置（如 <code>implementation</code> 依赖配置）</li>
+</ul>
+<p><strong>使用场景</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>plugins <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    id <span style="color:#e6db74">&#39;com.android.application&#39;</span> <span style="color:#75715e">// Android APP插件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    id <span style="color:#e6db74">&#39;org.jetbrains.kotlin.android&#39;</span> <span style="color:#75715e">// Kotlin支持
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h4 id="2-库详解">2. 库详解</h4>
+<p><strong>关键特征</strong>：</p>
+<ul>
+<li>通过坐标声明：<code>group:name:version</code>（如 <code>com.google.guava:guava:32.0-jre</code>）</li>
+<li><strong>传递依赖</strong>：库可能自带其他依赖（如 Retrofit 自动引入 OkHttp）</li>
+</ul>
+<p><strong>使用场景</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;androidx.core:core-ktx:1.12.0&#39;</span> <span style="color:#75715e">// 主代码依赖
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    testImplementation <span style="color:#e6db74">&#39;junit:junit:4.13.2&#39;</span>        <span style="color:#75715e">// 测试代码专用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><hr>
+<h3 id="二依赖配置详解">二、依赖配置详解</h3>
+<h4 id="1-implementation最常用">1. <code>implementation</code>（最常用）</h4>
+<p><strong>特点</strong>:</p>
+    </div>
+    <a href="/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1"></a>
+  </div>
+</div>
+
+        </div>
       
         <div class="w-100 mb4 relative bg-white">
           <div class="w-100 mb4 nested-copy-line-height relative bg-white">
