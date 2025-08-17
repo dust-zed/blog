@@ -1,19 +1,86 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Tutorials on zed的博客</title>
-    <link>http://localhost:1313/tutorials/</link>
-    <description>Recent content in Tutorials on zed的博客</description>
-    <generator>Hugo</generator>
-    <language>zh-cn</language>
-    <lastBuildDate>Wed, 11 Jun 2025 12:20:50 +0800</lastBuildDate>
-    <atom:link href="http://localhost:1313/tutorials/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Hugo Vercel博客配置</title>
-      <link>http://localhost:1313/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/</link>
-      <pubDate>Wed, 11 Jun 2025 12:20:50 +0800</pubDate>
-      <guid>http://localhost:1313/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/</guid>
-      <description>&lt;h4 id=&#34;前期准备&#34;&gt;前期准备&lt;/h4&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;安装 Hugo&lt;/p&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# macOS (Homebrew)&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;brew install hugo&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;注册Vercel账号&lt;/p&gt;&#xA;&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;h4 id=&#34;创建本地博客&#34;&gt;创建本地博客&lt;/h4&gt;&#xA;&lt;h5 id=&#34;11-生成新站点&#34;&gt;1.1 生成新站点&lt;/h5&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;hugo new site myblog&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;cd myblog&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;12-添加主题&#34;&gt;1.2 添加主题&lt;/h5&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;echo &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;theme = &amp;#39;ananke&amp;#39;&amp;#34;&lt;/span&gt; &amp;gt;&amp;gt; config.toml  &lt;span style=&#34;color:#75715e&#34;&gt;# 配置主题&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;自定义域名&#34;&gt;自定义域名&lt;/h4&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;在Vercel控制控制台 -&amp;gt; &lt;strong&gt;Settings&lt;/strong&gt; -&amp;gt; &lt;strong&gt;Domains&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;li&gt;输入自己的域名(&lt;code&gt;dust-zed.site&lt;/code&gt;,可在阿里云购买)&lt;/li&gt;&#xA;&lt;li&gt;按提示配置DNS解析&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;h4 id=&#34;管理不同类型的文章&#34;&gt;管理不同类型的文章&lt;/h4&gt;&#xA;&lt;h5 id=&#34;31-使用物理目录分类&#34;&gt;3.1 使用物理目录分类&lt;/h5&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;content/&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── blog/           &lt;span style=&#34;color:#75715e&#34;&gt;# 常规博客&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── tutorials/      &lt;span style=&#34;color:#75715e&#34;&gt;# 教程类&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── reviews/        &lt;span style=&#34;color:#75715e&#34;&gt;# 产品评测&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;└── notes/          &lt;span style=&#34;color:#75715e&#34;&gt;# 学习笔记&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;32-创建对应类型文章&#34;&gt;3.2 创建对应类型文章&lt;/h5&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;hugo new tutorials/hugo-vercel博客配置.md&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;33-统一配置文件&#34;&gt;3.3 统一配置文件&lt;/h5&gt;&#xA;&lt;p&gt;在&lt;code&gt;config.toml&lt;/code&gt;中集中管理URL规则&lt;/p&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-toml&#34; data-lang=&#34;toml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 所有文章默认路径&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# :slug动态代表内容的URL友好版本标题&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;permalinks&lt;/span&gt;]&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;posts&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/blog/:year/:month/:slug/&amp;#34;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;tutorials&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/learn/:slug/&amp;#34;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;reviews&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/products/:category/:slug/&amp;#34;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 分类页面路径&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;taxonomies&lt;/span&gt;]&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;category&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;categories&amp;#34;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;tag&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tags&amp;#34;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;34-自动生成分类列表&#34;&gt;3.4 自动生成分类列表&lt;/h5&gt;&#xA;&lt;h4 id=&#34;升级维护&#34;&gt;升级维护&lt;/h4&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;更新主题：&lt;code&gt;git submodule update --remote --merge&lt;/code&gt;&lt;/p&gt;</description>
-    </item>
-  </channel>
+    <channel>
+        <title>Tutorials on zed的博客</title>
+        <link>http://localhost:1313/tutorials/</link>
+        <description>Recent content in Tutorials on zed的博客</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <lastBuildDate>Wed, 11 Jun 2025 12:20:50 +0800</lastBuildDate><atom:link href="http://localhost:1313/tutorials/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Hugo Vercel博客配置</title>
+        <link>http://localhost:1313/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/</link>
+        <pubDate>Wed, 11 Jun 2025 12:20:50 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/</guid>
+        <description>&lt;h4 id=&#34;前期准备&#34;&gt;前期准备
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;安装 Hugo&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# macOS (Homebrew)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;brew install hugo
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;注册Vercel账号&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;创建本地博客&#34;&gt;创建本地博客
+&lt;/h4&gt;&lt;h5 id=&#34;11-生成新站点&#34;&gt;1.1 生成新站点
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;hugo new site myblog
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;cd myblog
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;12-添加主题&#34;&gt;1.2 添加主题
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;echo &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;theme = &amp;#39;ananke&amp;#39;&amp;#34;&lt;/span&gt; &amp;gt;&amp;gt; config.toml  &lt;span style=&#34;color:#75715e&#34;&gt;# 配置主题&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;自定义域名&#34;&gt;自定义域名
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;在Vercel控制控制台 -&amp;gt; &lt;strong&gt;Settings&lt;/strong&gt; -&amp;gt; &lt;strong&gt;Domains&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;输入自己的域名(&lt;code&gt;dust-zed.site&lt;/code&gt;,可在阿里云购买)&lt;/li&gt;
+&lt;li&gt;按提示配置DNS解析&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;管理不同类型的文章&#34;&gt;管理不同类型的文章
+&lt;/h4&gt;&lt;h5 id=&#34;31-使用物理目录分类&#34;&gt;3.1 使用物理目录分类
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;content/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── blog/           &lt;span style=&#34;color:#75715e&#34;&gt;# 常规博客&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── tutorials/      &lt;span style=&#34;color:#75715e&#34;&gt;# 教程类&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── reviews/        &lt;span style=&#34;color:#75715e&#34;&gt;# 产品评测&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;└── notes/          &lt;span style=&#34;color:#75715e&#34;&gt;# 学习笔记&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;32-创建对应类型文章&#34;&gt;3.2 创建对应类型文章
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;hugo new tutorials/hugo-vercel博客配置.md
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;33-统一配置文件&#34;&gt;3.3 统一配置文件
+&lt;/h5&gt;&lt;p&gt;在&lt;code&gt;config.toml&lt;/code&gt;中集中管理URL规则&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-toml&#34; data-lang=&#34;toml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 所有文章默认路径&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# :slug动态代表内容的URL友好版本标题&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;permalinks&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;posts&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/blog/:year/:month/:slug/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;tutorials&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/learn/:slug/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;reviews&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/products/:category/:slug/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 分类页面路径&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;taxonomies&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;category&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;categories&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;tag&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;tags&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;34-自动生成分类列表&#34;&gt;3.4 自动生成分类列表
+&lt;/h5&gt;&lt;h4 id=&#34;升级维护&#34;&gt;升级维护
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;更新主题：&lt;code&gt;git submodule update --remote --merge&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;本地测试：&lt;code&gt;hugo server -D&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;强制清除缓存：&lt;code&gt;hugo --gc -minify --cleanDestiantionDir&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用&lt;code&gt;hugo new --kind tutorial tutorials/new-tutorial.md&lt;/code&gt;创建预设格式的文章&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为不同目录设置独立的前言参数(archetypes)&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;archetypes/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── tutorials.md     &lt;span style=&#34;color:#75715e&#34;&gt;# 博客教程模板&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        
+    </channel>
 </rss>

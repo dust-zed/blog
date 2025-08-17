@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="将回调转换为协程 背景：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成挂起函数(suspend fun)，使其可以在协程中像顺序代码一样使用。\n核心函数：\nsuspendCoroutine(简单转换，无内置取消支持) suspend fun &lt;T&gt; convertCallbackToSuspendingFunc(): T = suspendCoroutine { continuation -&gt; //1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { //2. 成功时恢复协程，传递结果 continuation.resume(result) } override fun onFailure(error: Throwable) { //3. 失败时恢复协程，传递异常 continuation.resumeWithException(error) } } someAsyncOperation(callback) } continuation: 表示当前被挂起的协程。它提供了恢复协程的方法：resume(value)和resumeWithException(exception)。 缺点：如果调用这个suspend fun 的协程被取消。someAsyncOperation不会自动终止。这可能导致资源浪费或意外结果。只适用于异步操作本身非常快或你不关心取消的情况。 suspendCancellableCoroutine(支持取消) suspend fun &lt;T&gt; convertCallbackToSuspendingFuncSafely(): T = suspendCancellableCoroutine { cancellableContinuation -&gt; // 1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { cancellableContinuation.resume(result) } override fun onFailure(error: Throwable) { cancellableContinuation.resumeWithException(error) } } someAsyncOperation(callback) // 2. ⭐ 关键步骤：注册取消监听器 ⭐ cancellableContinuation.invokeOnCancellation { // 当协程被取消时，尝试取消底层的异步操作 // 通常调用库提供的取消方法，例如：cancelOperation(callback) cancelOperation(callback) } } 当调用这个suspend fun的协程被取消时： 协程的取消状态会传播到这个 CancellableContinuation。 触发 invokeOnCancellation {} 块。 在块内，你调用库的取消方法去清理资源并停止操作。 这是将回调 API 集成到协程世界的最佳实践。 协程作用域 1、什么是协程作用域（CoroutineScope） CoroutineScope不是协程本身，而是一个定义新协程运行环境的接口 它为在其内部启动的所有子协程提供了一个统一的CoroutineContext基础 它将所有在其内部启动的协程组织在一个结构中，以便进行生命周期管理 核心构成：\n">
+<title>协程知识点</title>
+
+<link rel='canonical' href='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="协程知识点">
+<meta property='og:description' content="将回调转换为协程 背景：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成挂起函数(suspend fun)，使其可以在协程中像顺序代码一样使用。\n核心函数：\nsuspendCoroutine(简单转换，无内置取消支持) suspend fun &lt;T&gt; convertCallbackToSuspendingFunc(): T = suspendCoroutine { continuation -&gt; //1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { //2. 成功时恢复协程，传递结果 continuation.resume(result) } override fun onFailure(error: Throwable) { //3. 失败时恢复协程，传递异常 continuation.resumeWithException(error) } } someAsyncOperation(callback) } continuation: 表示当前被挂起的协程。它提供了恢复协程的方法：resume(value)和resumeWithException(exception)。 缺点：如果调用这个suspend fun 的协程被取消。someAsyncOperation不会自动终止。这可能导致资源浪费或意外结果。只适用于异步操作本身非常快或你不关心取消的情况。 suspendCancellableCoroutine(支持取消) suspend fun &lt;T&gt; convertCallbackToSuspendingFuncSafely(): T = suspendCancellableCoroutine { cancellableContinuation -&gt; // 1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { cancellableContinuation.resume(result) } override fun onFailure(error: Throwable) { cancellableContinuation.resumeWithException(error) } } someAsyncOperation(callback) // 2. ⭐ 关键步骤：注册取消监听器 ⭐ cancellableContinuation.invokeOnCancellation { // 当协程被取消时，尝试取消底层的异步操作 // 通常调用库提供的取消方法，例如：cancelOperation(callback) cancelOperation(callback) } } 当调用这个suspend fun的协程被取消时： 协程的取消状态会传播到这个 CancellableContinuation。 触发 invokeOnCancellation {} 块。 在块内，你调用库的取消方法去清理资源并停止操作。 这是将回调 API 集成到协程世界的最佳实践。 协程作用域 1、什么是协程作用域（CoroutineScope） CoroutineScope不是协程本身，而是一个定义新协程运行环境的接口 它为在其内部启动的所有子协程提供了一个统一的CoroutineContext基础 它将所有在其内部启动的协程组织在一个结构中，以便进行生命周期管理 核心构成：\n">
+<meta property='og:url' content='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-30T19:02:22&#43;08:00'/><meta property='article:modified_time' content='2025-06-30T19:02:22&#43;08:00'/>
+<meta name="twitter:title" content="协程知识点">
+<meta name="twitter:description" content="将回调转换为协程 背景：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成挂起函数(suspend fun)，使其可以在协程中像顺序代码一样使用。\n核心函数：\nsuspendCoroutine(简单转换，无内置取消支持) suspend fun &lt;T&gt; convertCallbackToSuspendingFunc(): T = suspendCoroutine { continuation -&gt; //1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { //2. 成功时恢复协程，传递结果 continuation.resume(result) } override fun onFailure(error: Throwable) { //3. 失败时恢复协程，传递异常 continuation.resumeWithException(error) } } someAsyncOperation(callback) } continuation: 表示当前被挂起的协程。它提供了恢复协程的方法：resume(value)和resumeWithException(exception)。 缺点：如果调用这个suspend fun 的协程被取消。someAsyncOperation不会自动终止。这可能导致资源浪费或意外结果。只适用于异步操作本身非常快或你不关心取消的情况。 suspendCancellableCoroutine(支持取消) suspend fun &lt;T&gt; convertCallbackToSuspendingFuncSafely(): T = suspendCancellableCoroutine { cancellableContinuation -&gt; // 1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { cancellableContinuation.resume(result) } override fun onFailure(error: Throwable) { cancellableContinuation.resumeWithException(error) } } someAsyncOperation(callback) // 2. ⭐ 关键步骤：注册取消监听器 ⭐ cancellableContinuation.invokeOnCancellation { // 当协程被取消时，尝试取消底层的异步操作 // 通常调用库提供的取消方法，例如：cancelOperation(callback) cancelOperation(callback) } } 当调用这个suspend fun的协程被取消时： 协程的取消状态会传播到这个 CancellableContinuation。 触发 invokeOnCancellation {} 块。 在块内，你调用库的取消方法去清理资源并停止操作。 这是将回调 API 集成到协程世界的最佳实践。 协程作用域 1、什么是协程作用域（CoroutineScope） CoroutineScope不是协程本身，而是一个定义新协程运行环境的接口 它为在其内部启动的所有子协程提供了一个统一的CoroutineContext基础 它将所有在其内部启动的协程组织在一个结构中，以便进行生命周期管理 核心构成：\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li  class='current' >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/rust/' >
+                
+                
+                
+                <span>Rusts</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/">协程知识点</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jun 30, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 2 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h4 id="将回调转换为协程">将回调转换为协程
+</h4><p><strong>背景</strong>：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成<code>挂起函数(suspend fun)</code>，使其可以在协程中像<strong>顺序代码</strong>一样使用。</p>
+<p><strong>核心函数：</strong></p>
+<ol>
+<li><strong><code>suspendCoroutine</code>(简单转换，无内置取消支持)</strong></li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> &lt;<span style="color:#a6e22e">T</span>&gt; <span style="color:#a6e22e">convertCallbackToSuspendingFunc</span>(): T = suspendCoroutine {
+</span></span><span style="display:flex;"><span>  continuation <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">//1. 启动异步操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">val</span> callback = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">Callback</span>&lt;T&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onSuccess</span>(result: T) {
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e">//2. 成功时恢复协程，传递结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      continuation.resume(result)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onFailure</span>(error: Throwable) {
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e">//3. 失败时恢复协程，传递异常
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      continuation.resumeWithException(error)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  someAsyncOperation(callback)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>continuation: 表示当前被挂起的协程。它提供了恢复协程的方法：resume(value)和resumeWithException(exception)。</li>
+<li>缺点：如果调用这个suspend fun 的协程被取消。someAsyncOperation不会自动终止。这可能导致资源浪费或意外结果。只适用于异步操作本身非常快或你不关心取消的情况。</li>
+</ul>
+<ol start="2">
+<li><strong><code>suspendCancellableCoroutine</code>(支持取消)</strong></li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> &lt;<span style="color:#a6e22e">T</span>&gt; <span style="color:#a6e22e">convertCallbackToSuspendingFuncSafely</span>(): T = suspendCancellableCoroutine { cancellableContinuation <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 启动异步操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">val</span> callback = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">Callback</span>&lt;T&gt; {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onSuccess</span>(result: T) {
+</span></span><span style="display:flex;"><span>            cancellableContinuation.resume(result)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onFailure</span>(error: Throwable) {
+</span></span><span style="display:flex;"><span>            cancellableContinuation.resumeWithException(error)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    someAsyncOperation(callback)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. ⭐ 关键步骤：注册取消监听器 ⭐
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    cancellableContinuation.invokeOnCancellation {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 当协程被取消时，尝试取消底层的异步操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 通常调用库提供的取消方法，例如：cancelOperation(callback)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        cancelOperation(callback)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>当调用这个<code>suspend fun</code>的协程被取消时：
+<ol>
+<li>协程的取消状态会传播到这个 <code>CancellableContinuation</code>。</li>
+<li>触发 <code>invokeOnCancellation {}</code> 块。</li>
+<li>在块内，你调用库的取消方法去清理资源并停止操作。</li>
+</ol>
+</li>
+<li>这是<strong>将回调 API 集成到协程世界的最佳实践</strong>。</li>
+</ul>
+<h4 id="协程作用域">协程作用域
+</h4><h5 id="1什么是协程作用域coroutinescope">1、什么是协程作用域（CoroutineScope）
+</h5><ul>
+<li><code>CoroutineScope</code>不是协程本身，而是一个<strong>定义新协程运行环境</strong>的接口</li>
+<li>它为在其内部启动的所有子协程提供了一个统一的<code>CoroutineContext</code>基础</li>
+<li>它将所有在其内部启动的协程<strong>组织在一个结构中</strong>，以便进行<strong>生命周期管理</strong></li>
+</ul>
+<p><strong>核心构成：</strong></p>
+<p>CoroutineScope接口只有一个属性：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">CoroutineScope</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">val</span> coroutineContext: CotoutineContext
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这个<code>coroutineContext</code>是启动在该作用域内的<strong>所有子协程的默认上下文</strong>。</p>
+<p><strong>协程作用域的核心优点</strong></p>
+<ol>
+<li><strong>生命周期的自动管理(取消)</strong>
+<ul>
+<li>避免内存泄漏</li>
+<li>简化资源清理</li>
+</ul>
+</li>
+<li><strong>安全性与清晰性</strong>
+<ul>
+<li>取消传播：作用域的取消会自动且可靠地传播到所有子协程，无需开发者手动级联取消</li>
+<li>异常处理控制：作用域定义了异常传播的策略（通过其关联的<code>Job</code>是普通<code>Job</code>还是<code>SupervisorJob</code>）。<code>SupervisorJob</code>允许子协程独立失败而不影响其他兄弟协程和父作用域（常用于UI组件中单独的后台任务）。</li>
+<li>代码组织清晰：将任务划分到不同的作用域中，体现了任务的逻辑和生命周期归属。</li>
+</ul>
+</li>
+<li><strong>上下文继承与共享</strong>
+<ul>
+<li>在作用域内启动的协程默认继承作用域的coroutineContext</li>
+<li>可以指定不同的CoroutineContext元素来覆盖上下文</li>
+</ul>
+</li>
+<li><strong>协同等待(job.join(), coroutineScope {})</strong>
+<ul>
+<li>你可以通过作用域的关联 <code>Job</code> (调用 <code>scope.coroutineContext[Job]!!.join()</code> 或更简单地使用 <code>coroutineScope {}</code> 构建器) 来<strong>等待作用域内所有子协程全部完成</strong>。这保证了任务内部的并发操作在外部看来是原子性的（即父协程等待所有子协程完成后自己才完成）。</li>
+<li><code>coroutineScope {}</code> 构建器本身也会创建一个新的子作用域，并等待其内部所有子协程完成</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h4 id="async的行为">async的行为
+</h4><h5 id="1-async的立即启动特性">1. async的立即启动特性
+</h5><ul>
+<li>async不是等待await才执行：当使用async { &hellip; } 创建协程时，其中的代码会立即开始执行，而不是等待调用<code>await()</code>。即使不调用await()，协程体也会在后台启动。</li>
+<li>并发执行：多个async协程默认并行执行（取决于调度器和上下文）。例如：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">val</span> deferred1 = async { task1() } <span style="color:#75715e">// 立即开始执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> deferred2 = async { task2() } <span style="color:#75715e">// 立即开始执行（可能与 task1 同时运行）
+</span></span></span></code></pre></div><h5 id="2-await的作用">2. await()的作用
+</h5><ul>
+<li>同步等待结果：await()是一个挂起点：
+<ul>
+<li>如果协程已完成：直接返回结果</li>
+<li>如果协程未完成：挂起当前协程，等待结果但不阻止其他协程执行</li>
+</ul>
+</li>
+<li>顺序控制：await()可强制等待顺序：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">val</span> result1 = deferred1.await() <span style="color:#75715e">// 等待 task1 完成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> result2 = deferred2.await() <span style="color:#75715e">// 再等待 task2 完成
+</span></span></span></code></pre></div><h4 id="qa">Q&amp;A
+</h4><ol>
+<li>
+<p>父协程的挂起会影响子协程的运行吗？</p>
+<ul>
+<li><strong>通常不会影响子协程的运行</strong>，父协程与子协程是独立的任务单元，只要子协程未完成且未被取消，他们会继续由调度器分配线程执行。取消是取消，挂起时让出当前线程</li>
+</ul>
+</li>
+<li>
+<p>父作用域会等待所有子协程完成后才继续执行？</p>
+<ul>
+<li>是的，一个是隐式等待，一个是由coroutineScope构建的显式等待。</li>
+</ul>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">complexTask</span>() = coroutineScope { <span style="color:#75715e">// ⭐父作用域⭐
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">val</span> deferred1 = async {
+</span></span><span style="display:flex;"><span>        delay(<span style="color:#ae81ff">1000</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;结果1&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> deferred2 = async {
+</span></span><span style="display:flex;"><span>        delay(<span style="color:#ae81ff">1500</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;结果2&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    println(<span style="color:#e6db74">&#34;组合结果: </span><span style="color:#e6db74">${deferred1.await()}</span><span style="color:#e6db74"> + </span><span style="color:#e6db74">${deferred2.await()}</span><span style="color:#e6db74">&#34;</span>) 
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 🚫 会等待两个async都完成才执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>runBlocking {
+</span></span><span style="display:flex;"><span>    println(<span style="color:#e6db74">&#34;开始任务&#34;</span>)
+</span></span><span style="display:flex;"><span>    complexTask() <span style="color:#75715e">// 👇挂起点👇
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    println(<span style="color:#e6db74">&#34;✅ 所有嵌套协程完成&#34;</span>) <span style="color:#75715e">// 在complexTask内部完成后执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

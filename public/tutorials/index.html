@@ -1,370 +1,200 @@
 <!DOCTYPE html>
-<html lang="zh-cn">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    
-    <title>zed的博客</title>
-    <meta name="viewport" content="width=device-width,minimum-scale=1">
-    <meta name="description" content="The last theme you&#39;ll ever need. Maybe.">
-    <meta name="generator" content="Hugo 0.147.8">
-    
-    
-    
-      <meta name="robots" content="noindex, nofollow">
-    
-    
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="The last theme you'll ever need. Maybe.">
+<title>Tutorials</title>
 
-    
-<link rel="stylesheet" href="/ananke/css/main.min.css" >
+<link rel='canonical' href='http://localhost:1313/tutorials/'>
 
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Tutorials">
+<meta property='og:description' content="The last theme you'll ever need. Maybe.">
+<meta property='og:url' content='http://localhost:1313/tutorials/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='website'><meta property='og:updated_time' content=' 2025-08-15T12:50:54&#43;08:00 '/>
+<meta name="twitter:title" content="Tutorials">
+<meta name="twitter:description" content="The last theme you'll ever need. Maybe."><link rel="alternate" type="application/rss&#43;xml" href="http://localhost:1313/tutorials/index.xml">
+    </head>
+    <body class="">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
 
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
 
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
 
-    
-
-
-    
-      
-
-    
-
-    
-    
-      <link href="/tutorials/index.xml" rel="alternate" type="application/rss+xml" title="zed的博客" />
-      <link href="/tutorials/index.xml" rel="feed" type="application/rss+xml" title="zed的博客" />
-      
-    
-
-    
-      <link rel="canonical" href="http://localhost:1313/tutorials/">
-    
-
-    <meta property="og:url" content="http://localhost:1313/tutorials/">
-  <meta property="og:site_name" content="zed的博客">
-  <meta property="og:title" content="Tutorials">
-  <meta property="og:description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta property="og:locale" content="zh_cn">
-  <meta property="og:type" content="website">
-
-  <meta itemprop="name" content="Tutorials">
-  <meta itemprop="description" content="The last theme you&#39;ll ever need. Maybe.">
-  <meta itemprop="datePublished" content="2025-06-11T12:20:50+08:00">
-  <meta itemprop="dateModified" content="2025-06-11T12:20:50+08:00">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Tutorials">
-  <meta name="twitter:description" content="The last theme you&#39;ll ever need. Maybe.">
-
-	
-  </head><body class="ma0 avenir bg-near-white development">
-
-    
-
-  <header>
-    <div class="pb3-m pb6-l bg-black">
-      <nav class="pv3 ph3 ph4-ns" role="navigation">
-  <div class="flex-l center items-center justify-between">
-    <a href="/" class="f3 fw2 hover-white white-90 dib no-underline">
-      
-        zed的博客
-      
-    </a>
-    <div class="flex-l items-center">
-      
-
-      
-        <ul class="pl0 mr3">
-          
-          <li class="list f5 f4-ns fw4 dib pr3">
-            <a class="hover-white white-90 no-underline" href="/android-develop/" title="">
-              Android-Develops
-            </a>
-          </li>
-          
-          <li class="list f5 f4-ns fw4 dib pr3">
-            <a class="hover-white white-90 no-underline" href="/tutorials/" title="">
-              Tutorials
-            </a>
-          </li>
-          
-        </ul>
-      
-      <div class="ananke-socials"></div>
-
-    </div>
-  </div>
-</nav>
-
-      <div class="tc-l pv3 ph3 ph4-ns">
-        <h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">
-          Tutorials
-        </h1>
+    <header>
         
-      </div>
-    </div>
-  </header>
-
-
-    <main class="pb7" role="main">
-      
-<style>
-   
-  :root {
-    --card-padding: 1.2rem;
-    --card-border-radius: 10px;
-    --card-spacing: 1.5rem;
-    --primary-color: #1e40af;
-    --accent-color: #3b82f6;
-    --text-color: #2d3748;
-    --light-text: #718096;
-  }
-  
-   
-  .compact-header {
-    text-align: center;
-    padding: 2rem 1rem 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .compact-header h1 {
-    font-size: 2rem;
-    margin-bottom: 0.6rem;
-    color: var(--primary-color);
-    position: relative;
-    display: inline-block;
-  }
-  
-  .compact-header p {
-    max-width: 800px;
-    margin: 0 auto;
-    font-size: 1.05rem;
-    color: var(--light-text);
-    line-height: 1.6;
-  }
-  
-   
-  .compact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: var(--card-spacing);
-    margin-top: 1.5rem;
-  }
-  
-   
-  .compact-card {
-    background: white;
-    border-radius: var(--card-border-radius);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #e2e8f0;
-    padding: var(--card-padding);
-  }
-  
-  .compact-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-    border-color: #cbd5e0;
-  }
-  
-   
-  .compact-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .compact-title {
-    font-size: 1.15rem;
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    line-height: 1.4;
-  }
-  
-  .compact-title a {
-    color: var(--text-color);
-    transition: color 0.2s ease;
-  }
-  
-  .compact-card:hover .compact-title a {
-    color: var(--accent-color);
-  }
-  
-  .compact-excerpt {
-    color: var(--light-text);
-    font-size: 0.93rem;
-    line-height: 1.6;
-    flex-grow: 1;
-    margin-bottom: 1rem;
-  }
-  
-  .compact-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 0.8rem;
-    border-top: 1px solid #f1f5f9;
-    font-size: 0.85rem;
-    color: #a0aec0;
-  }
-  
-  .read-more-link {
-    color: var(--accent-color);
-    font-weight: 500;
-    font-size: 0.9rem;
-  }
-  
-  .article-date {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .article-date svg {
-    width: 14px;
-    height: 14px;
-  }
-  
-   
-  .compact-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    justify-content: center;
-    margin: 1.2rem 0 1.5rem;
-  }
-  
-  .tag-item {
-    background: #f7fafc;
-    padding: 0.4rem 0.8rem;
-    border-radius: 16px;
-    font-size: 0.85rem;
-    color: #4a5568;
-    transition: all 0.2s ease;
-  }
-  
-  .tag-item:hover {
-    background: #edf2f7;
-    color: var(--primary-color);
-  }
-  
-   
-  .no-articles {
-    text-align: center;
-    padding: 2rem;
-    grid-column: 1 / -1;
-  }
-  
-  .no-articles-icon {
-    font-size: 3rem;
-    color: #cbd5e1;
-    margin-bottom: 1rem;
-  }
-  
-  .no-articles-text {
-    font-size: 1.2rem;
-    color: #718096;
-  }
-  
-   
-  @media (min-width: 1024px) {
-    .compact-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  
-  @media (max-width: 1023px) and (min-width: 768px) {
-    .compact-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  
-  @media (max-width: 767px) and (min-width: 480px) {
-    .compact-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (max-width: 479px) {
-    .compact-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .compact-header h1 {
-      font-size: 1.7rem;
-    }
-    
-    .compact-header p {
-      font-size: 0.95rem;
-    }
-  }
-  
-   
-  .pagination {
-    margin-top: 2.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #edf2f7;
-  }
-</style>
-
-<article class="pa3 pa4-ns nested-copy-line-height">    
-    
-    <div class="compact-tags">
-      
-    </div>
-  </header>
-
-  <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy nested-links mid-gray"></section>
-  
-  
-  <section class="compact-grid">
-    
-      <article class="compact-card">
-        <div class="compact-content">
-          <h3 class="compact-title">
-            <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/" class="nested-links">
-              Hugo Vercel博客配置
-            </a>
-          </h3>
-          
-          <div class="compact-excerpt">
             
-              利用Hugo搭建博客并通过Vercel自动部署
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
             
-          </div>
-          
-          <div class="compact-meta">
-            <div class="article-date">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              25/06/11
-            </div>
-          </div>
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
         </div>
-      </article>
-    
-  </section>
-  
-  
-  <div class="pagination"></div>
-</article>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/rust/' >
+                
+                
+                
+                <span>Rusts</span>
+            </a>
+        </li>
+        
+        
+        <li  class='current' >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
 
-    </main>
-    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
-  <div class="flex justify-between">
-  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="http://localhost:1313/" >
-    &copy;  zed的博客 2025 
-  </a>
-    <div><div class="ananke-socials"></div>
-</div>
-  </div>
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <header>
+        <h3 class="section-title">
+            
+                章节
+            
+        </h3>
+
+        <div class="section-card">
+            <div class="section-details">
+                <h3 class="section-count">1 个页面</h3>
+                <h1 class="section-term">Tutorials</h1>
+                
+            </div>
+        </div>
+    </header>
+    
+    <section class="article-list--compact">
+        
+            <article>
+    <a href="/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/">
+        <div class="article-details">
+            <h2 class="article-title">Hugo Vercel博客配置</h2>
+            <footer class="article-time">
+                <time datetime='2025-06-11T12:20:50&#43;08:00'>Jun 11, 2025</time>
+            </footer>
+        </div>
+    </a>
+</article>
+        
+    </section>
+<footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
 </footer>
 
-  </body>
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
 </html>

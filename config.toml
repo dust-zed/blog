@@ -1,4 +1,4 @@
-theme = 'ananke'
+theme = 'hugo-theme-stack'
 baseURL = "https://www.dust-zed.site"
 title = "zed的博客"
 languageCode = "zh-cn"
@@ -25,7 +25,6 @@ reviews = "reviews/:slug"
 
 [params]
 text_color = ""
-author = ""
 favicon = ""
 site_logo = ""
 description = "The last theme you'll ever need. Maybe."
@@ -33,6 +32,6 @@ description = "The last theme you'll ever need. Maybe."
 background_color_class = "bg-black"
 recent_posts_number = 3
 
-[[params.ananke_socials]]
-name = "twitter"
-url = "https://twitter.com/GoHugoIO"
+[author]
+name = "zed"
+email = "zed118@gmail.com"

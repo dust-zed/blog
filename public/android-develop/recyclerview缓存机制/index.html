@@ -1,180 +1,211 @@
 <!DOCTYPE html>
-<html lang="zh-cn">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    
-    <title>RecyclerView缓存机制 | zed的博客</title>
-    <meta name="viewport" content="width=device-width,minimum-scale=1">
-    <meta name="description" content="RecyclerView缓存机制
-多级缓存体系架构图
-TEXT
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="RecyclerView缓存机制\n多级缓存体系架构图 TEXT RecyclerView 缓存系统 ├── 1. 屏幕内缓存 (Attached Scrap) │ └── 存放当前可见的ViewHolder（快速复用） ├── 2. 屏幕外缓存 (Cache) │ └── 保存最近离开屏幕的ViewHolder（默认容量=2） ├── 3. 扩展缓存 (ViewCacheExtension) │ └── 开发者自定义缓存（特殊用途） └── 4. 回收池 (RecycledViewPool) └── 全局共享的ViewHolder存储（不同类型独立缓存） 根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder\n在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：\n1. changedScrap 的作用 用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。 工作机制： 当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。 在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。 目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。 2. attachedScrap 的作用 用途：用于 快速复用可见或即将可见的 ViewHolder。 工作机制： 在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。 遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。 目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。 3. Stable IDs 如何改变 ViewHolder 获取方式 当启用 Stable IDs（通过 setHasStableIds(true) + 重写 getItemId()）时：\n">
+<title>RecyclerView缓存机制</title>
 
-RecyclerView 缓存系统
-├── 1. 屏幕内缓存 (Attached Scrap)
-│   └── 存放当前可见的ViewHolder（快速复用）
-├── 2. 屏幕外缓存 (Cache)
-│   └── 保存最近离开屏幕的ViewHolder（默认容量=2）
-├── 3. 扩展缓存 (ViewCacheExtension)
-│   └── 开发者自定义缓存（特殊用途）
-└── 4. 回收池 (RecycledViewPool)
-    └── 全局共享的ViewHolder存储（不同类型独立缓存）
-根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder
-在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：
+<link rel='canonical' href='http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/'>
 
-1. changedScrap 的作用
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="RecyclerView缓存机制">
+<meta property='og:description' content="RecyclerView缓存机制\n多级缓存体系架构图 TEXT RecyclerView 缓存系统 ├── 1. 屏幕内缓存 (Attached Scrap) │ └── 存放当前可见的ViewHolder（快速复用） ├── 2. 屏幕外缓存 (Cache) │ └── 保存最近离开屏幕的ViewHolder（默认容量=2） ├── 3. 扩展缓存 (ViewCacheExtension) │ └── 开发者自定义缓存（特殊用途） └── 4. 回收池 (RecycledViewPool) └── 全局共享的ViewHolder存储（不同类型独立缓存） 根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder\n在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：\n1. changedScrap 的作用 用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。 工作机制： 当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。 在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。 目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。 2. attachedScrap 的作用 用途：用于 快速复用可见或即将可见的 ViewHolder。 工作机制： 在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。 遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。 目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。 3. Stable IDs 如何改变 ViewHolder 获取方式 当启用 Stable IDs（通过 setHasStableIds(true) + 重写 getItemId()）时：\n">
+<meta property='og:url' content='http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-11T15:26:57&#43;08:00'/><meta property='article:modified_time' content='2025-06-11T15:26:57&#43;08:00'/>
+<meta name="twitter:title" content="RecyclerView缓存机制">
+<meta name="twitter:description" content="RecyclerView缓存机制\n多级缓存体系架构图 TEXT RecyclerView 缓存系统 ├── 1. 屏幕内缓存 (Attached Scrap) │ └── 存放当前可见的ViewHolder（快速复用） ├── 2. 屏幕外缓存 (Cache) │ └── 保存最近离开屏幕的ViewHolder（默认容量=2） ├── 3. 扩展缓存 (ViewCacheExtension) │ └── 开发者自定义缓存（特殊用途） └── 4. 回收池 (RecycledViewPool) └── 全局共享的ViewHolder存储（不同类型独立缓存） 根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder\n在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：\n1. changedScrap 的作用 用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。 工作机制： 当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。 在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。 目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。 2. attachedScrap 的作用 用途：用于 快速复用可见或即将可见的 ViewHolder。 工作机制： 在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。 遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。 目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。 3. Stable IDs 如何改变 ViewHolder 获取方式 当启用 Stable IDs（通过 setHasStableIds(true) + 重写 getItemId()）时：\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
 
-用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。
-工作机制：
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
 
-当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。
-在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
 
-
-目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。
-
-
-2. attachedScrap 的作用
-
-用途：用于 快速复用可见或即将可见的 ViewHolder。
-工作机制：
-
-在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。
-遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。
-
-
-目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。
-
-
-3. Stable IDs 如何改变 ViewHolder 获取方式
-当启用 Stable IDs（通过 setHasStableIds(true) &#43; 重写 getItemId()）时：">
-    <meta name="generator" content="Hugo 0.147.8">
-    
-    
-    
-      <meta name="robots" content="noindex, nofollow">
-    
-    
-
-    
-<link rel="stylesheet" href="/ananke/css/main.min.css" >
-
-
-
-
-    
-
-
-    
-      
-
-    
-
-    
-
-    
-      <link rel="canonical" href="http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/">
-    
-
-    <meta property="og:url" content="http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/">
-  <meta property="og:site_name" content="zed的博客">
-  <meta property="og:title" content="RecyclerView缓存机制">
-  <meta property="og:description" content="RecyclerView缓存机制
-多级缓存体系架构图 TEXT RecyclerView 缓存系统 ├── 1. 屏幕内缓存 (Attached Scrap) │ └── 存放当前可见的ViewHolder（快速复用） ├── 2. 屏幕外缓存 (Cache) │ └── 保存最近离开屏幕的ViewHolder（默认容量=2） ├── 3. 扩展缓存 (ViewCacheExtension) │ └── 开发者自定义缓存（特殊用途） └── 4. 回收池 (RecycledViewPool) └── 全局共享的ViewHolder存储（不同类型独立缓存） 根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder
-在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：
-1. changedScrap 的作用 用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。 工作机制： 当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。 在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。 目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。 2. attachedScrap 的作用 用途：用于 快速复用可见或即将可见的 ViewHolder。 工作机制： 在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。 遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。 目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。 3. Stable IDs 如何改变 ViewHolder 获取方式 当启用 Stable IDs（通过 setHasStableIds(true) &#43; 重写 getItemId()）时：">
-  <meta property="og:locale" content="zh_cn">
-  <meta property="og:type" content="article">
-    <meta property="article:section" content="android-develop">
-    <meta property="article:published_time" content="2025-06-11T15:26:57+08:00">
-    <meta property="article:modified_time" content="2025-06-11T15:26:57+08:00">
-
-  <meta itemprop="name" content="RecyclerView缓存机制">
-  <meta itemprop="description" content="RecyclerView缓存机制
-多级缓存体系架构图 TEXT RecyclerView 缓存系统 ├── 1. 屏幕内缓存 (Attached Scrap) │ └── 存放当前可见的ViewHolder（快速复用） ├── 2. 屏幕外缓存 (Cache) │ └── 保存最近离开屏幕的ViewHolder（默认容量=2） ├── 3. 扩展缓存 (ViewCacheExtension) │ └── 开发者自定义缓存（特殊用途） └── 4. 回收池 (RecycledViewPool) └── 全局共享的ViewHolder存储（不同类型独立缓存） 根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder
-在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：
-1. changedScrap 的作用 用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。 工作机制： 当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。 在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。 目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。 2. attachedScrap 的作用 用途：用于 快速复用可见或即将可见的 ViewHolder。 工作机制： 在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。 遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。 目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。 3. Stable IDs 如何改变 ViewHolder 获取方式 当启用 Stable IDs（通过 setHasStableIds(true) &#43; 重写 getItemId()）时：">
-  <meta itemprop="datePublished" content="2025-06-11T15:26:57+08:00">
-  <meta itemprop="dateModified" content="2025-06-11T15:26:57+08:00">
-  <meta itemprop="wordCount" content="209">
-  <meta itemprop="keywords" content="Android-Develop">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="RecyclerView缓存机制">
-  <meta name="twitter:description" content="RecyclerView缓存机制
-多级缓存体系架构图 TEXT RecyclerView 缓存系统 ├── 1. 屏幕内缓存 (Attached Scrap) │ └── 存放当前可见的ViewHolder（快速复用） ├── 2. 屏幕外缓存 (Cache) │ └── 保存最近离开屏幕的ViewHolder（默认容量=2） ├── 3. 扩展缓存 (ViewCacheExtension) │ └── 开发者自定义缓存（特殊用途） └── 4. 回收池 (RecycledViewPool) └── 全局共享的ViewHolder存储（不同类型独立缓存） 根据position判断是否命中Cache，根据viewType判断是否命中RecyclerViewPool，会执行onBindViewHolder
-在 RecyclerView 的回收复用机制中，changedScrap 和 attachedScrap 是两个关键临时缓存，而 Stable IDs 会改变 ViewHolder 获取的方式。以下是详细解释：
-1. changedScrap 的作用 用途：专门配合 notifyItemChanged() 或 notifyDataSetChanged() 使用。 工作机制： 当调用 notifyItemChanged(position) 时，被标记更新的 item 会被临时移到 changedScrap 中。 在布局阶段（如 onLayout），这些 ViewHolder 会被重新绑定数据（调用 onBindViewHolder()），然后放回原位置。 目的：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。 2. attachedScrap 的作用 用途：用于 快速复用可见或即将可见的 ViewHolder。 工作机制： 在布局过程中（如 LinearLayoutManager.fill()），RecyclerView 会先将当前屏幕上的 ViewHolder 临时移除 到 attachedScrap。 遍历新布局时，直接从 attachedScrap 中按 position 匹配 取回 ViewHolder（无需创建或绑定）。 目的：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。 3. Stable IDs 如何改变 ViewHolder 获取方式 当启用 Stable IDs（通过 setHasStableIds(true) &#43; 重写 getItemId()）时：">
-
-	
-  </head><body class="ma0 avenir bg-near-white development">
-
-    
-   
-  
-
-  <header>
-    <div class="bg-black">
-      <nav class="pv3 ph3 ph4-ns" role="navigation">
-  <div class="flex-l center items-center justify-between">
-    <a href="/" class="f3 fw2 hover-white white-90 dib no-underline">
-      
-        zed的博客
-      
-    </a>
-    <div class="flex-l items-center">
-      
-
-      
-        <ul class="pl0 mr3">
-          
-          <li class="list f5 f4-ns fw4 dib pr3">
-            <a class="hover-white white-90 no-underline" href="/android-develop/" title="">
-              Android-Develops
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li  class='current' >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
             </a>
-          </li>
-          
-          <li class="list f5 f4-ns fw4 dib pr3">
-            <a class="hover-white white-90 no-underline" href="/tutorials/" title="">
-              Tutorials
+        </li>
+        
+        
+        <li >
+            <a href='/rust/' >
+                
+                
+                
+                <span>Rusts</span>
             </a>
-          </li>
-          
-        </ul>
-      
-      <div class="ananke-socials"></div>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
 
-    </div>
-  </div>
-</nav>
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
 
-    </div>
-  </header>
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
 
 
 
-    <main class="pb7" role="main">
-      
-  
-  
-  <article class="flex-l mw8 center ph3 flex-wrap justify-between">
-    <header class="mt4 w-100">
-      <aside class="instapaper_ignoref b helvetica tracked ttu">
-          
-        Android-Develops
-      </aside><div id="sharing" class="mt3 ananke-socials"></div>
-<h1 class="f1 athelas mt3 mb1">RecyclerView缓存机制</h1>
-      
-      
-      
-      <time class="f6 mv4 dib tracked" datetime="2025-06-11T15:26:57+08:00">June 11, 2025</time>
-      
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
 
-      
-      
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
     </header>
-    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>RecyclerView缓存机制</p>
-<h4 id="多级缓存体系架构图"><strong>多级缓存体系架构图</strong></h4>
-<pre tabindex="0"><code>TEXT
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/">RecyclerView缓存机制</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jun 11, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>RecyclerView缓存机制</p>
+<h4 id="多级缓存体系架构图"><strong>多级缓存体系架构图</strong>
+</h4><pre tabindex="0"><code>TEXT
 
 RecyclerView 缓存系统
 ├── 1. 屏幕内缓存 (Attached Scrap)
@@ -188,8 +219,8 @@ RecyclerView 缓存系统
 </code></pre><p>根据<code>position</code>判断是否命中<code>Cache</code>，根据<code>viewType</code>判断是否命中<code>RecyclerViewPool</code>，会执行<code>onBindViewHolder</code></p>
 <p>在 <strong>RecyclerView</strong> 的回收复用机制中，<code>changedScrap</code> 和 <code>attachedScrap</code> 是两个关键临时缓存，而 <strong>Stable IDs</strong> 会改变 ViewHolder 获取的方式。以下是详细解释：</p>
 <hr>
-<h3 id="1"><strong>1. <code>changedScrap</code> 的作用</strong></h3>
-<ul>
+<h3 id="1"><strong>1. <code>changedScrap</code> 的作用</strong>
+</h3><ul>
 <li><strong>用途</strong>：专门配合 <code>notifyItemChanged()</code> 或 <code>notifyDataSetChanged()</code> 使用。</li>
 <li><strong>工作机制</strong>：
 <ul>
@@ -200,8 +231,8 @@ RecyclerView 缓存系统
 <li><strong>目的</strong>：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。</li>
 </ul>
 <hr>
-<h3 id="2"><strong>2. <code>attachedScrap</code> 的作用</strong></h3>
-<ul>
+<h3 id="2"><strong>2. <code>attachedScrap</code> 的作用</strong>
+</h3><ul>
 <li><strong>用途</strong>：用于 <strong>快速复用可见或即将可见的 ViewHolder</strong>。</li>
 <li><strong>工作机制</strong>：
 <ul>
@@ -212,8 +243,8 @@ RecyclerView 缓存系统
 <li><strong>目的</strong>：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。</li>
 </ul>
 <hr>
-<h3 id="3-stable-ids-如何改变-viewholder-获取方式"><strong>3. Stable IDs 如何改变 ViewHolder 获取方式</strong></h3>
-<p>当启用 <strong>Stable IDs</strong>（通过 <code>setHasStableIds(true)</code> + 重写 <code>getItemId()</code>）时：</p>
+<h3 id="3-stable-ids-如何改变-viewholder-获取方式"><strong>3. Stable IDs 如何改变 ViewHolder 获取方式</strong>
+</h3><p>当启用 <strong>Stable IDs</strong>（通过 <code>setHasStableIds(true)</code> + 重写 <code>getItemId()</code>）时：</p>
 <ul>
 <li>
 <p><strong>传统方式（无 Stable IDs）</strong>：<br>
@@ -228,8 +259,8 @@ RecyclerView 改为通过 <strong>item ID</strong>（而非 position）在 <code
 </span></span><span style="display:flex;"><span>ViewHolder vh <span style="color:#f92672">=</span> changedScrap.<span style="color:#a6e22e">findViewHolderByItemId</span>(id);
 </span></span></code></pre></div></li>
 </ul>
-<h4 id="优势"><strong>优势</strong></h4>
-<ol>
+<h4 id="优势"><strong>优势</strong>
+</h4><ol>
 <li><strong>位置无关复用</strong>：
 <ul>
 <li>即使数据集变化导致 item 位置改变（如插入/删除），仍能通过唯一 ID 正确复用 ViewHolder。</li>
@@ -248,8 +279,8 @@ RecyclerView 改为通过 <strong>item ID</strong>（而非 position）在 <code
 </li>
 </ol>
 <hr>
-<h3 id="关键对比总结"><strong>关键对比总结</strong></h3>
-<table>
+<h3 id="关键对比总结"><strong>关键对比总结</strong>
+</h3><div class="table-wrapper"><table>
   <thead>
       <tr>
           <th><strong>特性</strong></th>
@@ -284,38 +315,142 @@ RecyclerView 改为通过 <strong>item ID</strong>（而非 position）在 <code
           <td>按 <code>stableId</code> 匹配</td>
       </tr>
   </tbody>
-</table>
+</table></div>
 <blockquote>
 <p><strong>使用建议</strong>：<br>
 若数据集存在动态位置变化（如排序、增删），强烈建议启用 <strong>Stable IDs</strong>，以提升复用准确性和动画效果。</p></blockquote>
-<ul class="pa0">
-  
-</ul>
-<div class="mt6 instapaper_ignoref">
-      
-      
-      </div>
-    </div>
 
-    <aside class="w-30-l mt6-l">
+</section>
 
 
+    <footer class="article-footer">
+    
+
+    </footer>
 
 
-</aside>
+    
+</article>
 
-  </article>
+    
 
-    </main>
-    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
-  <div class="flex justify-between">
-  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="http://localhost:1313/" >
-    &copy;  zed的博客 2025 
-  </a>
-    <div><div class="ananke-socials"></div>
-</div>
-  </div>
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
 </footer>
 
-  </body>
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
 </html>
