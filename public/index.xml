@@ -141,6 +141,11 @@
 &lt;li&gt;&lt;strong&gt;ASCII&lt;/strong&gt;是Unicode和UTF-8的&lt;strong&gt;特殊兼容子集&lt;/strong&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
+&lt;h4 id=&#34;字符数据&#34;&gt;字符数据
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;b&lt;/code&gt;前缀标识的数据：表示&lt;code&gt;ASCII&lt;/code&gt;字符集的字节数据，类型为&lt;code&gt;u8&lt;/code&gt;或&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;amp;str&lt;/code&gt;和&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;：&lt;code&gt;&amp;amp;str&lt;/code&gt;是utf-8编码的切片引用且不可变，&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;是对原始字节的切片引用，可变版本是&lt;code&gt;&amp;amp;mut [u8]&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </description>
         </item>
         <item>

@@ -314,6 +314,11 @@
 <li><strong>ASCII</strong>是Unicode和UTF-8的<strong>特殊兼容子集</strong></li>
 </ul>
 <hr>
+<h4 id="字符数据">字符数据
+</h4><ul>
+<li><code>b</code>前缀标识的数据：表示<code>ASCII</code>字符集的字节数据，类型为<code>u8</code>或<code>&amp;[u8]</code></li>
+<li><code>&amp;str</code>和<code>&amp;[u8]</code>：<code>&amp;str</code>是utf-8编码的切片引用且不可变，<code>&amp;[u8]</code>是对原始字节的切片引用，可变版本是<code>&amp;mut [u8]</code></li>
+</ul>
 
 </section>
 
