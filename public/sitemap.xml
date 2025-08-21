@@ -2,22 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/rust/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</loc>
-    <lastmod>2025-08-15T12:50:54+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
     <loc>http://localhost:1313/categories/rust/</loc>
-    <lastmod>2025-08-15T12:50:54+08:00</lastmod>
+    <lastmod>2025-08-19T15:02:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/rust/</loc>
-    <lastmod>2025-08-15T12:50:54+08:00</lastmod>
+    <lastmod>2025-08-19T15:02:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/</loc>
+    <lastmod>2025-08-19T15:02:39+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</loc>
+    <lastmod>2025-08-19T15:02:39+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</loc>
     <lastmod>2025-08-15T12:50:54+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

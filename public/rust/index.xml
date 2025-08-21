@@ -6,7 +6,126 @@
         <description>Recent content in Rusts on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 15 Aug 2025 12:50:54 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 19 Aug 2025 15:02:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>需要多熟悉的rust语法</title>
+        <link>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link>
+        <pubDate>Tue, 19 Aug 2025 15:02:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</guid>
+        <description>&lt;h4 id=&#34;绑定运算符&#34;&gt;@(绑定运算符)
+&lt;/h4&gt;&lt;p&gt;在Rust中，&lt;code&gt;@&lt;/code&gt;被称为绑定运算符，用于在模式匹配的值绑定到一个变量，同时允许进一步解构内部结构。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;具体解析&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self.reader.read(buf) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Ok(len) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    self.size &lt;span style=&#34;color:#f92672&#34;&gt;-=&lt;/span&gt; len;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(len)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  err &lt;span style=&#34;color:#f92672&#34;&gt;@&lt;/span&gt; Err(_) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; err
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;Ok(len)&lt;/code&gt;分支&lt;/strong&gt;：匹配成功的&lt;code&gt;Ok&lt;/code&gt;变体，提取内部的&lt;code&gt;len&lt;/code&gt;值，然后更新&lt;code&gt;self.size&lt;/code&gt;并返回&lt;code&gt;Ok(len)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;**&lt;code&gt;err @ Err(_)&lt;/code&gt;**分支：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Err(_)&lt;/code&gt;匹配任意&lt;code&gt;Err&lt;/code&gt;变体(不关心内部错误的具体值)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;@&lt;/code&gt;将整个Err的值(如&lt;code&gt;Err(&amp;quot;io_error&amp;quot;)&lt;/code&gt;)绑定到变量&lt;code&gt;err&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;分支返回&lt;code&gt;err&lt;/code&gt;，即原始的&lt;code&gt;Err&lt;/code&gt;值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;解构默认会发生所有权转移，&lt;code&gt;let Data(inner) = &amp;amp;data;&lt;/code&gt;等价于&lt;code&gt;let Data(ref inner) = &amp;amp;data;&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;asref&#34;&gt;AsRef
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;AsRef&lt;/code&gt; trait的核心作用是允许一个类型以&lt;strong&gt;零开销&lt;/strong&gt;的方式将自己或引用转换成&lt;strong&gt;另一种类型的引用&lt;/strong&gt;。&lt;code&gt;AsMut&lt;/code&gt;是&lt;code&gt;AsRef&lt;/code&gt;的可变版本&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;1. 核心机制&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AsRef&amp;lt;T&amp;gt;&lt;/code&gt;定义了一个方法：&lt;code&gt;fn as_ref(&amp;amp;self) -&amp;gt; &amp;amp;T&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;它接受&lt;code&gt;&amp;amp;self&lt;/code&gt;，返回目标类型&lt;code&gt;&amp;amp;T&lt;/code&gt;的引用&lt;/li&gt;
+&lt;li&gt;本质上：将&lt;code&gt;&amp;amp;Self&lt;/code&gt;转换为&lt;code&gt;&amp;amp;T&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;2. 转换类型&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;允许的是&lt;code&gt;Self&lt;/code&gt;到&lt;code&gt;T&lt;/code&gt;的引用转换。&lt;/li&gt;
+&lt;li&gt;例如：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;String&lt;/code&gt;实现&lt;code&gt;AsRef&amp;lt;str&amp;gt;&lt;/code&gt;: &lt;code&gt;&amp;amp;String -&amp;gt; &amp;amp;str&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Vec&amp;lt;T&amp;gt;&lt;/code&gt; 实现&lt;code&gt;AsRef&amp;lt;[T]&amp;gt;&lt;/code&gt;: &lt;code&gt;&amp;amp;Vec&amp;lt;T&amp;gt; -&amp;gt;&amp;amp;[T]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PathBuf&lt;/code&gt;实现&lt;code&gt;AsRef&amp;lt;Path&amp;gt;&lt;/code&gt;: &lt;code&gt;&amp;amp;PathBuf -&amp;gt; &amp;amp;Path&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;**3. 设计目的 **&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;泛型灵活性：让函数接受多种类型参数&lt;/li&gt;
+&lt;li&gt;零开销抽象：转换过程无额外堆分配或复制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;零开销&#34;&gt;零开销
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;什么是零开销&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;栈操作和微小的寄存器复制是允许的&lt;/li&gt;
+&lt;li&gt;没有&lt;strong&gt;堆内存分配&lt;/strong&gt;：绝不调用内存分配器&lt;/li&gt;
+&lt;li&gt;没有&lt;strong&gt;深拷贝&lt;/strong&gt;：不复制底层数据本身（即使是栈上的解构也需要合理区分）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;+++++&lt;/p&gt;
+&lt;h4 id=&#34;切片引用&#34;&gt;切片引用
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;切片引用本质就是宽指针&lt;/strong&gt;，由&lt;strong&gt;数据指针&lt;/strong&gt;和&lt;strong&gt;长度&lt;/strong&gt;组成&lt;/p&gt;
+&lt;p&gt;++++&lt;/p&gt;
+&lt;h4 id=&#34;condvar&#34;&gt;Condvar
+&lt;/h4&gt;&lt;p&gt;在rust中，&lt;code&gt;Condvar&lt;/code&gt;（条件变量）是用于线程间同步的核心工具，通常与&lt;code&gt;Mutex&lt;/code&gt;结合使用。它的核心功能是让线程在某个条件不满足时&lt;strong&gt;主动阻塞&lt;/strong&gt;，直到其他线程修改条件并通知它继续执行。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;作用：解决线程间的&lt;strong&gt;等待-通知&lt;/strong&gt;问题，避免busy looping。&lt;/li&gt;
+&lt;li&gt;依赖：必须与&lt;code&gt;Mutex&lt;/code&gt;配合使用（保护共享数据 + 同步条件）&lt;/li&gt;
+&lt;li&gt;典型场景：生产者-消费者模型、任务队列调度、资源池管理等。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::sync::{Arc, Mutex, Condvar};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::thread;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//创建共享数据结构：(Mutex&amp;lt;bool&amp;gt;, Condvar)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; pair &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Arc::new(Mutex::new(&lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;), Condvar::new()));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; pair_clone &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Arc::clone(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;pair);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; consumer &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; thread::spawn(&lt;span style=&#34;color:#66d9ef&#34;&gt;move&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (lock, cvar) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;*&lt;/span&gt;pair_clone;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; lock.lock().unwarp();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;//等条件满足
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!*&lt;/span&gt;condition {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#75715e&#34;&gt;//释放锁并阻塞，被唤醒后(wait返回后)重新获取锁
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;      condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; cvar.wait(condition).unwarp();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;消费者：条件已满足！继续执行&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;//消费者的处理逻辑
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	});
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	thread::sleep(Duration::from_secs(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;));&lt;span style=&#34;color:#75715e&#34;&gt;//模拟工作耗时
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (lock, cvar) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;*&lt;/span&gt;pair;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; lock.lock().unwarp();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;生产者：更新条件并通知消费者...&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 通知一个等待的消费者线程
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    cvar.notify_one();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	consumer.join().unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;主线程: 所有线程执行完成&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;++++++&lt;/p&gt;
+&lt;h4 id=&#34;pin&#34;&gt;PIN
+&lt;/h4&gt;&lt;p&gt;+++++&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;haystack&lt;/code&gt;&lt;strong&gt;命名源自英语谚语&lt;/strong&gt;&amp;ldquo;looking for a needle in a haystack&amp;rdquo;&lt;/strong&gt;(大海捞针),&lt;code&gt;haystack&lt;/code&gt;表示被搜索的&lt;strong&gt;主体数据&lt;/strong&gt;，&lt;code&gt;needle&lt;/code&gt;表示待查找的&lt;strong&gt;目标元素&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;rust中有两种解引用的方式：&lt;strong&gt;&lt;code&gt;*&lt;/code&gt;&lt;strong&gt;和&lt;/strong&gt;模式匹配解引用&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;++++++&lt;/p&gt;
+&lt;h4 id=&#34;unicodeascii和utf-8等&#34;&gt;Unicode、ASCII和UTF-8等
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Unicode&lt;/strong&gt;为所有字符分配了唯一标识(称为&lt;strong&gt;码点&lt;/strong&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;UTF-8&lt;/strong&gt;等是需要将这些码点转换为用于存储/传输的&lt;strong&gt;字节序列&lt;/strong&gt;,根据&lt;strong&gt;码点值的范围分类&lt;/strong&gt;，确定字节序列的&lt;strong&gt;长度&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ASCII&lt;/strong&gt;是Unicode和UTF-8的&lt;strong&gt;特殊兼容子集&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;+++++++&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>Ripgrep的命令文档</title>
         <link>http://localhost:1313/rust/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</link>
         <pubDate>Fri, 15 Aug 2025 12:50:54 +0800</pubDate>
@@ -104,7 +223,18 @@
 &lt;h4 id=&#34;output-options&#34;&gt;output options
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;&lt;code&gt;-A NUM, --after-context=NUM&lt;/code&gt;  会显示每条匹配结果&lt;strong&gt;之后&lt;/strong&gt;的 NUM 行内容&lt;/li&gt;
-&lt;li&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-B, --before-context=NUM&lt;/code&gt; 会显示每条匹配结果之前的NUM行内容&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-C NUM, --context=NUM&lt;/code&gt;在匹配结果前后显示NUM行内容&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;block-buffered&lt;/code&gt;使用内存缓冲区，只有当这个缓冲区积累到一定大小后，才会一次性将其内容**刷新 (flush) **到标准输出 (stdout)。&lt;code&gt;--no-block-buffered&lt;/code&gt;取消此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-b, --byte-offset&lt;/code&gt;在输出中添加数字前缀，表示行或匹配文本在文件中的起始字节位置（从0开始计数）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--color=WHEN&lt;/code&gt;此选项决定何时在输出中使用&lt;strong&gt;颜色高亮&lt;/strong&gt;和&lt;strong&gt;ANSI转义序列&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--colors=COLOR_SPEC&lt;/code&gt;选项用于&lt;strong&gt;自定义输出内容的颜色和样式&lt;/strong&gt;，可通过多次指定实现多层样式叠加&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--column&lt;/code&gt;在输出中增加列号信息，&lt;code&gt;--no-column&lt;/code&gt;取消这个功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--context-separator=SEPARATOR&lt;/code&gt;在使用上下文选项（&lt;code&gt;-A/-B/-C&lt;/code&gt;）时，指定&lt;strong&gt;分隔不同上下文块的显示符号&lt;/strong&gt;,&lt;code&gt;--no-context-separator&lt;/code&gt;取消此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--field-match-separator=SEPARATOR&lt;/code&gt;自定义 ripgrep 输出结果中&lt;strong&gt;各字段之间的分隔符号&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--heading&lt;/code&gt;在每个文件匹配结果组的&lt;strong&gt;顶部&lt;/strong&gt;显示一次文件路径，而不是在每行匹配前都重复显示，&lt;code&gt;--no-heading&lt;/code&gt;取消此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-h, --help&lt;/code&gt;      &lt;code&gt;-h&lt;/code&gt;是精简帮助模式，&lt;code&gt;--help&lt;/code&gt;是完整帮助模式&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--hyperlink-format=FORMAT&lt;/code&gt;  创建可点击的超链接&lt;/li&gt;
 &lt;/ul&gt;
 </description>
         </item>

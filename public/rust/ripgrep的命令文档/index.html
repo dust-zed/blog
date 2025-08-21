@@ -188,7 +188,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 1 分钟
+                    阅读时长: 2 分钟
                 </time>
             </div>
         
@@ -295,7 +295,18 @@
 <h4 id="output-options">output options
 </h4><ul>
 <li><code>-A NUM, --after-context=NUM</code>  会显示每条匹配结果<strong>之后</strong>的 NUM 行内容</li>
-<li></li>
+<li><code>-B, --before-context=NUM</code> 会显示每条匹配结果之前的NUM行内容</li>
+<li><code>-C NUM, --context=NUM</code>在匹配结果前后显示NUM行内容</li>
+<li><code>block-buffered</code>使用内存缓冲区，只有当这个缓冲区积累到一定大小后，才会一次性将其内容**刷新 (flush) **到标准输出 (stdout)。<code>--no-block-buffered</code>取消此功能</li>
+<li><code>-b, --byte-offset</code>在输出中添加数字前缀，表示行或匹配文本在文件中的起始字节位置（从0开始计数）</li>
+<li><code>--color=WHEN</code>此选项决定何时在输出中使用<strong>颜色高亮</strong>和<strong>ANSI转义序列</strong></li>
+<li><code>--colors=COLOR_SPEC</code>选项用于<strong>自定义输出内容的颜色和样式</strong>，可通过多次指定实现多层样式叠加</li>
+<li><code>--column</code>在输出中增加列号信息，<code>--no-column</code>取消这个功能</li>
+<li><code>--context-separator=SEPARATOR</code>在使用上下文选项（<code>-A/-B/-C</code>）时，指定<strong>分隔不同上下文块的显示符号</strong>,<code>--no-context-separator</code>取消此功能</li>
+<li><code>--field-match-separator=SEPARATOR</code>自定义 ripgrep 输出结果中<strong>各字段之间的分隔符号</strong></li>
+<li><code>--heading</code>在每个文件匹配结果组的<strong>顶部</strong>显示一次文件路径，而不是在每行匹配前都重复显示，<code>--no-heading</code>取消此功能</li>
+<li><code>-h, --help</code>      <code>-h</code>是精简帮助模式，<code>--help</code>是完整帮助模式</li>
+<li><code>--hyperlink-format=FORMAT</code>  创建可点击的超链接</li>
 </ul>
 
 </section>
