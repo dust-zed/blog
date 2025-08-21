@@ -1,6 +1,6 @@
 +++
 date = '2025-08-19T15:02:39+08:00'
-draft = true
+draft = false
 title = '需要多熟悉的rust语法'
 
 categories = ['rust']

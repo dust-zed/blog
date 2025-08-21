@@ -6,7 +6,112 @@
         <description>Recent content on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 22 Aug 2025 03:33:16 +0800</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 22 Aug 2025 06:01:17 +0800</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Rust中的IO操作</title>
+        <link>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</link>
+        <pubDate>Fri, 22 Aug 2025 06:01:17 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</guid>
+        <description>&lt;p&gt;在Rust中，I/O操作主要通过&lt;code&gt;Read&lt;/code&gt;和&lt;code&gt;Write&lt;/code&gt;两个核心trait实现，而&lt;code&gt;Cursor&lt;/code&gt;、&lt;code&gt;BufWriter&lt;/code&gt;和&lt;code&gt;ReadBuf&lt;/code&gt;是围绕这些trait的实用工具。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;1-read和write-trait&#34;&gt;1. &lt;code&gt;Read&lt;/code&gt;和&lt;code&gt;Write&lt;/code&gt; trait
+&lt;/h4&gt;&lt;h5 id=&#34;stdioread&#34;&gt;&lt;code&gt;std::io::Read&lt;/code&gt;
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：从数据源（文件、网络等）读取字节流。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;read&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, buf: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; [&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;]) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;尝试读取数据到缓冲区&lt;code&gt;buf&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;返回实际读取的字节数(&lt;code&gt;Ok(n)&lt;/code&gt;)，或错误（&lt;code&gt;Err(e)&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;当读取到EOF时返回&lt;code&gt;Ok(0)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;常用方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;read_to_end(&amp;amp;mut vec)&lt;/code&gt;:读取所有字节到&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;read_to_string(&amp;amp;mut string)&lt;/code&gt;:读取UTF-8字节到&lt;code&gt;String&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;read_exact(&amp;amp;mut buf)&lt;/code&gt;:精确读取&lt;code&gt;buf.len()&lt;/code&gt;字节，否则报错&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;stdiowrite&#34;&gt;&lt;code&gt;std::io::Write&lt;/code&gt;
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：将字节流写入目标&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;write&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, buf: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;[&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;]) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;flush&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;write&lt;/code&gt;尝试写入缓冲区&lt;code&gt;buf&lt;/code&gt;，返回实际写入的字节数&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;flush&lt;/code&gt;确保所有缓冲数据写入目标（如磁盘）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;2-cursort&#34;&gt;2. &lt;code&gt;Cursor&amp;lt;T&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：将内存类型包装成可&lt;code&gt;随机访问&lt;/code&gt;的&lt;code&gt;Read&lt;/code&gt;/&lt;code&gt;Write&lt;/code&gt;对象。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;特点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在内存中模拟文件指针（维护&lt;code&gt;position&lt;/code&gt;）。&lt;/li&gt;
+&lt;li&gt;实现Read和Write（需&lt;code&gt;T: AsMut&amp;lt;[u8]&amp;gt;&lt;/code&gt;)，支持&lt;code&gt;Seek&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;零成本抽象，高性能内存操作。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;使用场景&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;读取数据，或写入到&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;测试时代替真实文件I/O。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-bufwriterw&#34;&gt;3. &lt;code&gt;BufWriter&amp;lt;W&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：包装一个&lt;code&gt;Write&lt;/code&gt;对象，提供&lt;strong&gt;写入缓冲&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;减少系统调用（如磁盘、网络写入）。&lt;/li&gt;
+&lt;li&gt;批量写入提高性能（默认缓冲区大小&lt;strong&gt;8KB&lt;/strong&gt;）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;行为&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;先写入内存缓冲区，满时自动刷新到内部&lt;code&gt;W&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;手动调用&lt;code&gt;flush()&lt;/code&gt;或&lt;code&gt;Drop&lt;/code&gt;时强制刷新缓冲区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;4-bufreaderr&#34;&gt;4. &lt;code&gt;BufReader&amp;lt;R&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：包装&lt;code&gt;Read&lt;/code&gt;对象，提供&lt;strong&gt;读取缓冲&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;减少频繁系统调用（如读取文件时多次小数据读取）&lt;/li&gt;
+&lt;li&gt;支持按行读取（&lt;code&gt;read_line&lt;/code&gt;和&lt;code&gt;lines&lt;/code&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;完整知识图谱&#34;&gt;完整知识图谱
+&lt;/h4&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;I/O 核心 Trait
+│
+├── Read (字节源)
+│   ├── 实现类型：File, TcpStream, Vec&amp;lt;u8&amp;gt;, etc.
+│   ├── 工具：BufReader (缓冲读取), Take (限制读取长度)
+│   └── 扩展：BufRead (提供 read_line, lines 等方法)
+│
+├── Write (字节目标)
+│   ├── 实现类型：File, TcpStream, Vec&amp;lt;u8&amp;gt;, etc.
+│   └── 工具：BufWriter (缓冲写入), LineWriter (行缓冲)
+│
+├── Seek (随机访问)
+│   └── 实现类型：File, Cursor&amp;lt;T&amp;gt;
+│
+└── 内存适配器
+    └── Cursor&amp;lt;T&amp;gt; (内存模拟 I/O)
+        ├── 支持：Read/Write/Seek
+        └── 适用：Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8], String, &amp;amp;str
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
+&lt;h5 id=&#34;关键原则&#34;&gt;关键原则
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;1. 缓冲使用&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;BufReader/BufWriter总是推荐用于文件/网络 I/O。&lt;/li&gt;
+&lt;li&gt;Cursor用于内存数据（如解析二进制格式）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;2. 错误处理&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;所有I/O操作返回&lt;code&gt;Result&lt;/code&gt;，必须处理&lt;code&gt;Err&lt;/code&gt;情况。&lt;/li&gt;
+&lt;li&gt;特别注意&lt;code&gt;flush()&lt;/code&gt;的错误（如磁盘满）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;3. 性能&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;小数据写入用&lt;code&gt;BufWriter&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;避免频繁小数据读取（缓冲或批量化）&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>大端序和小端序</title>
         <link>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</link>
         <pubDate>Fri, 22 Aug 2025 03:33:16 +0800</pubDate>
