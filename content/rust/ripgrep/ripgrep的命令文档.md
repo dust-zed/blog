@@ -98,4 +98,16 @@ PATH...: 需要检索的文件或目录
 #### output options
 
 * `-A NUM, --after-context=NUM`  会显示每条匹配结果**之后**的 NUM 行内容
-* 
+* `-B, --before-context=NUM` 会显示每条匹配结果之前的NUM行内容
+* `-C NUM, --context=NUM`在匹配结果前后显示NUM行内容
+* `block-buffered`使用内存缓冲区，只有当这个缓冲区积累到一定大小后，才会一次性将其内容**刷新 (flush) **到标准输出 (stdout)。`--no-block-buffered`取消此功能
+* `-b, --byte-offset`在输出中添加数字前缀，表示行或匹配文本在文件中的起始字节位置（从0开始计数）
+* `--color=WHEN`此选项决定何时在输出中使用**颜色高亮**和**ANSI转义序列**
+* `--colors=COLOR_SPEC`选项用于**自定义输出内容的颜色和样式**，可通过多次指定实现多层样式叠加
+* `--column`在输出中增加列号信息，`--no-column`取消这个功能
+* `--context-separator=SEPARATOR`在使用上下文选项（`-A/-B/-C`）时，指定**分隔不同上下文块的显示符号**,`--no-context-separator`取消此功能
+* `--field-match-separator=SEPARATOR`自定义 ripgrep 输出结果中**各字段之间的分隔符号**
+* `--heading`在每个文件匹配结果组的**顶部**显示一次文件路径，而不是在每行匹配前都重复显示，`--no-heading`取消此功能
+* `-h, --help`      `-h`是精简帮助模式，`--help`是完整帮助模式
+* `--hyperlink-format=FORMAT`  创建可点击的超链接
+
