@@ -6,7 +6,25 @@
         <description>Recent content in Rusts on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Tue, 19 Aug 2025 15:02:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 22 Aug 2025 03:33:16 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>大端序和小端序</title>
+        <link>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</link>
+        <pubDate>Fri, 22 Aug 2025 03:33:16 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</guid>
+        <description>&lt;p&gt;大端序和小端序是两种不同的&lt;strong&gt;字节存储顺序&lt;/strong&gt;，用于描述多字节数据（如整数、浮点数）在计算机内存中的存储方式。它们的区别在于字节的排列顺序：&lt;/p&gt;
+&lt;h4 id=&#34;大端序&#34;&gt;大端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;高位字节存储在低地址&lt;/strong&gt;，低位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;小端序&#34;&gt;小端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;低位字节存储在低地址&lt;/strong&gt;，高位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;小端序更符合计算机的处理逻辑&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>需要多熟悉的rust语法</title>
         <link>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link>
         <pubDate>Tue, 19 Aug 2025 15:02:39 +0800</pubDate>
@@ -66,10 +84,10 @@
 &lt;li&gt;没有&lt;strong&gt;堆内存分配&lt;/strong&gt;：绝不调用内存分配器&lt;/li&gt;
 &lt;li&gt;没有&lt;strong&gt;深拷贝&lt;/strong&gt;：不复制底层数据本身（即使是栈上的解构也需要合理区分）&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;+++++&lt;/p&gt;
+&lt;hr&gt;
 &lt;h4 id=&#34;切片引用&#34;&gt;切片引用
 &lt;/h4&gt;&lt;p&gt;&lt;strong&gt;切片引用本质就是宽指针&lt;/strong&gt;，由&lt;strong&gt;数据指针&lt;/strong&gt;和&lt;strong&gt;长度&lt;/strong&gt;组成&lt;/p&gt;
-&lt;p&gt;++++&lt;/p&gt;
+&lt;hr&gt;
 &lt;h4 id=&#34;condvar&#34;&gt;Condvar
 &lt;/h4&gt;&lt;p&gt;在rust中，&lt;code&gt;Condvar&lt;/code&gt;（条件变量）是用于线程间同步的核心工具，通常与&lt;code&gt;Mutex&lt;/code&gt;结合使用。它的核心功能是让线程在某个条件不满足时&lt;strong&gt;主动阻塞&lt;/strong&gt;，直到其他线程修改条件并通知它继续执行。&lt;/p&gt;
 &lt;ul&gt;
@@ -110,19 +128,19 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	consumer.join().unwrap();
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;主线程: 所有线程执行完成&amp;#34;&lt;/span&gt;);
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;++++++&lt;/p&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
 &lt;h4 id=&#34;pin&#34;&gt;PIN
-&lt;/h4&gt;&lt;p&gt;+++++&lt;/p&gt;
+&lt;/h4&gt;&lt;hr&gt;
 &lt;p&gt;&lt;strong&gt;&lt;code&gt;haystack&lt;/code&gt;&lt;strong&gt;命名源自英语谚语&lt;/strong&gt;&amp;ldquo;looking for a needle in a haystack&amp;rdquo;&lt;/strong&gt;(大海捞针),&lt;code&gt;haystack&lt;/code&gt;表示被搜索的&lt;strong&gt;主体数据&lt;/strong&gt;，&lt;code&gt;needle&lt;/code&gt;表示待查找的&lt;strong&gt;目标元素&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;rust中有两种解引用的方式：&lt;strong&gt;&lt;code&gt;*&lt;/code&gt;&lt;strong&gt;和&lt;/strong&gt;模式匹配解引用&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;++++++&lt;/p&gt;
+&lt;hr&gt;
 &lt;h4 id=&#34;unicodeascii和utf-8等&#34;&gt;Unicode、ASCII和UTF-8等
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Unicode&lt;/strong&gt;为所有字符分配了唯一标识(称为&lt;strong&gt;码点&lt;/strong&gt;)&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;UTF-8&lt;/strong&gt;等是需要将这些码点转换为用于存储/传输的&lt;strong&gt;字节序列&lt;/strong&gt;,根据&lt;strong&gt;码点值的范围分类&lt;/strong&gt;，确定字节序列的&lt;strong&gt;长度&lt;/strong&gt;。&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;ASCII&lt;/strong&gt;是Unicode和UTF-8的&lt;strong&gt;特殊兼容子集&lt;/strong&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;+++++++&lt;/p&gt;
+&lt;hr&gt;
 </description>
         </item>
         <item>

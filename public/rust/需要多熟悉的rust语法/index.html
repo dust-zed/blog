@@ -257,10 +257,10 @@
 <li>没有<strong>堆内存分配</strong>：绝不调用内存分配器</li>
 <li>没有<strong>深拷贝</strong>：不复制底层数据本身（即使是栈上的解构也需要合理区分）</li>
 </ul>
-<p>+++++</p>
+<hr>
 <h4 id="切片引用">切片引用
 </h4><p><strong>切片引用本质就是宽指针</strong>，由<strong>数据指针</strong>和<strong>长度</strong>组成</p>
-<p>++++</p>
+<hr>
 <h4 id="condvar">Condvar
 </h4><p>在rust中，<code>Condvar</code>（条件变量）是用于线程间同步的核心工具，通常与<code>Mutex</code>结合使用。它的核心功能是让线程在某个条件不满足时<strong>主动阻塞</strong>，直到其他线程修改条件并通知它继续执行。</p>
 <ul>
@@ -301,19 +301,19 @@
 </span></span><span style="display:flex;"><span>	consumer.join().unwrap();
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">println!</span>(<span style="color:#e6db74">&#34;主线程: 所有线程执行完成&#34;</span>);
 </span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>++++++</p>
+</span></span></code></pre></div><hr>
 <h4 id="pin">PIN
-</h4><p>+++++</p>
+</h4><hr>
 <p><strong><code>haystack</code><strong>命名源自英语谚语</strong>&ldquo;looking for a needle in a haystack&rdquo;</strong>(大海捞针),<code>haystack</code>表示被搜索的<strong>主体数据</strong>，<code>needle</code>表示待查找的<strong>目标元素</strong>.</p>
 <p>rust中有两种解引用的方式：<strong><code>*</code><strong>和</strong>模式匹配解引用</strong></p>
-<p>++++++</p>
+<hr>
 <h4 id="unicodeascii和utf-8等">Unicode、ASCII和UTF-8等
 </h4><ul>
 <li><strong>Unicode</strong>为所有字符分配了唯一标识(称为<strong>码点</strong>)</li>
 <li><strong>UTF-8</strong>等是需要将这些码点转换为用于存储/传输的<strong>字节序列</strong>,根据<strong>码点值的范围分类</strong>，确定字节序列的<strong>长度</strong>。</li>
 <li><strong>ASCII</strong>是Unicode和UTF-8的<strong>特殊兼容子集</strong></li>
 </ul>
-<p>+++++++</p>
+<hr>
 
 </section>
 

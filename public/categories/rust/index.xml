@@ -6,7 +6,25 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Tue, 19 Aug 2025 15:02:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 22 Aug 2025 03:33:16 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>大端序和小端序</title>
+        <link>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</link>
+        <pubDate>Fri, 22 Aug 2025 03:33:16 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</guid>
+        <description>&lt;p&gt;大端序和小端序是两种不同的&lt;strong&gt;字节存储顺序&lt;/strong&gt;，用于描述多字节数据（如整数、浮点数）在计算机内存中的存储方式。它们的区别在于字节的排列顺序：&lt;/p&gt;
+&lt;h4 id=&#34;大端序&#34;&gt;大端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;高位字节存储在低地址&lt;/strong&gt;，低位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;小端序&#34;&gt;小端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;低位字节存储在低地址&lt;/strong&gt;，高位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;小端序更符合计算机的处理逻辑&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>需要多熟悉的rust语法</title>
         <link>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link>
         <pubDate>Tue, 19 Aug 2025 15:02:39 +0800</pubDate>
