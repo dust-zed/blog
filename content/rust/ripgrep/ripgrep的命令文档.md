@@ -3,7 +3,7 @@ date = '2025-08-15T12:50:54+08:00'
 draft = true
 title = 'Ripgrep的命令文档'
 
-categories = ['rust']
+categories = ["rust", "ripgrep"]
 
 +++
 

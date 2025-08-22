@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>ripgrep on zed的博客</title>
+        <link>http://localhost:1313/rust/ripgrep/</link>
+        <description>Recent content in ripgrep on zed的博客</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <lastBuildDate>Fri, 15 Aug 2025 12:50:54 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Ripgrep的命令文档</title>
+        <link>http://localhost:1313/rust/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</link>
+        <pubDate>Fri, 15 Aug 2025 12:50:54 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</guid>
+        <description>&lt;p&gt;用法 （&lt;code&gt;[]&lt;/code&gt;内表示是可选参数):&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] PATTERN [PATH ...]&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] -e PATTERN ... [PATH ...]&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] -f PATTERNFILE ... [PATH ...]&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] --files [PATH ...]&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] --type-list&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;command | rg [OPTIONS] PATTERN&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] --help&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rg [OPTIONS] --version&lt;/code&gt;&lt;/p&gt;
+&lt;h4 id=&#34;参数解释&#34;&gt;参数解释
+&lt;/h4&gt;&lt;p&gt;PATTERN: 要搜索的正则表达式，以&lt;code&gt;-&lt;/code&gt;开始的正则需要添加 &lt;code&gt;-e&lt;/code&gt;/&lt;code&gt;--regexp&lt;/code&gt;flag，如&lt;code&gt;rg -e -foo&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;PATH&amp;hellip;: 需要检索的文件或目录&lt;/p&gt;
+&lt;h4 id=&#34;输入选项input-options&#34;&gt;输入选项(input options)
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;--&lt;/code&gt;：表示后续以&lt;code&gt;-&lt;/code&gt;开头的&lt;code&gt;word&lt;/code&gt;都不再是&lt;code&gt;flag&lt;/code&gt;而是&lt;code&gt;pattern&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;-e PATTERN, --regexp=PATTERN&lt;/code&gt;: 需要搜索的正则表达式，可多次指定&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;-f PATTERNFILE, --file=PATTERNFILE&lt;/code&gt;:指定从何文件搜索正则表达式，可多次指定&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;--pre=COMMAND&lt;/code&gt; 允许指定一个文件格式转换命令，ripgrep会先将文件通过该命令转换，然后在转换后的内容搜索正则表达式。&lt;code&gt;文件&lt;/code&gt; → &lt;code&gt;COMMAND处理&lt;/code&gt; → &lt;code&gt;获取标准输出&lt;/code&gt; → &lt;code&gt;ripgrep搜索输出内容&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;--pre-glob=GLOB&lt;/code&gt;专为&lt;code&gt;--pre&lt;/code&gt;命令设计，精确的筛选需要预处理的文件，避免对不匹配的文件执行不必要的格式转换，大幅提升性能。&lt;code&gt;rg --pre=pre-pdftotext --pre-glob=&#39;*.pdf&#39; &#39;关键词&#39;&lt;/code&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;report.pdf&lt;/code&gt; → 调用 &lt;code&gt;pdftotext&lt;/code&gt; 转换后搜索&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;notes.txt&lt;/code&gt; → 直接搜索文本（省去进程创建）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;-z, --search-zip&lt;/code&gt;搜索压缩包&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;search-options&#34;&gt;search options
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;-s, --case-sensitive&lt;/code&gt;执行搜索时区分大小写&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-i, --ignore-case&lt;/code&gt;执行搜索时不区分大小写&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--crlf&lt;/code&gt;启动时将CRLF(\r\n)视为行终止符，而不是\n&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--dfa-size-limit=NUM+SUFFIX?&lt;/code&gt;正则表达式的dfa上限，可带单位&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--regex-size-limit=NUM+SUFFIX?&lt;/code&gt;设置&lt;strong&gt;在内存中构建&lt;/strong&gt;的整体正则表达式对象的最大尺寸&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--engine=ENGINE&lt;/code&gt;指定正则表达式引擎&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-E ENCODING, --encoding=ENCODING&lt;/code&gt;强制 ripgrep 使用特定编码处理所有被搜索文件（默认自动检测编码）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-F, --fixedstrings&lt;/code&gt;将所有模式视为字面量而不是正则表达式&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-v --invert-match&lt;/code&gt;反转匹配，打印不匹配的行，&lt;code&gt;--no-invert-match&lt;/code&gt;为相反的输入&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-x --line-regexp&lt;/code&gt;整行匹配&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-w, --word-regexp&lt;/code&gt;独立单词匹配，启用此标志后，ripgrep 只显示被&lt;strong&gt;单词边界&lt;/strong&gt;包围的匹配结果。类似于在正则表达式中自动给搜索词添加 &lt;code&gt;\b&lt;/code&gt; 边界，比&lt;code&gt;-x&lt;/code&gt;优先级高&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-m NUM, --max-count=NUM&lt;/code&gt;  限制每个文件的匹配行数量，到达指定数量就停止当前文件搜索&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--mmap&lt;/code&gt;优先使用&lt;code&gt;mmap&lt;/code&gt;技术进行文件搜索&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-U, --multiline&lt;/code&gt;多行模式，允许匹配内容跨越多个行，突破默认的单行匹配限制&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--multiline-dotall&lt;/code&gt;当启用多行搜索时(&lt;code&gt;-U&lt;/code&gt;)，强制正则表达式中的点号&lt;code&gt;.&lt;/code&gt;匹配&lt;strong&gt;包括换行符&lt;/strong&gt;的所有字符&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-unicode&lt;/code&gt;禁用unicode模式&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--null-data&lt;/code&gt; 将默认的行终止符从换行符&lt;code&gt;\n&lt;/code&gt;改为NUL字符(&lt;code&gt;\0&lt;/code&gt;或ASCII 0)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-P, --pcre2&lt;/code&gt;切换默认的正则引擎更换为&lt;strong&gt;PCRE2&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-S, --smart-case&lt;/code&gt;启用智能大小写匹配模式&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--stop-no-nonmatch&lt;/code&gt;找到至少一个匹配行且后续遇到不匹配行就提前停止读取文件&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-a, --text&lt;/code&gt;强制将所有文件当作纯文本文件处理，禁用其默认的二进制文件检测机制&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-j NUM, --threads=NUM&lt;/code&gt;控制搜索时使用的并行线程数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;filter-options&#34;&gt;filter options
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--binary&lt;/code&gt; 默认情况下ripgrep使用&lt;code&gt;NUL&lt;/code&gt;字节作为启发式标志。一旦在文件中检测到NUL字节，立即判断为二进制文件，然后立即停止搜索该文件并不显示匹配内容。启用后即使检测到NUL字节，也继续搜索文件，直到找到&lt;strong&gt;首个匹配项&lt;/strong&gt;或搜索到&lt;strong&gt;文件结束&lt;/strong&gt;停止搜索&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-L, --follow&lt;/code&gt; 开启“跟随符号链接”功能（默认关闭）,用 &lt;code&gt;--no-follow&lt;/code&gt; 在本命令中取消 &lt;code&gt;-L&lt;/code&gt; 的效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-g GLOB, --glob=GLOB&lt;/code&gt; 通过通配符模式（glob）&lt;strong&gt;包含或排除特定文件和目录&lt;/strong&gt;进行搜索&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--glob-case-insensitive&lt;/code&gt;让所有通过&lt;code&gt;-g/--glob&lt;/code&gt;指定的通配符进行不区分大小写的匹配，&lt;code&gt;--no-glob-case-insensitive&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--iglob=GLOB&lt;/code&gt;允许用户通过&lt;strong&gt;不区分大小写&lt;/strong&gt;的通配符模式来&lt;strong&gt;包含或排除文件/目录&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-., --hidden&lt;/code&gt; 搜索隐藏文件和目录，&lt;code&gt;--no-hidden&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--ignore-file=PATH&lt;/code&gt; 通过外部文件指定忽略规则（&lt;code&gt;gitignore&lt;/code&gt; 格式）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--ignore-file-case-insensitive&lt;/code&gt; 控制&lt;strong&gt;忽略文件规则匹配时是否区分大小写&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-d NUM, --max-depth=NUM&lt;/code&gt;指定搜索的目录遍历的深度层级&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--max-filesize=NUM+SUFFIX?&lt;/code&gt;  跳过超过指定大小的文件&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore&lt;/code&gt; 跳过所有忽略文件，&lt;code&gt;--ignore&lt;/code&gt;取消这效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore-dot&lt;/code&gt;  仅跳过 &lt;code&gt;.ignore&lt;/code&gt; 和&lt;code&gt;.rgignore&lt;/code&gt; 文件中的过滤规则，通过 &lt;code&gt;--ignore-dot&lt;/code&gt; 可关闭此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore-exclude&lt;/code&gt; 禁用手动配置的排除规则，&lt;code&gt;--ignore-exclude&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore-files&lt;/code&gt; 禁用显式指定的忽略文件，&lt;code&gt;--ignore-files&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore-global&lt;/code&gt; 禁用来自“全局”源的忽略规则（&lt;code&gt;.gitignore&lt;/code&gt; 文件），&lt;code&gt;--ignore-global&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore-parent&lt;/code&gt;不应用从父目录中找到的忽略文件（如 &lt;code&gt;.gitignore&lt;/code&gt;）中的规则，&lt;code&gt;--ignore-parent&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-ignore-vcs&lt;/code&gt; 禁用版本控制系统的忽略规则，&lt;code&gt;-ignore--vcs&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-require-git&lt;/code&gt; 默认只在git仓库才遵守版本控制的忽略文件（如&lt;code&gt;.gitignore&lt;/code&gt;），启用后即使不再git仓库，也会遵守版本控制的忽略文件。&lt;code&gt;--require-git&lt;/code&gt;取消此效果&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--no-file-system&lt;/code&gt; 遍历目录树搜索文件时，不会跨越任何文件系统边界，&lt;code&gt;--no-one-file-system&lt;/code&gt;取消此效果。在搜索&lt;strong&gt;每个给定的起始路径&lt;/strong&gt;时，遇到&lt;strong&gt;挂载点（通往另一个文件系统的“门”）就停下来，不进去搜索&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-t TYPE, --type=TYPE&lt;/code&gt;  用于限制只搜索特定类型的文件&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-T TYPE, --type-not=TYPE&lt;/code&gt; 用于&lt;strong&gt;排除&lt;/strong&gt;指定类型的文件不进行搜索&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--type-add=TYPESPEC&lt;/code&gt;  用于创建自定义文件类型匹配规则&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--type-clear=TYPE&lt;/code&gt; 清楚 &lt;code&gt;type-add&lt;/code&gt;创建的自定义文件类型匹配规则&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-u, --unrestricted&lt;/code&gt; 标志通过多次重复（最高3次）逐步降低 ripgrep 的智能过滤级别，使搜索范围越来越广&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;output-options&#34;&gt;output options
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;-A NUM, --after-context=NUM&lt;/code&gt;  会显示每条匹配结果&lt;strong&gt;之后&lt;/strong&gt;的 NUM 行内容&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-B, --before-context=NUM&lt;/code&gt; 会显示每条匹配结果之前的NUM行内容&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-C NUM, --context=NUM&lt;/code&gt;在匹配结果前后显示NUM行内容&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;block-buffered&lt;/code&gt;使用内存缓冲区，只有当这个缓冲区积累到一定大小后，才会一次性将其内容**刷新 (flush) **到标准输出 (stdout)。&lt;code&gt;--no-block-buffered&lt;/code&gt;取消此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-b, --byte-offset&lt;/code&gt;在输出中添加数字前缀，表示行或匹配文本在文件中的起始字节位置（从0开始计数）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--color=WHEN&lt;/code&gt;此选项决定何时在输出中使用&lt;strong&gt;颜色高亮&lt;/strong&gt;和&lt;strong&gt;ANSI转义序列&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--colors=COLOR_SPEC&lt;/code&gt;选项用于&lt;strong&gt;自定义输出内容的颜色和样式&lt;/strong&gt;，可通过多次指定实现多层样式叠加&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--column&lt;/code&gt;在输出中增加列号信息，&lt;code&gt;--no-column&lt;/code&gt;取消这个功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--context-separator=SEPARATOR&lt;/code&gt;在使用上下文选项（&lt;code&gt;-A/-B/-C&lt;/code&gt;）时，指定&lt;strong&gt;分隔不同上下文块的显示符号&lt;/strong&gt;,&lt;code&gt;--no-context-separator&lt;/code&gt;取消此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--field-match-separator=SEPARATOR&lt;/code&gt;自定义 ripgrep 输出结果中&lt;strong&gt;各字段之间的分隔符号&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--heading&lt;/code&gt;在每个文件匹配结果组的&lt;strong&gt;顶部&lt;/strong&gt;显示一次文件路径，而不是在每行匹配前都重复显示，&lt;code&gt;--no-heading&lt;/code&gt;取消此功能&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-h, --help&lt;/code&gt;      &lt;code&gt;-h&lt;/code&gt;是精简帮助模式，&lt;code&gt;--help&lt;/code&gt;是完整帮助模式&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--hyperlink-format=FORMAT&lt;/code&gt;  创建可点击的超链接&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>
