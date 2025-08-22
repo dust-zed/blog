@@ -77,9 +77,69 @@ hugo new tutorials/hugo-vercel博客配置.md
 
 ```
 
-##### 3.4 自动生成分类列表
+##### 3.5 多级目录
 
+使用的是`hugo-theme-stack`主题，支持多级目录，需要通过配置和内容组织来实现。
 
+**内容组织**
+
+按层级组织内容文件夹：
+
+```toml
+content/
+├── rust/                  # 一级目录
+│   ├── ripgrep/              # 二级目录
+│   │   ├── test/            # 三级目录
+│   │   │   ├── post1.md   # 文章
+│   │   ├── post2.md
+│   ├── other/              # 二级目录
+│   │   ├── post3.md
+```
+
+然后需要在文章的frontmatter中指定分类层级：
+
+```toml
+categories = ["rust", "ripgrep"]
+```
+
+**配置导航菜单**
+
+修改config.toml配置文件，通过[[menu.main]]定义需要多级菜单的目录:
+
+```toml
+[[menu.main]]
+  name = "rust"
+  url = "/rust"
+  weight = 2
+
+  [[menu.main.children]] # 注意缩进
+    name = "ripgrep"
+    url = "/rust/ripgrep"
+    weight = 1
+```
+
+**添加索引文件**
+
+二级菜单通常需要对应实际内容目录，否则可能被主题隐藏：
+
+* 在`content`目录下创建匹配的文件夹结构，并添加索引文件`_index.md`
+
+```
+content/
+└── rust/
+    ├── _index.md  # 一级目录索引页
+    └── ripgrep/
+        └── _index.md  # 二级目录索引页
+```
+
+* 在 `_index.md` 中添加基本内容（frontmatter 即可）：
+
+```toml
+# content/rust/_index.md
++++
+title = "Rust 相关内容"
++++
+```
 
 #### 升级维护
 
