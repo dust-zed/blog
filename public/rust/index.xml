@@ -251,6 +251,13 @@
 &lt;li&gt;&lt;code&gt;b&lt;/code&gt;前缀标识的数据：表示&lt;code&gt;ASCII&lt;/code&gt;字符集的字节数据，类型为&lt;code&gt;u8&lt;/code&gt;或&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;&amp;amp;str&lt;/code&gt;和&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;：&lt;code&gt;&amp;amp;str&lt;/code&gt;是utf-8编码的切片引用且不可变，&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;是对原始字节的切片引用，可变版本是&lt;code&gt;&amp;amp;mut [u8]&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;为什么可以手动调用dropx而不能调用xdrop&#34;&gt;为什么可以手动调用drop(x)而不能调用x.drop()
+&lt;/h4&gt;&lt;p&gt;关键在于&lt;strong&gt;所有权&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;std::mem::drop&amp;lt;T&amp;gt;(_x: T)&lt;/code&gt;转移了所有权，_x离开drop函数作用域，&lt;strong&gt;自动触发析构逻辑&lt;/strong&gt;（调用&lt;code&gt;Drop::drop&lt;/code&gt; trait的实现）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;drop(&amp;amp;mut self)&lt;/code&gt;没有发生所有权的转移，如果允许手动调用&lt;code&gt;x.drop&lt;/code&gt;,编译期在作用域结束时仍会再次调用&lt;code&gt;drop&lt;/code&gt;，双重释放，导致内存安全问题。&lt;/li&gt;
+&lt;/ul&gt;
 </description>
         </item>
         <item>

@@ -319,6 +319,13 @@
 <li><code>b</code>前缀标识的数据：表示<code>ASCII</code>字符集的字节数据，类型为<code>u8</code>或<code>&amp;[u8]</code></li>
 <li><code>&amp;str</code>和<code>&amp;[u8]</code>：<code>&amp;str</code>是utf-8编码的切片引用且不可变，<code>&amp;[u8]</code>是对原始字节的切片引用，可变版本是<code>&amp;mut [u8]</code></li>
 </ul>
+<hr>
+<h4 id="为什么可以手动调用dropx而不能调用xdrop">为什么可以手动调用drop(x)而不能调用x.drop()
+</h4><p>关键在于<strong>所有权</strong></p>
+<ul>
+<li><code>std::mem::drop&lt;T&gt;(_x: T)</code>转移了所有权，_x离开drop函数作用域，<strong>自动触发析构逻辑</strong>（调用<code>Drop::drop</code> trait的实现）</li>
+<li><code>drop(&amp;mut self)</code>没有发生所有权的转移，如果允许手动调用<code>x.drop</code>,编译期在作用域结束时仍会再次调用<code>drop</code>，双重释放，导致内存安全问题。</li>
+</ul>
 
 </section>
 

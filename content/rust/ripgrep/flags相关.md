@@ -86,9 +86,15 @@ for token in argv {
 
 ------------
 
-#### 具体流程验证
+#### 用例子熟悉流程
 
-* 
+以`rg --json -F 'impl<T> ParseResult<T>'`为例熟悉下流程
+
+1. `lexopt`词法化：把`--json`作为`lexopt::Arg::Long("json")`交给Parser。
+2. 名称查找：`Parser::new()`构建一次性的解析表；`Parser.find_long`在`FlagMap`中查找,返回FlagLookup::Match(&FlagInfo)。
+3. 构造FlagValue，由于`--json`在`defs.rs`定义为switch,所以构造为`FlagValue::Switch(true)`
+4. 调用`Flag.update`写入`LowArgs`，本例就是`LowArgs.mode`被设置为`Search(JSON)`
+5. `LowArgs` -> `HiArgs`
 
 --------------
 
@@ -106,8 +112,8 @@ for token in argv {
     P.get_or_init(|| {/* build parser*/ })
     ```
 
-* 用trait + 实现 实现可扩展性（面向接口编程）: `Flag` trait定义行为，具体flag实现只改update，解析器只依赖trait，不耦合具体实现，新增flag仅需实现trait并加入FLAGS；围绕`Flag`trait定义了Flag相关的struct。
-* 避免自引用结构的技巧（索引替代引用）：用 HashMap<Vec<u8>, usize> + Vec<FlagInfo>（map 存索引）绕开在同一 struct 中存放自引用的问题，同时提高查找后访问效率。
+* 用trait + 实现 实现可扩展性（**面向接口编程**）: `Flag` trait定义行为，具体flag实现只改update，解析器只依赖trait，不耦合具体实现，新增flag仅需实现trait并加入FLAGS；围绕`Flag`trait定义了Flag相关的struct。
+* 避免自引用结构的技巧（**索引替代引用**）：用 HashMap<Vec<u8>, usize> + Vec<FlagInfo>（map 存索引）绕开在同一 struct 中存放自引用的问题，同时提高查找后访问效率。
 * 低级解析库（`lexopt`）结合自定义逻辑：采用低层解析器以获得最大控制权（支持 negation、suggest、自定义错误信息等），而不是直接用高级库强行适配。
 * 丰富的错误上下文（`anyhow::Context / with_context`）：在可能失败的点用 .with_context(|| format!(...)) 包装错误，给出对用户/调试更友好的信息（“missing value for flag …”）。
 * 明确地把“选项参数”和“位置参数”分开收集与处理：在parse阶段把positional直接收集，后面同一语义化(pattern/path)，有利于保持解析逻辑整洁

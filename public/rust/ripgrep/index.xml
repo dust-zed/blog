@@ -6,7 +6,188 @@
         <description>Recent content in ripgrep on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 15 Aug 2025 12:50:54 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sat, 23 Aug 2025 12:06:35 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Flags相关</title>
+        <link>http://localhost:1313/rust/ripgrep/flags%E7%9B%B8%E5%85%B3/</link>
+        <pubDate>Sat, 23 Aug 2025 12:06:35 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/flags%E7%9B%B8%E5%85%B3/</guid>
+        <description>&lt;p&gt;&lt;code&gt;flag&lt;/code&gt;是命令行中的一个选项或开关(以&lt;code&gt;-&lt;/code&gt;或&lt;code&gt;--&lt;/code&gt;开头)，用来改变程序的行为或传入参数。&lt;/p&gt;
+&lt;h4 id=&#34;相关定义&#34;&gt;相关定义
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;FlagValue&lt;/code&gt;对flag进行了分类：&lt;code&gt;Switch&lt;/code&gt;&amp;mdash;-改变程序行为和&lt;code&gt;Value&lt;/code&gt;&amp;mdash;&amp;ndash;传入参数。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;FlagValue&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Switch(&lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Value(OsString),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Flag&lt;/code&gt; trait抽象并定义了“一个逻辑上的命令行选项/开关的元信息与行为（名称、别名、是否为开关、帮助文本、类别等）”以及在解析后如何把该选项的值应用到低级参数结构&lt;code&gt;LowArgs&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; Flag {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_switch&lt;/span&gt;() -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;name_&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;(); &lt;span style=&#34;color:#75715e&#34;&gt;// 名字与别名/否定名
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;doc_&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;();  &lt;span style=&#34;color:#75715e&#34;&gt;//帮助文本文档、变量名、可选值列表、类别等（用于生成-h/man/completion）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;completion_type&lt;/span&gt;(); &lt;span style=&#34;color:#75715e&#34;&gt;// 用于shell自动补全的参数类型分类
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;update&lt;/span&gt;(); &lt;span style=&#34;color:#75715e&#34;&gt;//把解析得到的FlagValue应用到LowArgs(只做验证/赋值，不执行昂贵操作)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;使用流程(伪代码)&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; token &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; argv {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (flag_impl, value) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; match_token_to_flag(token, &lt;span style=&#34;color:#66d9ef&#34;&gt;FLAGS&lt;/span&gt;)&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  flag_impl.update(value, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;mutual low_args)&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;; &lt;span style=&#34;color:#75715e&#34;&gt;//每个Flag把自己的语义写入low_args
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;设计原则：Flag的update不做副作用性“动作”（如运行外部命令）；只负责验证并把配置记录到LowArgs，后续在HiArgs阶段执行构造/初始化工作。&lt;/p&gt;
+&lt;h4 id=&#34;解析流程&#34;&gt;解析流程
+&lt;/h4&gt;&lt;p&gt;总体的解析流程是&lt;code&gt;cli中的token&lt;/code&gt; &amp;mdash;&amp;ndash;&amp;gt; &lt;code&gt;lowArgs&lt;/code&gt; &amp;mdash;&amp;mdash;&amp;gt; &lt;code&gt;hiArgs&lt;/code&gt;&lt;/p&gt;
+&lt;h5 id=&#34;parse_low&#34;&gt;parse_low
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;功能：将&lt;code&gt;token&lt;/code&gt;解析为&lt;code&gt;LowArgs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;说明：&lt;code&gt;parse_low&lt;/code&gt;执行了两次parse，其目的是保证正确的优先级和副作用控制
+&lt;ul&gt;
+&lt;li&gt;第一次快速解析(只用命令行)用于：
+&lt;ul&gt;
+&lt;li&gt;立即设置日志/消息相关的全局状态(set_log_levels)，这样在随后读取并解析配置文件时按照CLI指定的日志级别输出（例如&amp;ndash;trace）&lt;/li&gt;
+&lt;li&gt;检测特殊模式（help/version），如果是special就立刻短路返回，不去读配置文件或做更多的工作&lt;/li&gt;
+&lt;li&gt;检测&lt;code&gt;--no-config&lt;/code&gt;标志，若存在则直接使用第一次的结果并返回（不读配置文件）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;第二次完整解析：没有短路返回且允许读配置文件，才去读取配置文件获得config_args，并把它们与原始CLI参数合并（config_args在前，CLI参数在后，保证CLI覆盖配置文件的设置），然后第二次完整的parse出最终的LowArgs。另外，第二次会重新构造一个新的LowArgs（而不是在第一次的基础上改），这样避免第一次解析时可能遗留的中间状态影响最终结果，保持语义清晰。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;parse&#34;&gt;parse
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;parse_low&lt;/code&gt;调用&lt;code&gt;parse&lt;/code&gt;执行具体的解析逻辑&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用&lt;code&gt;lexopt&lt;/code&gt;这个crate把token分为了&lt;code&gt;Short&lt;/code&gt;,&lt;code&gt;Long&lt;/code&gt;,&lt;code&gt;Value&lt;/code&gt;；其中&lt;code&gt;-abc&lt;/code&gt;会依次产生&lt;code&gt;Short(&#39;a&#39;)&lt;/code&gt;,&lt;code&gt;Short(&#39;b&#39;)&lt;/code&gt;,&lt;code&gt;Short(&#39;c&#39;)&lt;/code&gt;;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;作为选项参数的value&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;由 parse 在遇到 Short/Long 后根据该 Flag 的类型决定是否用 p.value() 读取（支持 &amp;ndash;opt=value 或 &amp;ndash;opt value）。&lt;/li&gt;
+&lt;li&gt;这类值被封装为 FlagValue::Value 并传入相应的 Flag.update(&amp;hellip;) 去修改 LowArgs 的字段。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;位置参数(positional)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;lexopt 在遇到不以 &lt;code&gt;-&lt;/code&gt; 开头的 &lt;code&gt;token&lt;/code&gt; 时返回 &lt;code&gt;Arg::Value&lt;/code&gt;，parse 直接把它 push 到 args.positional。&lt;/li&gt;
+&lt;li&gt;这些位置参数在后续 LowArgs -&amp;gt; HiArgs 阶段被语义化（第一个可能是 PATTERN，后面是 PATHS，特殊的 &amp;ldquo;-&amp;rdquo; 表示 stdin 等）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Special case: -h/-V与&amp;ndash;help/&amp;ndash;version的短路处理&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;名称到Flag的查找：&lt;/p&gt;
+&lt;p&gt;先简单介绍下相关的类&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;FlagInfo&lt;/code&gt;是对Flag类的补充，Flag trait表示一个&amp;quot;逻辑上的&amp;quot;选项（带长名、可选短名、否定名、别名以及update行为；FlagInfo则是对同一个逻辑flag在解析器中具体出现形式（某个长名/短名/别名/否定名）的一条记录。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FlagMap&lt;/code&gt;实际是hashmap&amp;lt;vec[u8], usize&amp;gt;,usize对应Vec&amp;lt;FlagInfo&amp;gt;的index，Parser就维护了 flagMap和Vec&amp;lt;FlagInfo&amp;gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FlagLookUp&lt;/code&gt;是enum类型，用于表示根据flag name查找的flag的结果，分为&lt;code&gt;Match(&amp;amp;&#39;a FlagInfo&#39;)&lt;/code&gt;,&lt;code&gt;UnrecognizedShort(char)&lt;/code&gt;,&lt;code&gt;UnrecognizedLong(String)&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;接着就是对lexopt解析出的short/long进行处理，分别调用&lt;code&gt;find_short&lt;/code&gt;和&lt;code&gt;find_long&lt;/code&gt;在FlagMap和Vec&amp;lt;FlagInfo&amp;gt;进行查找，并返回&lt;code&gt;FlagLookUp&lt;/code&gt;，找到对应的FlagInfo就会使用Flag trait中的&lt;code&gt;update&lt;/code&gt;对普通value进行处理&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;用例子熟悉流程&#34;&gt;用例子熟悉流程
+&lt;/h4&gt;&lt;p&gt;以&lt;code&gt;rg --json -F &#39;impl&amp;lt;T&amp;gt; ParseResult&amp;lt;T&amp;gt;&#39;&lt;/code&gt;为例熟悉下流程&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;lexopt&lt;/code&gt;词法化：把&lt;code&gt;--json&lt;/code&gt;作为&lt;code&gt;lexopt::Arg::Long(&amp;quot;json&amp;quot;)&lt;/code&gt;交给Parser。&lt;/li&gt;
+&lt;li&gt;名称查找：&lt;code&gt;Parser::new()&lt;/code&gt;构建一次性的解析表；&lt;code&gt;Parser.find_long&lt;/code&gt;在&lt;code&gt;FlagMap&lt;/code&gt;中查找,返回FlagLookup::Match(&amp;amp;FlagInfo)。&lt;/li&gt;
+&lt;li&gt;构造FlagValue，由于&lt;code&gt;--json&lt;/code&gt;在&lt;code&gt;defs.rs&lt;/code&gt;定义为switch,所以构造为&lt;code&gt;FlagValue::Switch(true)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;调用&lt;code&gt;Flag.update&lt;/code&gt;写入&lt;code&gt;LowArgs&lt;/code&gt;，本例就是&lt;code&gt;LowArgs.mode&lt;/code&gt;被设置为&lt;code&gt;Search(JSON)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LowArgs&lt;/code&gt; -&amp;gt; &lt;code&gt;HiArgs&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;parsers中优秀的编程思想&#34;&gt;parse.rs中优秀的编程思想
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;明确的职责分离&lt;/strong&gt;：把“识别token（parse）”、“把flag值写入LowArgs(Flag::update)”和“把LowArgs升为HiArgs（HiArgs::from_low_args）”清晰拆开，降低每个模块复杂度，便于测试与复用。&lt;strong&gt;解析 → 中间结构 → 运行时构造&lt;/strong&gt;的分层解析&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;两阶段解析以支持配置合并与早期短路&lt;/strong&gt;：先先用 CLI 快速设置日志/short-circuit（help/version），再在需要时合并 config args 并重新解析，既能早期反馈又保持最终语义一致&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用OnceLock做惰性全局只读初始化：用OnceLock初始化一次性不可变解析器，既线程安全又避免重复构造开销&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::sync::OnceLock;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; P: &lt;span style=&#34;color:#a6e22e&#34;&gt;OnceLock&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Parser&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; OnceLock::new();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;P.get_or_init(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; {&lt;span style=&#34;color:#75715e&#34;&gt;/* build parser*/&lt;/span&gt; })
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;用trait + 实现 实现可扩展性（&lt;strong&gt;面向接口编程&lt;/strong&gt;）: &lt;code&gt;Flag&lt;/code&gt; trait定义行为，具体flag实现只改update，解析器只依赖trait，不耦合具体实现，新增flag仅需实现trait并加入FLAGS；围绕&lt;code&gt;Flag&lt;/code&gt;trait定义了Flag相关的struct。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;避免自引用结构的技巧（&lt;strong&gt;索引替代引用&lt;/strong&gt;）：用 HashMap&amp;lt;Vec&lt;!-- raw HTML omitted --&gt;, usize&amp;gt; + Vec&lt;!-- raw HTML omitted --&gt;（map 存索引）绕开在同一 struct 中存放自引用的问题，同时提高查找后访问效率。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;低级解析库（&lt;code&gt;lexopt&lt;/code&gt;）结合自定义逻辑：采用低层解析器以获得最大控制权（支持 negation、suggest、自定义错误信息等），而不是直接用高级库强行适配。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;丰富的错误上下文（&lt;code&gt;anyhow::Context / with_context&lt;/code&gt;）：在可能失败的点用 .with_context(|| format!(&amp;hellip;)) 包装错误，给出对用户/调试更友好的信息（“missing value for flag …”）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;明确地把“选项参数”和“位置参数”分开收集与处理：在parse阶段把positional直接收集，后面同一语义化(pattern/path)，有利于保持解析逻辑整洁&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;思考&#34;&gt;思考
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;如何做到恰到好处的分层，既不过度也不让某一层过于冗杂？&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>ripgrep的main函数</title>
+        <link>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84main%E5%87%BD%E6%95%B0/</link>
+        <pubDate>Fri, 22 Aug 2025 22:03:01 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84main%E5%87%BD%E6%95%B0/</guid>
+        <description>&lt;h4 id=&#34;概览&#34;&gt;概览
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;main.rs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;角色：ripgrep可执行程序的入口，负责顶层参数分发、并发策略选者、错误与退出码处理、以及几种运行模式(search/files/types/generate/special)的协调。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;主要职责&#34;&gt;主要职责
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;调用flags::parse()获取解析结果并交由run()处理&lt;/li&gt;
+&lt;li&gt;在顶层处理run()返回的错误：BrokenPipe被视为优雅退出（退出码为0），其他错误打印并返回2。&lt;/li&gt;
+&lt;li&gt;根据HiArgs和Mode决定单线程或并行执行搜索/列举等逻辑。&lt;/li&gt;
+&lt;li&gt;在搜索结束后依据匹配情况、错误标记和quiet标志计算最终退出码 (0/1/2)。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;控制流伪代码&#34;&gt;控制流（伪代码）
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;//高层伪代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ExitCode&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; run(flags::parse()) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(code) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; code,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err(err) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; err.chain() contains BrokenPipe { &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; ExitCode::from(&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;); }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      eprintln(err);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      ExitCode::from(&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;关键函数与职责&#34;&gt;关键函数与职责
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;main：顶层错误捕获与BrokenPipe特殊处理&lt;/li&gt;
+&lt;li&gt;run(result): 解包ParseResult（Err/Special/Ok），分派到具体模式；计算最终退出码。&lt;/li&gt;
+&lt;li&gt;search(args, mode)：单线程搜索。构造walk -&amp;gt; haystack -&amp;gt; 顺序调用searcher，统计并打印stats。&lt;/li&gt;
+&lt;li&gt;search_parallel(args, mode)：并行搜索，使用walk的并行runner，worker closuer负责单文件搜索、统计合并和通过bufwtr打印结果。&lt;/li&gt;
+&lt;li&gt;files(args)/file_parallel(args)：列出文件路径(单线程/多线程实现，后者使用打印线程和mpsc channel)。&lt;/li&gt;
+&lt;li&gt;special(mode)：输出help/version等短路模式(最少初始化)&lt;/li&gt;
+&lt;li&gt;generate(mode)：生成man页或shell补全并写stdout&lt;/li&gt;
+&lt;li&gt;print_stats(&amp;hellip;)：根据SearchMode输出文本或JSON统计。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;重要概念与类型&#34;&gt;重要概念与类型
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;HiArgs：高层运行时配置（）&lt;/li&gt;
+&lt;li&gt;Mode/SearchMode：决定是 Search/Files/Types/Generate/Special 以及 JSON/text 输出等。&lt;/li&gt;
+&lt;li&gt;WalkState：ignore crate的遍历控制(Continue/Quit)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Ripgrep的命令文档</title>
         <link>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</link>
         <pubDate>Fri, 15 Aug 2025 12:50:54 +0800</pubDate>
