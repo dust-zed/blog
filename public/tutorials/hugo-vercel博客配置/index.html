@@ -75,21 +75,21 @@
         
         
         <li >
-            <a href='/android-develop/' >
+            <a href='/rust' >
                 
                 
                 
-                <span>Android-Develops</span>
+                <span>rust</span>
             </a>
         </li>
         
         
         <li >
-            <a href='/rust/' >
+            <a href='/android-develop/' >
                 
                 
                 
-                <span>Rust</span>
+                <span>Android-Develops</span>
             </a>
         </li>
         
@@ -192,7 +192,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 1 分钟
+                    阅读时长: 2 分钟
                 </time>
             </div>
         
@@ -253,8 +253,49 @@
 </span></span><span style="display:flex;"><span>[<span style="color:#a6e22e">taxonomies</span>]
 </span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">category</span> = <span style="color:#e6db74">&#34;categories&#34;</span>
 </span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">tag</span> = <span style="color:#e6db74">&#34;tags&#34;</span>
-</span></span></code></pre></div><h5 id="34-自动生成分类列表">3.4 自动生成分类列表
-</h5><h4 id="升级维护">升级维护
+</span></span></code></pre></div><h5 id="35-多级目录">3.5 多级目录
+</h5><p>使用的是<code>hugo-theme-stack</code>主题，支持多级目录，需要通过配置和内容组织来实现。</p>
+<p><strong>内容组织</strong></p>
+<p>按层级组织内容文件夹：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span><span style="color:#a6e22e">content</span><span style="color:#960050;background-color:#1e0010">/</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">rust</span><span style="color:#960050;background-color:#1e0010">/</span>                  <span style="color:#75715e"># 一级目录</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">ripgrep</span><span style="color:#960050;background-color:#1e0010">/</span>              <span style="color:#75715e"># 二级目录</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">test</span><span style="color:#960050;background-color:#1e0010">/</span>            <span style="color:#75715e"># 三级目录</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">post1</span>.<span style="color:#a6e22e">md</span>   <span style="color:#75715e"># 文章</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">post2</span>.<span style="color:#a6e22e">md</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">other</span><span style="color:#960050;background-color:#1e0010">/</span>              <span style="color:#75715e"># 二级目录</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">│</span>   <span style="color:#960050;background-color:#1e0010">├──</span> <span style="color:#a6e22e">post3</span>.<span style="color:#a6e22e">md</span>
+</span></span></code></pre></div><p>然后需要在文章的frontmatter中指定分类层级：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span><span style="color:#a6e22e">categories</span> = [<span style="color:#e6db74">&#34;rust&#34;</span>, <span style="color:#e6db74">&#34;ripgrep&#34;</span>]
+</span></span></code></pre></div><p><strong>配置导航菜单</strong></p>
+<p>修改config.toml配置文件，通过[[menu.main]]定义需要多级菜单的目录:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span>[[<span style="color:#a6e22e">menu</span>.<span style="color:#a6e22e">main</span>]]
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">name</span> = <span style="color:#e6db74">&#34;rust&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;/rust&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">weight</span> = <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  [[<span style="color:#a6e22e">menu</span>.<span style="color:#a6e22e">main</span>.<span style="color:#a6e22e">children</span>]] <span style="color:#75715e"># 注意缩进</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span> = <span style="color:#e6db74">&#34;ripgrep&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;/rust/ripgrep&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">weight</span> = <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><p><strong>添加索引文件</strong></p>
+<p>二级菜单通常需要对应实际内容目录，否则可能被主题隐藏：</p>
+<ul>
+<li>在<code>content</code>目录下创建匹配的文件夹结构，并添加索引文件<code>_index.md</code></li>
+</ul>
+<pre tabindex="0"><code>content/
+└── rust/
+    ├── _index.md  # 一级目录索引页
+    └── ripgrep/
+        └── _index.md  # 二级目录索引页
+</code></pre><ul>
+<li>在 <code>_index.md</code> 中添加基本内容（frontmatter 即可）：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span><span style="color:#75715e"># content/rust/_index.md</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">+++</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">title</span> = <span style="color:#e6db74">&#34;Rust 相关内容&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">+++</span>
+</span></span></code></pre></div><h4 id="升级维护">升级维护
 </h4><ul>
 <li>
 <p>更新主题：<code>git submodule update --remote --merge</code></p>

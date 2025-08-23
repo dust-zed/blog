@@ -16,12 +16,25 @@ filename = "sitemap.xml"
 category = "categories"
 tag = "tags"
 
+[cascade]
+_target = { path = "/categories/rust/**" }
+
 [permalinks]
 android-develop = "android-develop/:slug/"
 tutorials = "tutorials/:slug/"
 kotlin = "kotlin/:slug"
-rust = "rust/:slug" # :sections[1] 捕获子分类名
+rust = "rust/:sections[1]/:slug" # :sections[1] 捕获子分类名
 reviews = "reviews/:slug"
+
+[[menu.main]]
+  name = "rust"
+  url = "/rust"
+  weight = 2
+
+  [[menu.main.children]]
+    name = "ripgrep"
+    url = "/rust/ripgrep"
+    weight = 1
 
 [params]
 text_color = ""
