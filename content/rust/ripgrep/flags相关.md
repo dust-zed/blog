@@ -2,7 +2,7 @@
 date = '2025-08-23T12:06:35+08:00'
 draft = true
 title = 'Flags相关'
-categories = ['rust']
+categories = ['rust', 'ripgrep']
 
 +++
 
@@ -121,3 +121,4 @@ for token in argv {
 #### 思考
 
 * 如何做到恰到好处的分层，既不过度也不让某一层过于冗杂？
+* 面向接口/trait编程思路的合理应用。 把trait当作”**可插拔点**”而不是默认模版
