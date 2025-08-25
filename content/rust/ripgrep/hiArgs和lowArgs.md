@@ -387,7 +387,7 @@ fn update(&self, v: FlagValue, args: &mut LowArgs) {
 }
 ```
 
-`Patterns::from_low_args` 从三种来源构造去重(利用`HashSet`)的 `Patterns::patterns: Vec<String>` 。`-f file.txt, --file=file.txt`中`file.txt(pattern文件)`存放着需要匹配的`pattern`。
+`Patterns::from_low_args` 从三种来源构造去重(利用`HashSet`)的 `Patterns::patterns: Vec<String>` 。`-f file.txt, --file=file.txt`中`file.txt(pattern文件)`存放着需要匹配的`patterns`。
 
 #### Paths - 路径管理系统
 
@@ -398,20 +398,65 @@ struct Paths {
   is_one_file: bool,           // 是否只搜索单个文件
 }
 ```
-
-要么从`positional`中读取文件路径，要么就是智能路径推断：
+要么从`positional`中读取文件路径，要么就是智能路径推断。
 
 ```rust
-let use_cwd = !is_readable_stdin
+fn from_low_args(
+    state: &mut State,
+    _: &Patterns,  // 虽然不使用，但强制要求存在
+    low: &mut LowArgs,
+) -> anyhow::Result<Paths> {
+ 	let mut paths = Vec::with_capacity(low.positional.len());
+  for osarg in low.positional.drain(..) {
+  	let path = PathBuf::from(osarg);
+    if state.stdin_consumed && path == Path::new("-") {
+    	anyhow::bail!(
+         "error: attempted to read patterns from stdin \
+          while also searching stdin",
+      );
+    }
+   	paths.push(path);
+ 	}
+  ...
+  let use_cwd = !is_readable_stdin
     || state.stdin_consumed
     || !matches!(low.mode, Mode::Search(_));
 
-let (path, is_one_file) = if use_cwd {
+	let (path, is_one_file) = if use_cwd {
     (PathBuf::from("./"), false)  // 搜索当前目录
-} else {
+	} else {
     (PathBuf::from("-"), true)    // 搜索 stdin
-};
+	};
+}
 ```
+
+`Paths::from_low_args()`函数使用了一个非常巧妙的**编译时依赖约束**设计，这个设计确保了
+
+* 调用着必须先构造`Patterns`
+* 编译器会检查这个约束
+* 无法意外地颠倒调用顺序
+
+设计**编译时依赖约束**的原因是`Patterns`和`Paths`都使用了`positional`,此数据消费顺序不可颠倒。
+
+```rust
+// Patterns::from_low_args 中：
+if low.patterns.is_empty() {
+    let ospat = low.positional.remove(0);  // 消费第一个位置参数
+    return Ok(Patterns { patterns: vec![pat] });
+}
+
+// Paths::from_low_args 中：
+for osarg in low.positional.drain(..) {  // 处理剩余的位置参数
+    paths.push(PathBuf::from(osarg));
+}
+```
+
+**编译时依赖约束设计优势**
+
+1. **编译时安全** - 类型系统防止错误调用顺序
+2. **自文档化** - 函数签名清楚表达依赖关系
+3. **零运行时成本** - 约束在编译时检查，运行时无开销
+4. **API 清晰性** - 强制调用者理解正确的使用方式
 
 单文件优化检测：
 
