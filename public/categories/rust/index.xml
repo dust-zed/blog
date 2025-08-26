@@ -6,153 +6,7 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Tue, 26 Aug 2025 11:20:58 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>Test</title>
-        <link>http://localhost:1313/rust/ripgrep/test/</link>
-        <pubDate>Tue, 26 Aug 2025 11:20:58 +0800</pubDate>
-        
-        <guid>http://localhost:1313/rust/ripgrep/test/</guid>
-        <description>&lt;p&gt;# 编程知识整理 
-
-
-
-
-
-  
-
-  
-
-  
-    
-    
-    
-    
-  
-
-  
-
-  
-    
-  
-
-  
-
-  
-    
-      
-    
-    
-    
-    
-  
-
-  
-
-  
-    
-  
-
-  
-
-  
-    
-      
-    
-    
-    
-    
-  
-
-  
-
-  
-    
-  
-
-  
-
-  
-    
-  
-
-  
-
-  
-    
-  
-
-  
-
-  
-    
-      
-    
-    
-    
-    
-  
-
-  
-
-  
-    
-  
-
-  
-
-  
-
-
-
-  
-
-
-&lt;div class=&#34;knowledge-graph-container&#34; data-nodes=&#39;[{&amp;#34;content&amp;#34;:&amp;#34;drain()方法用于从集合中移除元素并返回一个迭代器，与clear()不同，它允许你在移除元素的同时使用它们。 \n&amp;#34;,&amp;#34;id&amp;#34;:&amp;#34;drain%E6%96%B9%E6%B3%95%E7%9A%84%E5%8A%9F%E8%83%BD&amp;#34;,&amp;#34;title&amp;#34;:&amp;#34;drain()方法的功能&amp;#34;},{&amp;#34;content&amp;#34;:&amp;#34;Rust中的每个值都有一个所有者。 2. 同一时间只能有一个所有者。 3. 当所有者离开作用域，值将被丢弃。 \n&amp;#34;,&amp;#34;id&amp;#34;:&amp;#34;rust%E7%9A%84%E6%89%80%E6%9C%89%E6%9D%83%E8%A7%84%E5%88%99&amp;#34;,&amp;#34;title&amp;#34;:&amp;#34;Rust的所有权规则&amp;#34;},{&amp;#34;content&amp;#34;:&amp;#34;JavaScript是一种高级编程语言，主要用于网页交互，现在也用于服务器端开发。\n #### Promise的作用 \nPromise用于处理异步操作，避免回调地狱，使异步代码更易读和维护。 \n&amp;#34;,&amp;#34;id&amp;#34;:&amp;#34;javascript-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80&amp;#34;,&amp;#34;title&amp;#34;:&amp;#34;JavaScript 编程语言&amp;#34;},{&amp;#34;content&amp;#34;:&amp;#34;箭头函数没有自己的this，它会捕获其所在上下文的this值，作为自己的this值。 \n&amp;#34;,&amp;#34;id&amp;#34;:&amp;#34;%E7%AE%AD%E5%A4%B4%E5%87%BD%E6%95%B0%E4%B8%8E%E6%99%AE%E9%80%9A%E5%87%BD%E6%95%B0%E7%9A%84%E5%8C%BA%E5%88%AB&amp;#34;,&amp;#34;title&amp;#34;:&amp;#34;箭头函数与普通函数的区别&amp;#34;}]&#39;&gt;
-  &lt;div id=&#34;kg-e9a436cf8286e66feb4ea74c87974264&#34; class=&#34;knowledge-graph&#34;&gt;&lt;/div&gt;
-  &lt;div class=&#34;knowledge-panel&#34;&gt;
-    &lt;h3&gt;知识节点&lt;/h3&gt;
-    &lt;div class=&#34;knowledge-list&#34;&gt;
-      
-        &lt;div class=&#34;knowledge-item&#34; data-id=&#34;drain%E6%96%B9%E6%B3%95%E7%9A%84%E5%8A%9F%E8%83%BD&#34;&gt;
-          &lt;h4&gt;drain()方法的功能&lt;/h4&gt;
-          &lt;div class=&#34;content&#34;&gt;drain()方法用于从集合中移除元素并返回一个迭代器，与clear()不同，它允许你在移除元素的同时使用它们。&lt;/div&gt;
-        &lt;/div&gt;
-      
-        &lt;div class=&#34;knowledge-item&#34; data-id=&#34;rust%E7%9A%84%E6%89%80%E6%9C%89%E6%9D%83%E8%A7%84%E5%88%99&#34;&gt;
-          &lt;h4&gt;Rust的所有权规则&lt;/h4&gt;
-          &lt;div class=&#34;content&#34;&gt;Rust中的每个值都有一个所有者。 2. 同一时间只能有一个所有者。 3. 当所有者离开作用域，值将被丢弃。&lt;/div&gt;
-        &lt;/div&gt;
-      
-        &lt;div class=&#34;knowledge-item&#34; data-id=&#34;javascript-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80&#34;&gt;
-          &lt;h4&gt;JavaScript 编程语言&lt;/h4&gt;
-          &lt;div class=&#34;content&#34;&gt;&lt;p&gt;JavaScript是一种高级编程语言，主要用于网页交互，现在也用于服务器端开发。&lt;/p&gt;
-&lt;h4 id=&#34;promise的作用&#34;&gt;Promise的作用
-&lt;/h4&gt;&lt;p&gt;Promise用于处理异步操作，避免回调地狱，使异步代码更易读和维护。&lt;/p&gt;
-&lt;/div&gt;
-        &lt;/div&gt;
-      
-        &lt;div class=&#34;knowledge-item&#34; data-id=&#34;%E7%AE%AD%E5%A4%B4%E5%87%BD%E6%95%B0%E4%B8%8E%E6%99%AE%E9%80%9A%E5%87%BD%E6%95%B0%E7%9A%84%E5%8C%BA%E5%88%AB&#34;&gt;
-          &lt;h4&gt;箭头函数与普通函数的区别&lt;/h4&gt;
-          &lt;div class=&#34;content&#34;&gt;箭头函数没有自己的this，它会捕获其所在上下文的this值，作为自己的this值。&lt;/div&gt;
-        &lt;/div&gt;
-      
-    &lt;/div&gt;
-  &lt;/div&gt;
-&lt;/div&gt;
-
-&lt;script&gt;
-
-(function() {
-  const container = document.querySelector(&#39;[data-nodes]&#39;);
-  const nodes = JSON.parse(container.dataset.nodes);
-  
-  
-  console.log(&#39;知识节点:&#39;, nodes);
-})();
-&lt;/script&gt;&lt;/p&gt;
-</description>
-        </item>
-        <item>
+        <lastBuildDate>Tue, 26 Aug 2025 09:21:41 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Haystack</title>
         <link>http://localhost:1313/rust/ripgrep/haystack/</link>
         <pubDate>Tue, 26 Aug 2025 09:21:41 +0800</pubDate>
@@ -163,7 +17,88 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; haystack_builder &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; args.haystack_builder();
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; haystack &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; haystack_builder.build_from_result(result);
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;searcher.search(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;haystack);
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;是对&lt;code&gt;ignore::DirEntry&lt;/code&gt;的包装，添加了应用层逻辑,对&lt;code&gt;DirEntry&lt;/code&gt;增加了几种判断，而&lt;code&gt;HaystackBuilder&lt;/code&gt;则是根据&lt;code&gt;DirEntry&lt;/code&gt;的类型返回不同的结果。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Haystack&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dent: &lt;span style=&#34;color:#a6e22e&#34;&gt;ignore&lt;/span&gt;::DirEntry,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  strip_dot_prefix: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Haystack {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_stdin&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_dir&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_explicit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_file&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;中的方法指明了文件类型的层次关系：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;普通文件(&lt;code&gt;is_file() == true&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;目录(&lt;code&gt;is_dir() == true&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;符号链接 (既不是文件也不是目录)&lt;/li&gt;
+&lt;li&gt;特殊文件(设备、管道、socket)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;HaystackBuilder&lt;/code&gt;根据几个&lt;code&gt;is_*&lt;/code&gt;方法返回&lt;code&gt;Option&amp;lt;Haystack&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;haystack对direntry包装&#34;&gt;Haystack对DirEntry包装
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;包装了&lt;code&gt;DirEntry&lt;/code&gt;,而不是在&lt;code&gt;DirEntry&lt;/code&gt;中扩展，体现了几个重要的设计原则：&lt;/p&gt;
+&lt;h5 id=&#34;1-关注点分离&#34;&gt;1. 关注点分离
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ignore::DirEntry - 通用文件系统抽象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 职责：文件遍历、基础元数据、忽略规则
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Haystack - ripgrep 特定的搜索抽象  
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 职责：搜索逻辑、用户意图理解、应用层策略
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-不同的语义层次&#34;&gt;2. 不同的语义层次
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;DirEntry&lt;/code&gt;的视角：文件系统条目&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is_file()&lt;/code&gt;→&amp;ldquo;这是一个文件系统吗？&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;is_dir()&lt;/code&gt;→&amp;ldquo;这是一个文件系统目录吗？&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;的视角：搜索目标&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is_explicit()&lt;/code&gt; →&amp;ldquo;用户明确要求搜索这个吗？&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;is_dir()&lt;/code&gt;→ &amp;ldquo;从搜索角度看，这应该被当作目录处理吗？&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-符号链接处理的差异&#34;&gt;3. 符号链接处理的差异
+&lt;/h5&gt;&lt;p&gt;注意&lt;code&gt;Haystack::is_dir()&lt;/code&gt;的特殊逻辑：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_dir&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ft &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self.dent.file_type() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(ft) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; ft,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; ft.is_dir() { &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 关键差异：额外的符号链接解析
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    self.dent.path_is_symlink() &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; self.dent.path().is_dir()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个逻辑是ripgrep特有的，不应该污染通用的&lt;code&gt;DirEntry&lt;/code&gt;&lt;/p&gt;
+&lt;h5 id=&#34;4-应用特定的概念&#34;&gt;4. 应用特定的概念
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;引入了ripgrep特有的概念：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is_explicit()&lt;/code&gt; - 基于&lt;code&gt;depth == 0&lt;/code&gt;判断用户意图&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;strip_dot_prefix&lt;/code&gt; - UI优化功能&lt;/li&gt;
+&lt;li&gt;搜索优先级策略 - 显式 &amp;gt; 文件 &amp;gt; 其他&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;5-依赖方向控制&#34;&gt;5. 依赖方向控制
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ignore &lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;通用&lt;/span&gt;) &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;←&lt;/span&gt; ripgrep core (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;特定&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;如果把 ripgrep 逻辑放入 DirEntry，会让通用库依赖特定应用，违反了依赖倒置原则。&lt;/p&gt;
+&lt;h5 id=&#34;6-架构优势&#34;&gt;6. 架构优势
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;可测试性 - &lt;code&gt;Haystack&lt;/code&gt;的逻辑可以独立测试&lt;/li&gt;
+&lt;li&gt;可扩展性 - 可以添加更多ripgrep特定的方法&lt;/li&gt;
+&lt;li&gt;复用性 - &lt;code&gt;ignore&lt;/code&gt;crate 可以被其他工具使用&lt;/li&gt;
+&lt;li&gt;清晰性 - 每个类型的职责边界明确&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这是&lt;strong&gt;适配器模式&lt;/strong&gt;的经典应用，体现了优秀的软件架构设计。&lt;/p&gt;
+&lt;h5 id=&#34;7-抽象层次的视角&#34;&gt;7. 抽象层次的视角
+&lt;/h5&gt;&lt;p&gt;从&lt;code&gt;Haystack&lt;/code&gt;的设计可以学到优秀架构设计的核心思想：&lt;strong&gt;抽象层次的视角分离&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;DirEntry&lt;/code&gt;是文件系统的抽象，就应该从文件系统视角去添加一些方法；&lt;code&gt;Haystack&lt;/code&gt;是搜索目标的抽象，就应该从搜索角度去添加方法。&lt;/p&gt;
+</description>
         </item>
         <item>
         <title>HiArgs和lowArgs</title>

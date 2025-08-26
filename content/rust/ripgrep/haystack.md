@@ -1,6 +1,6 @@
 +++
 date = '2025-08-26T09:21:41+08:00'
-draft = true
+draft = false
 title = 'Haystack'
 categories = ['rust', 'ripgrep']
 
