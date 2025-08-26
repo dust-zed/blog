@@ -2,32 +2,42 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/</loc>
-    <lastmod>2025-08-24T20:57:16+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
     <loc>http://localhost:1313/rust/ripgrep/</loc>
-    <lastmod>2025-08-24T20:57:16+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/categories/ripgrep/</loc>
-    <lastmod>2025-08-24T20:57:16+08:00</lastmod>
+    <lastmod>2025-08-26T11:20:58+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/categories/rust/</loc>
-    <lastmod>2025-08-24T20:57:16+08:00</lastmod>
+    <lastmod>2025-08-26T11:20:58+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/rust/</loc>
-    <lastmod>2025-08-24T20:57:16+08:00</lastmod>
+    <lastmod>2025-08-26T11:20:58+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/test/</loc>
+    <lastmod>2025-08-26T11:20:58+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/</loc>
+    <lastmod>2025-08-26T11:20:58+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/haystack/</loc>
+    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/categories/ripgrep/</loc>
+    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/</loc>
     <lastmod>2025-08-24T20:57:16+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

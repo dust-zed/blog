@@ -497,24 +497,66 @@
 </span></span><span style="display:flex;"><span>  args.patterns.push(PatternSource::File(path));
 </span></span><span style="display:flex;"><span>  Ok(())
 </span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><code>Patterns::from_low_args</code> 从三种来源构造去重(利用<code>HashSet</code>)的 <code>Patterns::patterns: Vec&lt;String&gt;</code> 。<code>-f file.txt, --file=file.txt</code>中<code>file.txt(pattern文件)</code>存放着需要匹配的<code>pattern</code>。</p>
+</span></span></code></pre></div><p><code>Patterns::from_low_args</code> 从三种来源构造去重(利用<code>HashSet</code>)的 <code>Patterns::patterns: Vec&lt;String&gt;</code> 。<code>-f file.txt, --file=file.txt</code>中<code>file.txt(pattern文件)</code>存放着需要匹配的<code>patterns</code>。</p>
 <h4 id="paths---路径管理系统">Paths - 路径管理系统
 </h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Paths</span> {
 </span></span><span style="display:flex;"><span>  paths: Vec<span style="color:#f92672">&lt;</span>PathBuf<span style="color:#f92672">&gt;</span>,         <span style="color:#75715e">// 实际路径列表
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  has_implicit_path: <span style="color:#66d9ef">bool</span>,     <span style="color:#75715e">// 是否有隐式路径
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  is_one_file: <span style="color:#66d9ef">bool</span>,           <span style="color:#75715e">// 是否只搜索单个文件
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span></code></pre></div><p>要么从<code>positional</code>中读取文件路径，要么就是智能路径推断：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> use_cwd <span style="color:#f92672">=</span> <span style="color:#f92672">!</span>is_readable_stdin
+</span></span></code></pre></div><p>要么从<code>positional</code>中读取文件路径，要么就是智能路径推断。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">from_low_args</span>(
+</span></span><span style="display:flex;"><span>    state: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> State,
+</span></span><span style="display:flex;"><span>    _: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Patterns</span>,  <span style="color:#75715e">// 虽然不使用，但强制要求存在
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    low: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> LowArgs,
+</span></span><span style="display:flex;"><span>) -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>Paths<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span> 	<span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> paths <span style="color:#f92672">=</span> Vec::with_capacity(low.positional.len());
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> osarg <span style="color:#66d9ef">in</span> low.positional.drain(<span style="color:#f92672">..</span>) {
+</span></span><span style="display:flex;"><span>  	<span style="color:#66d9ef">let</span> path <span style="color:#f92672">=</span> PathBuf::from(osarg);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> state.stdin_consumed <span style="color:#f92672">&amp;&amp;</span> path <span style="color:#f92672">==</span> Path::new(<span style="color:#e6db74">&#34;-&#34;</span>) {
+</span></span><span style="display:flex;"><span>    	anyhow::<span style="color:#a6e22e">bail!</span>(
+</span></span><span style="display:flex;"><span>         <span style="color:#e6db74">&#34;error: attempted to read patterns from stdin </span><span style="color:#ae81ff">\</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          while also searching stdin&#34;</span>,
+</span></span><span style="display:flex;"><span>      );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>   	paths.push(path);
+</span></span><span style="display:flex;"><span> 	}
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">..</span>.
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> use_cwd <span style="color:#f92672">=</span> <span style="color:#f92672">!</span>is_readable_stdin
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">||</span> state.stdin_consumed
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">||</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">matches!</span>(low.mode, Mode::Search(_));
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> (path, is_one_file) <span style="color:#f92672">=</span> <span style="color:#66d9ef">if</span> use_cwd {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">let</span> (path, is_one_file) <span style="color:#f92672">=</span> <span style="color:#66d9ef">if</span> use_cwd {
 </span></span><span style="display:flex;"><span>    (PathBuf::from(<span style="color:#e6db74">&#34;./&#34;</span>), <span style="color:#66d9ef">false</span>)  <span style="color:#75715e">// 搜索当前目录
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>} <span style="color:#66d9ef">else</span> {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	} <span style="color:#66d9ef">else</span> {
 </span></span><span style="display:flex;"><span>    (PathBuf::from(<span style="color:#e6db74">&#34;-&#34;</span>), <span style="color:#66d9ef">true</span>)    <span style="color:#75715e">// 搜索 stdin
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>};
-</span></span></code></pre></div><p>单文件优化检测：</p>
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	};
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>Paths::from_low_args()</code>函数使用了一个非常巧妙的<strong>编译时依赖约束</strong>设计，这个设计确保了</p>
+<ul>
+<li>调用着必须先构造<code>Patterns</code></li>
+<li>编译器会检查这个约束</li>
+<li>无法意外地颠倒调用顺序</li>
+</ul>
+<p>设计<strong>编译时依赖约束</strong>的原因是<code>Patterns</code>和<code>Paths</code>都使用了<code>positional</code>,此数据消费顺序不可颠倒。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// Patterns::from_low_args 中：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> low.patterns.is_empty() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> ospat <span style="color:#f92672">=</span> low.positional.remove(<span style="color:#ae81ff">0</span>);  <span style="color:#75715e">// 消费第一个位置参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> Ok(Patterns { patterns: <span style="color:#a6e22e">vec</span><span style="color:#f92672">!</span>[pat] });
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Paths::from_low_args 中：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> osarg <span style="color:#66d9ef">in</span> low.positional.drain(<span style="color:#f92672">..</span>) {  <span style="color:#75715e">// 处理剩余的位置参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    paths.push(PathBuf::from(osarg));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>编译时依赖约束设计优势</strong></p>
+<ol>
+<li><strong>编译时安全</strong> - 类型系统防止错误调用顺序</li>
+<li><strong>自文档化</strong> - 函数签名清楚表达依赖关系</li>
+<li><strong>零运行时成本</strong> - 约束在编译时检查，运行时无开销</li>
+<li><strong>API 清晰性</strong> - 强制调用者理解正确的使用方式</li>
+</ol>
+<p>单文件优化检测：</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> is_one_file <span style="color:#f92672">=</span> paths.len() <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">&amp;&amp;</span> (paths[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">==</span> Path::new(<span style="color:#e6db74">&#34;-&#34;</span>) <span style="color:#f92672">||</span> <span style="color:#f92672">!</span>paths[<span style="color:#ae81ff">0</span>].is_dir());
 </span></span></code></pre></div><ul>

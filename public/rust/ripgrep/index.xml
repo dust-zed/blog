@@ -6,7 +6,101 @@
         <description>Recent content in ripgrep on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Sun, 24 Aug 2025 20:57:16 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 26 Aug 2025 09:21:41 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Haystack</title>
+        <link>http://localhost:1313/rust/ripgrep/haystack/</link>
+        <pubDate>Tue, 26 Aug 2025 09:21:41 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/haystack/</guid>
+        <description>&lt;p&gt;&lt;code&gt;haystack.rs&lt;/code&gt;是连接文件发现和搜索执行的核心抽象：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;//在main.rs中
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; haystack_builder &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; args.haystack_builder();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; haystack &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; haystack_builder.build_from_result(result);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;searcher.search(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;haystack);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;是对&lt;code&gt;ignore::DirEntry&lt;/code&gt;的包装，添加了应用层逻辑,对&lt;code&gt;DirEntry&lt;/code&gt;增加了几种判断，而&lt;code&gt;HaystackBuilder&lt;/code&gt;则是根据&lt;code&gt;DirEntry&lt;/code&gt;的类型返回不同的结果。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Haystack&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dent: &lt;span style=&#34;color:#a6e22e&#34;&gt;ignore&lt;/span&gt;::DirEntry,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  strip_dot_prefix: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Haystack {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_stdin&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_dir&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_explicit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_file&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;中的方法指明了文件类型的层次关系：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;普通文件(&lt;code&gt;is_file() == true&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;目录(&lt;code&gt;is_dir() == true&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;符号链接 (既不是文件也不是目录)&lt;/li&gt;
+&lt;li&gt;特殊文件(设备、管道、socket)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;HaystackBuilder&lt;/code&gt;根据几个&lt;code&gt;is_*&lt;/code&gt;方法返回&lt;code&gt;Option&amp;lt;Haystack&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;haystack对direntry包装&#34;&gt;Haystack对DirEntry包装
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;包装了&lt;code&gt;DirEntry&lt;/code&gt;,而不是在&lt;code&gt;DirEntry&lt;/code&gt;中扩展，体现了几个重要的设计原则：&lt;/p&gt;
+&lt;h5 id=&#34;1-关注点分离&#34;&gt;1. 关注点分离
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ignore::DirEntry - 通用文件系统抽象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 职责：文件遍历、基础元数据、忽略规则
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Haystack - ripgrep 特定的搜索抽象  
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 职责：搜索逻辑、用户意图理解、应用层策略
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-不同的语义层次&#34;&gt;2. 不同的语义层次
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;DirEntry&lt;/code&gt;的视角：文件系统条目&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is_file()&lt;/code&gt;→&amp;ldquo;这是一个文件系统吗？&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;is_dir()&lt;/code&gt;→&amp;ldquo;这是一个文件系统目录吗？&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;的视角：搜索目标&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is_explicit()&lt;/code&gt; →&amp;ldquo;用户明确要求搜索这个吗？&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;is_dir()&lt;/code&gt;→ &amp;ldquo;从搜索角度看，这应该被当作目录处理吗？&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-符号链接处理的差异&#34;&gt;3. 符号链接处理的差异
+&lt;/h5&gt;&lt;p&gt;注意&lt;code&gt;Haystack::is_dir()&lt;/code&gt;的特殊逻辑：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_dir&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ft &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self.dent.file_type() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(ft) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; ft,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; ft.is_dir() { &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 关键差异：额外的符号链接解析
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    self.dent.path_is_symlink() &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; self.dent.path().is_dir()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个逻辑是ripgrep特有的，不应该污染通用的&lt;code&gt;DirEntry&lt;/code&gt;&lt;/p&gt;
+&lt;h5 id=&#34;4-应用特定的概念&#34;&gt;4. 应用特定的概念
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;Haystack&lt;/code&gt;引入了ripgrep特有的概念：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is_explicit()&lt;/code&gt; - 基于&lt;code&gt;depth == 0&lt;/code&gt;判断用户意图&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;strip_dot_prefix&lt;/code&gt; - UI优化功能&lt;/li&gt;
+&lt;li&gt;搜索优先级策略 - 显式 &amp;gt; 文件 &amp;gt; 其他&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;5-依赖方向控制&#34;&gt;5. 依赖方向控制
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ignore &lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;通用&lt;/span&gt;) &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;←&lt;/span&gt; ripgrep core (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;特定&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;如果把 ripgrep 逻辑放入 DirEntry，会让通用库依赖特定应用，违反了依赖倒置原则。&lt;/p&gt;
+&lt;h5 id=&#34;6-架构优势&#34;&gt;6. 架构优势
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;可测试性 - &lt;code&gt;Haystack&lt;/code&gt;的逻辑可以独立测试&lt;/li&gt;
+&lt;li&gt;可扩展性 - 可以添加更多ripgrep特定的方法&lt;/li&gt;
+&lt;li&gt;复用性 - &lt;code&gt;ignore&lt;/code&gt;crate 可以被其他工具使用&lt;/li&gt;
+&lt;li&gt;清晰性 - 每个类型的职责边界明确&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这是&lt;strong&gt;适配器模式&lt;/strong&gt;的经典应用，体现了优秀的软件架构设计。&lt;/p&gt;
+&lt;h5 id=&#34;7-抽象层次的视角&#34;&gt;7. 抽象层次的视角
+&lt;/h5&gt;&lt;p&gt;从&lt;code&gt;Haystack&lt;/code&gt;的设计可以学到优秀架构设计的核心思想：&lt;strong&gt;抽象层次的视角分离&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;DirEntry&lt;/code&gt;是文件系统的抽象，就应该从文件系统视角去添加一些方法；&lt;code&gt;Haystack&lt;/code&gt;是搜索目标的抽象，就应该从搜索角度去添加方法。&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>HiArgs和lowArgs</title>
         <link>http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/</link>
         <pubDate>Sun, 24 Aug 2025 20:57:16 +0800</pubDate>
@@ -302,24 +396,66 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  args.patterns.push(PatternSource::File(path));
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Ok(())
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Patterns::from_low_args&lt;/code&gt; 从三种来源构造去重(利用&lt;code&gt;HashSet&lt;/code&gt;)的 &lt;code&gt;Patterns::patterns: Vec&amp;lt;String&amp;gt;&lt;/code&gt; 。&lt;code&gt;-f file.txt, --file=file.txt&lt;/code&gt;中&lt;code&gt;file.txt(pattern文件)&lt;/code&gt;存放着需要匹配的&lt;code&gt;pattern&lt;/code&gt;。&lt;/p&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Patterns::from_low_args&lt;/code&gt; 从三种来源构造去重(利用&lt;code&gt;HashSet&lt;/code&gt;)的 &lt;code&gt;Patterns::patterns: Vec&amp;lt;String&amp;gt;&lt;/code&gt; 。&lt;code&gt;-f file.txt, --file=file.txt&lt;/code&gt;中&lt;code&gt;file.txt(pattern文件)&lt;/code&gt;存放着需要匹配的&lt;code&gt;patterns&lt;/code&gt;。&lt;/p&gt;
 &lt;h4 id=&#34;paths---路径管理系统&#34;&gt;Paths - 路径管理系统
 &lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Paths&lt;/span&gt; {
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  paths: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;PathBuf&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,         &lt;span style=&#34;color:#75715e&#34;&gt;// 实际路径列表
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  has_implicit_path: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,     &lt;span style=&#34;color:#75715e&#34;&gt;// 是否有隐式路径
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  is_one_file: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,           &lt;span style=&#34;color:#75715e&#34;&gt;// 是否只搜索单个文件
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;要么从&lt;code&gt;positional&lt;/code&gt;中读取文件路径，要么就是智能路径推断：&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; use_cwd &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;is_readable_stdin
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;要么从&lt;code&gt;positional&lt;/code&gt;中读取文件路径，要么就是智能路径推断。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;from_low_args&lt;/span&gt;(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    state: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; State,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;Patterns&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 虽然不使用，但强制要求存在
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    low: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; LowArgs,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;anyhow&lt;/span&gt;::Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Paths&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; 	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; paths &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Vec::with_capacity(low.positional.len());
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; osarg &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; low.positional.drain(&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; path &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; PathBuf::from(osarg);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; state.stdin_consumed &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; path &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; Path::new(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;-&amp;#34;&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    	anyhow::&lt;span style=&#34;color:#a6e22e&#34;&gt;bail!&lt;/span&gt;(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;error: attempted to read patterns from stdin &lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;          while also searching stdin&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      );
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   	paths.push(path);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; 	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; use_cwd &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;is_readable_stdin
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; state.stdin_consumed
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;matches!&lt;/span&gt;(low.mode, Mode::Search(_));
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (path, is_one_file) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; use_cwd {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (path, is_one_file) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; use_cwd {
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (PathBuf::from(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;./&amp;#34;&lt;/span&gt;), &lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;)  &lt;span style=&#34;color:#75715e&#34;&gt;// 搜索当前目录
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;} &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	} &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; {
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (PathBuf::from(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;-&amp;#34;&lt;/span&gt;), &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;)    &lt;span style=&#34;color:#75715e&#34;&gt;// 搜索 stdin
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;};
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;单文件优化检测：&lt;/p&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Paths::from_low_args()&lt;/code&gt;函数使用了一个非常巧妙的&lt;strong&gt;编译时依赖约束&lt;/strong&gt;设计，这个设计确保了&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用着必须先构造&lt;code&gt;Patterns&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;编译器会检查这个约束&lt;/li&gt;
+&lt;li&gt;无法意外地颠倒调用顺序&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;设计&lt;strong&gt;编译时依赖约束&lt;/strong&gt;的原因是&lt;code&gt;Patterns&lt;/code&gt;和&lt;code&gt;Paths&lt;/code&gt;都使用了&lt;code&gt;positional&lt;/code&gt;,此数据消费顺序不可颠倒。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Patterns::from_low_args 中：
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; low.patterns.is_empty() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ospat &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; low.positional.remove(&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;);  &lt;span style=&#34;color:#75715e&#34;&gt;// 消费第一个位置参数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; Ok(Patterns { patterns: &lt;span style=&#34;color:#a6e22e&#34;&gt;vec&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;[pat] });
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Paths::from_low_args 中：
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; osarg &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; low.positional.drain(&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;) {  &lt;span style=&#34;color:#75715e&#34;&gt;// 处理剩余的位置参数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    paths.push(PathBuf::from(osarg));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;编译时依赖约束设计优势&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;编译时安全&lt;/strong&gt; - 类型系统防止错误调用顺序&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;自文档化&lt;/strong&gt; - 函数签名清楚表达依赖关系&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;零运行时成本&lt;/strong&gt; - 约束在编译时检查，运行时无开销&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;API 清晰性&lt;/strong&gt; - 强制调用者理解正确的使用方式&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;单文件优化检测：&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; is_one_file &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; paths.len() &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; (paths[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;] &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; Path::new(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;-&amp;#34;&lt;/span&gt;) &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;paths[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;].is_dir());
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
@@ -495,7 +631,7 @@
 &lt;p&gt;用trait + 实现 实现可扩展性（&lt;strong&gt;面向接口编程&lt;/strong&gt;）: &lt;code&gt;Flag&lt;/code&gt; trait定义行为，具体flag实现只改update，解析器只依赖trait，不耦合具体实现，新增flag仅需实现trait并加入FLAGS；围绕&lt;code&gt;Flag&lt;/code&gt;trait定义了Flag相关的struct。&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;避免自引用结构的技巧（&lt;strong&gt;索引替代引用&lt;/strong&gt;）：用 HashMap&amp;lt;Vec&lt;!-- raw HTML omitted --&gt;, usize&amp;gt; + Vec&lt;!-- raw HTML omitted --&gt;（map 存索引）绕开在同一 struct 中存放自引用的问题，同时提高查找后访问效率。&lt;/p&gt;
+&lt;p&gt;避免自引用结构的技巧（&lt;strong&gt;索引替代引用&lt;/strong&gt;）：用 HashMap&amp;lt;Vec&lt;u8&gt;, usize&amp;gt; + Vec&lt;FlagInfo&gt;（map 存索引）绕开在同一 struct 中存放自引用的问题，同时提高查找后访问效率。&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;低级解析库（&lt;code&gt;lexopt&lt;/code&gt;）结合自定义逻辑：采用低层解析器以获得最大控制权（支持 negation、suggest、自定义错误信息等），而不是直接用高级库强行适配。&lt;/p&gt;

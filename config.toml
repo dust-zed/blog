@@ -45,7 +45,15 @@ description = "The last theme you'll ever need. Maybe."
 background_color_class = "bg-black"
 recent_posts_number = 3
 menu_layout = "multilevel"  # stack 主题特有配置
+  [params.notes]
+    enabled = true
+    showConnections = true
 
 [author]
 name = "zed"
 email = "zed118@gmail.com"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
