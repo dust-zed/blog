@@ -1,0 +1,84 @@
+{{- $markdown := .Inner | safeJS -}}
+{{- $uniqueID := printf "mm-%d" now.UnixNano -}}
+{{- $height := .Get "height" | default "500px" -}}
+{{- $width := .Get "width" | default "100%" -}}
+
+<div class="markmap-container" id="container-{{ $uniqueID }}">
+  <div class="markmap-canvas" id="markmap-{{ $uniqueID }}" 
+       style="height: {{ $height }}; 
+              width: {{ $width }}; 
+              margin: 1rem 0;"></div>
+  <script type="application/json" id="data-{{ $uniqueID }}">{{ $markdown }}</script>
+</div>
+
+{{- /* 加载本地资源 */ -}}
+{{- if not (.Page.Scratch.Get "markmapLoaded") -}}
+  <script>
+    window.initializeMarkmap = function() {
+      var container = document.getElementById('markmap-{{ $uniqueID }}');
+      if (!container) return;
+      
+      var rawData = document.getElementById('data-{{ $uniqueID }}');
+      if (!rawData) {
+        container.innerHTML = '<p class="text-danger">错误: 未找到思维导图数据</p>';
+        return;
+      }
+
+      try {
+        var data = JSON.parse(rawData.textContent);
+        var transformer = new markmap.Transformer();
+        var { root } = transformer.transform(data);
+        
+        markmap.Markmap.create(container, {
+          fit: true,
+          color: function(node) {
+            return node.data?.color || (node.depth === 1 ? '#4c7bd0' : '#6c757d');
+          },
+          nodeMinHeight: 24,
+          paddingX: 15,
+          zoom: true,
+          duration: 300
+        }, root);
+
+        // 响应式高度调整
+        var resizeObserver = new ResizeObserver(function(entries) {
+          entries.forEach(function(entry) {
+            var width = entry.contentRect.width;
+            if (width > 0) {
+              container.style.height = Math.min(width * 0.75, 800) + 'px';
+            }
+          });
+        });
+        
+        resizeObserver.observe(container);
+      } catch (err) {
+        container.innerHTML = '<p class="text-danger">渲染思维导图时出错: ' + 
+                             (err.message || '未知错误') + '</p>';
+        console.error('Markmap 错误:', err);
+      }
+    };
+
+    // 加载本地脚本
+    function loadScript(src, callback) {
+      var script = document.createElement('script');
+      script.src = '{{ "js/" | relURL }}' + src;
+      script.onload = callback;
+      script.onerror = function() {
+        console.error('加载脚本失败:', src);
+      };
+      document.head.appendChild(script);
+    }
+
+    // 检查并加载依赖
+    if (!window.d3) {
+      loadScript('d3.min.js', function() {
+        loadScript('markmap-lib.js', window.initializeMarkmap);
+      });
+    } else if (!window.markmap) {
+      loadScript('markmap-lib.js', window.initializeMarkmap);
+    } else {
+      window.initializeMarkmap();
+    }
+  </script>
+  {{- .Page.Scratch.Set "markmapLoaded" true -}}
+{{- end -}}

@@ -2,32 +2,52 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/rust/ripgrep/haystack/</loc>
-    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
     <loc>http://localhost:1313/rust/ripgrep/</loc>
-    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/categories/ripgrep/</loc>
-    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
+    <lastmod>2025-08-28T00:13:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/categories/rust/</loc>
-    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
+    <lastmod>2025-08-28T00:13:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/rust/</loc>
-    <lastmod>2025-08-26T09:21:41+08:00</lastmod>
+    <lastmod>2025-08-28T00:13:07+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/test/</loc>
+    <lastmod>2025-08-28T00:13:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
     <loc>http://localhost:1313/</loc>
+    <lastmod>2025-08-28T00:13:07+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/categories/ripgrep/</loc>
+    <lastmod>2025-08-27T10:28:07+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84%E5%AE%8C%E6%95%B4%E6%9E%B6%E6%9E%84/</loc>
+    <lastmod>2025-08-27T10:28:07+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/walk%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/</loc>
+    <lastmod>2025-08-27T09:07:07+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/walk%E5%AD%A6%E4%B9%A0/</loc>
+    <lastmod>2025-08-26T15:01:45+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/ripgrep/haystack/</loc>
     <lastmod>2025-08-26T09:21:41+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
