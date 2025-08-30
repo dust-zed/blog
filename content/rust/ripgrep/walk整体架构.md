@@ -565,3 +565,230 @@ WalkEventIter {depth: 0, it: it.IntoIter, next: None }
    - 退出子目录时 `self.depth -= 1`
    - 遇到新条目时更新 `self.depth = dent.depth()`
 
+### WalkParallel
+
+##### 1.核心构成
+
+```rust
+pub struct WalkParallel {
+    paths: std::vec::IntoIter<PathBuf>,  // 要遍历的路径
+    ig_root: Ignore,                    // 根目录的忽略规则
+    max_filesize: Option<u64>,          // 文件大小限制
+    max_depth: Option<usize>,           // 最大深度
+    follow_links: bool,                 // 是否跟踪符号链接
+    same_file_system: bool,             // 是否限制在同一个文件系统
+    threads: usize,                     // 线程数
+    skip: Option<Arc<Handle>>,          // 跳过规则
+    filter: Option<Filter>,             // 自定义过滤器
+}
+
+struct Worker<'s> {
+    visitor: Box<dyn ParallelVisitor>,  // 处理文件/目录的回调
+    stack: Stack,                      // 任务栈
+    quit_now: Arc<AtomicBool>,         // 提前终止标志
+    active_workers: Arc<AtomicUsize>,  // 活跃工作线程计数
+    // ... 其他状态
+}
+```
+
+##### 2. 构建初始化
+
+```rust
+// 1. 创建并行遍历器
+let walker = WalkBuilder::new("/path")
+    .threads(4)  // 设置线程数
+    .build_parallel();
+
+// 2. 运行遍历
+walker.run(|| {
+    // 每个线程的初始化代码
+    Box::new(|result| {
+        // 处理每个文件/目录
+        match result {
+            Ok(entry) => println!("Found: {}", entry.path().display()),
+            Err(err) => eprintln!("Error: {}", err),
+        }
+        WalkState::Continue  // 控制遍历流程
+    })
+});
+```
+
+##### 3. 关键组件
+
+* **ParallelVisitor**：定义如何处理遍历结果
+
+```rust
+pub trait ParallelVisitor: Send {
+    fn visit(&mut self, entry: Result<DirEntry, Error>) -> WalkState;
+}
+```
+
+* **Work**任务单元：
+
+```rust
+struct Work {
+  dent: DirEntry, 	//目录项
+  ignore: Ignore,		//忽略规则
+  root_device: u64,	//设备号（用于跨文件系统检查）
+}
+```
+
+##### 4. 执行流程
+
+1. 创建工作线程池
+2. 将初始路径加入工作队列
+3. 每个工作线程：
+   * 从队列获取任务
+   * 处理目录项
+   * 发现子目录生成新任务
+   * 处理ignore规则
+
+#### 流程详解
+
+##### 1. 初始化阶段
+
+```rust
+let walker = WalkBuilder::new("/path")
+    .threads(4)  // 4个工作线程
+    .build_parallel();
+
+walker.run(|| {
+    // 每个线程初始化时执行
+    Box::new(|result| {
+        // 处理每个文件/目录
+        println!("{:?}", result?);
+        WalkState::Continue
+    })
+});
+```
+
+##### 2. 核心方法
+
+###### 2.1 `visit`方法
+
+```rust
+pub fn visit(mut self, builder: &mut dyn ParallelVisitorBuilder<'_>) {
+    // 1. 初始化工作队列
+    let threads = self.threads();
+    let mut stack = vec![];
+    
+    // 2. 处理初始路径
+    {
+        let mut visitor = builder.build();
+        // ... 处理初始路径并填充 stack ...
+    }
+    
+    // 3. 创建工作线程
+    let quit_now = Arc::new(AtomicBool::new(false));
+    let active_workers = Arc::new(AtomicUsize::new(threads));
+    let stacks = Stack::new_for_each_thread(threads, stack);
+    
+    // 4. 启动工作线程
+    std::thread::scope(|s| {
+        let handles: Vec<_> = stacks
+            .into_iter()
+            .map(|stack| Worker { /* ... */ })
+            .map(|worker| s.spawn(|| worker.run()))
+            .collect();
+            
+        // 5. 等待所有工作线程完成
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    });
+}
+```
+
+###### 2.2 `Worker::run`方法
+
+```rust
+fn run(mut self) {
+  while let Some(work) = self.get_work() {	//获取工作项
+    if let WalkState::Quit = self.run_one(work) {		//处理工作项
+      self.quit_now()
+    }
+  }
+}
+```
+
+###### 2.3 `Worker::run_one`方法
+
+```rust
+fn run_one(&mut self, work: Work) -> WalkState {
+    // 如果是文件或符号链接，直接处理
+    if work.is_symlink() || !work.is_dir() {
+        return self.visitor.visit(Ok(work.dent));
+    }
+    
+    // 读取目录内容
+    let readdir = match work.read_dir() {
+        Ok(readdir) => readdir,
+        Err(err) => return self.visitor.visit(Err(err)),
+    };
+    
+    // 处理目录中的每个条目
+    for result in readdir {
+        let state = self.generate_work(/* ... */);
+        if state.is_quit() {
+            return state;
+        }
+    }
+    WalkState::Continue
+}
+```
+
+###### 2.4 `Worker::get_work`方法
+
+```rust
+fn get_work(&mut self) -> Option<Work> {
+    // 1. 先尝试从自己的队列获取工作
+    if let Some(work) = self.stack.pop() {
+        return Some(work);
+    }
+    
+    // 2. 尝试从其他线程窃取工作
+    if let Some(work) = self.stack.steal() {
+        return Some(work);
+    }
+    
+    // 3. 如果都失败，等待工作或退出
+    self.stack.recv()
+}
+```
+
+##### 3. 工作流程
+
+###### 1. 初始化阶段
+
+* 创建指定数量的工作线程
+* 将初始工作项分配到工作队列
+
+###### 2. 工作阶段
+
+* 每个工作线程从自己的队列获取工作
+* 处理文件或遍历目录
+* 将新发现的工作放入队列
+
+###### 3. 工作窃取
+
+* 当线程自己的队列为空时，尝试从其他线程窃取工作
+* 使用原子操作保证线程安全
+
+###### 4. 终止条件
+
+* 所有工作队列为空时
+* 所有工作线程都处于空闲状态
+* 收到退出信号
+
+##### 4. 关键设计点
+
+1. 工作窃取：使用工作窃取算法实现负载均衡
+2. 无锁设计：使用`channel`进行线程间通信
+3. 优雅退出：使用原子布尔值控制工作线程退出
+4. 资源管理：使用`RAII`确保资源正确释放
+
+#### 总结
+
+* 文件发现获得文件的绝对路径，之后使用绝对路径便可读取文件内容
+
+* 多线程模式使用广度优先遍历，单线程使用了深度优先遍历
