@@ -640,6 +640,277 @@
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
+&lt;h3 id=&#34;walkparallel&#34;&gt;WalkParallel
+&lt;/h3&gt;&lt;h5 id=&#34;1核心构成&#34;&gt;1.核心构成
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkParallel&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    paths: &lt;span style=&#34;color:#a6e22e&#34;&gt;std&lt;/span&gt;::vec::IntoIter&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;PathBuf&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 要遍历的路径
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    ig_root: &lt;span style=&#34;color:#a6e22e&#34;&gt;Ignore&lt;/span&gt;,                    &lt;span style=&#34;color:#75715e&#34;&gt;// 根目录的忽略规则
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    max_filesize: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,          &lt;span style=&#34;color:#75715e&#34;&gt;// 文件大小限制
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    max_depth: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,           &lt;span style=&#34;color:#75715e&#34;&gt;// 最大深度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    follow_links: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,                 &lt;span style=&#34;color:#75715e&#34;&gt;// 是否跟踪符号链接
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    same_file_system: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,             &lt;span style=&#34;color:#75715e&#34;&gt;// 是否限制在同一个文件系统
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    threads: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;,                     &lt;span style=&#34;color:#75715e&#34;&gt;// 线程数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    skip: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Arc&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Handle&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;,          &lt;span style=&#34;color:#75715e&#34;&gt;// 跳过规则
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    filter: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Filter&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,             &lt;span style=&#34;color:#75715e&#34;&gt;// 自定义过滤器
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Worker&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    visitor: Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; ParallelVisitor&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 处理文件/目录的回调
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    stack: &lt;span style=&#34;color:#a6e22e&#34;&gt;Stack&lt;/span&gt;,                      &lt;span style=&#34;color:#75715e&#34;&gt;// 任务栈
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    quit_now: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;AtomicBool&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,         &lt;span style=&#34;color:#75715e&#34;&gt;// 提前终止标志
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    active_workers: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;AtomicUsize&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 活跃工作线程计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ... 其他状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-构建初始化&#34;&gt;2. 构建初始化
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 1. 创建并行遍历器
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; walker &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; WalkBuilder::new(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/path&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .threads(&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;)  &lt;span style=&#34;color:#75715e&#34;&gt;// 设置线程数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    .build_parallel();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 2. 运行遍历
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;walker.run(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 每个线程的初始化代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    Box::new(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;result&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 处理每个文件/目录
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; result {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Ok(entry) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Found: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, entry.path().display()),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Err(err) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;eprintln!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Error: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, err),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        WalkState::Continue  &lt;span style=&#34;color:#75715e&#34;&gt;// 控制遍历流程
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    })
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;3-关键组件&#34;&gt;3. 关键组件
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;ParallelVisitor&lt;/strong&gt;：定义如何处理遍历结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; ParallelVisitor: Send {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;visit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, entry: Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Work&lt;/strong&gt;任务单元：&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Work&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dent: &lt;span style=&#34;color:#a6e22e&#34;&gt;DirEntry&lt;/span&gt;, 	&lt;span style=&#34;color:#75715e&#34;&gt;//目录项
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  ignore: &lt;span style=&#34;color:#a6e22e&#34;&gt;Ignore&lt;/span&gt;,		&lt;span style=&#34;color:#75715e&#34;&gt;//忽略规则
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  root_device: &lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;,	&lt;span style=&#34;color:#75715e&#34;&gt;//设备号（用于跨文件系统检查）
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;4-执行流程&#34;&gt;4. 执行流程
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;创建工作线程池&lt;/li&gt;
+&lt;li&gt;将初始路径加入工作队列&lt;/li&gt;
+&lt;li&gt;每个工作线程：
+&lt;ul&gt;
+&lt;li&gt;从队列获取任务&lt;/li&gt;
+&lt;li&gt;处理目录项&lt;/li&gt;
+&lt;li&gt;发现子目录生成新任务&lt;/li&gt;
+&lt;li&gt;处理ignore规则&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;流程详解&#34;&gt;流程详解
+&lt;/h4&gt;&lt;h5 id=&#34;1-初始化阶段&#34;&gt;1. 初始化阶段
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; walker &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; WalkBuilder::new(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/path&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .threads(&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;)  &lt;span style=&#34;color:#75715e&#34;&gt;// 4个工作线程
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    .build_parallel();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;walker.run(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 每个线程初始化时执行
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    Box::new(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;result&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 处理每个文件/目录
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{:?}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, result&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        WalkState::Continue
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    })
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-核心方法&#34;&gt;2. 核心方法
+&lt;/h5&gt;&lt;h6 id=&#34;21-visit方法&#34;&gt;2.1 &lt;code&gt;visit&lt;/code&gt;方法
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;visit&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, builder: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; ParallelVisitorBuilder&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&amp;#39;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 1. 初始化工作队列
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; threads &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.threads();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; stack &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[];
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 2. 处理初始路径
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; visitor &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; builder.build();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// ... 处理初始路径并填充 stack ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 3. 创建工作线程
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; quit_now &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Arc::new(AtomicBool::new(&lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; active_workers &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Arc::new(AtomicUsize::new(threads));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; stacks &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Stack::new_for_each_thread(threads, stack);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 4. 启动工作线程
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    std::thread::scope(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;s&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; handles: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; stacks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            .into_iter()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            .map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;stack&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; Worker { &lt;span style=&#34;color:#75715e&#34;&gt;/* ... */&lt;/span&gt; })
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            .map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;worker&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; s.spawn(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; worker.run()))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            .collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 5. 等待所有工作线程完成
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; handle &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; handles {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            handle.join().unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    });
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h6 id=&#34;22-workerrun方法&#34;&gt;2.2 &lt;code&gt;Worker::run&lt;/code&gt;方法
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;run&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(work) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.get_work() {	&lt;span style=&#34;color:#75715e&#34;&gt;//获取工作项
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; WalkState::Quit &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.run_one(work) {		&lt;span style=&#34;color:#75715e&#34;&gt;//处理工作项
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;      self.quit_now()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h6 id=&#34;23-workerrun_one方法&#34;&gt;2.3 &lt;code&gt;Worker::run_one&lt;/code&gt;方法
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;run_one&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, work: &lt;span style=&#34;color:#a6e22e&#34;&gt;Work&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 如果是文件或符号链接，直接处理
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; work.is_symlink() &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;work.is_dir() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; self.visitor.visit(Ok(work.dent));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 读取目录内容
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; readdir &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; work.read_dir() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Ok(readdir) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; readdir,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Err(err) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; self.visitor.visit(Err(err)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 处理目录中的每个条目
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; result &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; readdir {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; state &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.generate_work(&lt;span style=&#34;color:#75715e&#34;&gt;/* ... */&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; state.is_quit() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; state;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    WalkState::Continue
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h6 id=&#34;24-workerget_work方法&#34;&gt;2.4 &lt;code&gt;Worker::get_work&lt;/code&gt;方法
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;get_work&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Work&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 1. 先尝试从自己的队列获取工作
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(work) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.stack.pop() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; Some(work);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 2. 尝试从其他线程窃取工作
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(work) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.stack.steal() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; Some(work);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 3. 如果都失败，等待工作或退出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    self.stack.recv()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;3-工作流程&#34;&gt;3. 工作流程
+&lt;/h5&gt;&lt;h6 id=&#34;1-初始化阶段-1&#34;&gt;1. 初始化阶段
+&lt;/h6&gt;&lt;ul&gt;
+&lt;li&gt;创建指定数量的工作线程&lt;/li&gt;
+&lt;li&gt;将初始工作项分配到工作队列&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h6 id=&#34;2-工作阶段&#34;&gt;2. 工作阶段
+&lt;/h6&gt;&lt;ul&gt;
+&lt;li&gt;每个工作线程从自己的队列获取工作&lt;/li&gt;
+&lt;li&gt;处理文件或遍历目录&lt;/li&gt;
+&lt;li&gt;将新发现的工作放入队列&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h6 id=&#34;3-工作窃取&#34;&gt;3. 工作窃取
+&lt;/h6&gt;&lt;ul&gt;
+&lt;li&gt;当线程自己的队列为空时，尝试从其他线程窃取工作&lt;/li&gt;
+&lt;li&gt;使用原子操作保证线程安全&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h6 id=&#34;4-终止条件&#34;&gt;4. 终止条件
+&lt;/h6&gt;&lt;ul&gt;
+&lt;li&gt;所有工作队列为空时&lt;/li&gt;
+&lt;li&gt;所有工作线程都处于空闲状态&lt;/li&gt;
+&lt;li&gt;收到退出信号&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-关键设计点&#34;&gt;4. 关键设计点
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;工作窃取：使用工作窃取算法实现负载均衡&lt;/li&gt;
+&lt;li&gt;无锁设计：使用&lt;code&gt;channel&lt;/code&gt;进行线程间通信&lt;/li&gt;
+&lt;li&gt;优雅退出：使用原子布尔值控制工作线程退出&lt;/li&gt;
+&lt;li&gt;资源管理：使用&lt;code&gt;RAII&lt;/code&gt;确保资源正确释放&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;总结&#34;&gt;总结
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;文件发现获得文件的绝对路径，之后使用绝对路径便可读取文件内容&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;多线程模式使用广度优先遍历，单线程使用了深度优先遍历&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;ignore的结构&#34;&gt;Ignore的结构
+&lt;/h3&gt;&lt;p&gt;结构体&lt;code&gt;Ignore&lt;/code&gt;负责管理忽略规则。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;/// Ignore is a matcher useful for recursively walking one or more directories.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[derive(Clone, Debug)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Ignore&lt;/span&gt;(Arc&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;IgnoreInner&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[derive(Clone, Debug)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;IgnoreInner&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// A map of all existing directories that have already been
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// compiled into matchers.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;///
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Note that this is never used during matching, only when adding new
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// parent directory matchers. This avoids needing to rebuild glob sets for
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// parent directories if many paths are being searched.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    compiled: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;RwLock&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;HashMap&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;OsString, Weak&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;IgnoreInner&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// The path to the directory that this matcher was built from.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    dir: &lt;span style=&#34;color:#a6e22e&#34;&gt;PathBuf&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// An override matcher (default is empty).
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    overrides: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Override&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// A file type matcher.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    types: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Types&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// The parent directory to match next.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    parent: &lt;span style=&#34;color:#a6e22e&#34;&gt;Ignore&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether this matcher should be compiled case insensitively.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    case_insensitive: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to match hidden files.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    hidden: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to read .ignore files.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    ignore: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to respect any ignore files in parent directories.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    parents: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to read git&amp;#39;s global gitignore file.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    git_global: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to read .gitignore files.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    git_ignore: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to read .git/info/exclude files.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    git_exclude: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether to ignore files case insensitively
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    ignore_case_insensitive: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Whether a git repository must be present in order to apply any
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// git-related ignore rules.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    require_git: &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;关键组件解析&#34;&gt;关键组件解析
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;Ignore结构体
+&lt;ul&gt;
+&lt;li&gt;使用&lt;code&gt;Arc&lt;/code&gt;进行引用计数，允许多线程共享&lt;/li&gt;
+&lt;li&gt;实际实现在&lt;code&gt;IgnoreInner&lt;/code&gt;中&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IgnoreInner&lt;/code&gt;字段
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;compiled&lt;/code&gt;：缓存已编译的目录匹配器，避免重复构建&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt;:当前匹配器对应的目录路径&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;overrides&lt;/code&gt;：覆盖规则，优先级最高&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;types&lt;/code&gt;：文件类型匹配器&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;parent&lt;/code&gt;: 父目录的匹配器，形成链式结构&lt;/li&gt;
+&lt;li&gt;各种标志位：控制忽略规则的行为(如是否忽略隐藏文件、是否读取.gitignore等)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;忽略规则的优先级
+&lt;ul&gt;
+&lt;li&gt;从高到低
+&lt;ol&gt;
+&lt;li&gt;显式覆盖规则(&lt;code&gt;overrides&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;当前目录的.gitignore&lt;/li&gt;
+&lt;li&gt;父目录的.gitignore&lt;/li&gt;
+&lt;li&gt;全局gitignore&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
 </description>
         </item>
         <item>
@@ -1969,78 +2240,289 @@
         <pubDate>Fri, 08 Aug 2025 11:37:40 +0800</pubDate>
         
         <guid>http://localhost:1313/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</guid>
-        <description>&lt;h4 id=&#34;一巩固基础&#34;&gt;一、巩固基础
-&lt;/h4&gt;&lt;h5 id=&#34;1-精读rust程序设计语言&#34;&gt;1. 精读《Rust程序设计语言》
-&lt;/h5&gt;&lt;pre&gt;&lt;code&gt;* 重读 [The Book](https://doc.rust-lang.org/book/)并完成所有课后练习
-* 重点章节：所有权、错误处理、泛型、trait、声明周期、智能指针、并发
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h5 id=&#34;2-标准库深度探索&#34;&gt;2. 标准库深度探索
-&lt;/h5&gt;&lt;ul&gt;
-&lt;li&gt;掌握核心traits：&lt;code&gt;From&lt;/code&gt;/&lt;code&gt;Into&lt;/code&gt;, &lt;code&gt;TryFrom&lt;/code&gt;/&lt;code&gt;TryInto&lt;/code&gt;, &lt;code&gt; AsRef&lt;/code&gt;/&lt;code&gt;AsMut&lt;/code&gt;, &lt;code&gt;Deref&lt;/code&gt;等&lt;/li&gt;
-&lt;li&gt;使用 &lt;code&gt;cargo doc --open&lt;/code&gt; 本地标准库文档并阅读源码&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h4 id=&#34;二项目实践&#34;&gt;二、项目实践
-&lt;/h4&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-mermaid&#34; data-lang=&#34;mermaid&#34;&gt;graph LR
-    A[基础项目] --&amp;gt; B[中等项目]
-    B --&amp;gt; C[高级项目]
-    
-    A --&amp;gt; |CLI工具| A1[grep实现]
-    A --&amp;gt; |网络| A2[HTTP代理]
-    A --&amp;gt; |系统| A3[文件监视器]
-    
-    B --&amp;gt; |Web| B1[使用Actix/Axum构建API]
-    B --&amp;gt; |算法| B2[数据结构实现]
-    B --&amp;gt; |并发| B3[线程池实现]
-    
-    C --&amp;gt; |OS| C1[操作系统内核]
-    C --&amp;gt; |分布式| C2[分布式键值存储]
-    C --&amp;gt; |编译器| C3[解释器/LSP]
-&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;三深度进阶&#34;&gt;三、深度进阶
-&lt;/h4&gt;&lt;h5 id=&#34;1-内存与优化&#34;&gt;1. 内存与优化
-&lt;/h5&gt;&lt;pre&gt;&lt;code&gt;* 学习`pref`性能分析工具
-* 实践`#[inline]`, `Box&amp;lt;[T]&amp;gt;` vs `Vec&amp;lt;T&amp;gt;`等优化
-* 阅读Rust性能指南
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h5 id=&#34;2-高级特性精通&#34;&gt;2. 高级特性精通
-&lt;/h5&gt;&lt;ul&gt;
-&lt;li&gt;宏编程&lt;/li&gt;
-&lt;li&gt;不安全Rust的正确使用&lt;/li&gt;
-&lt;li&gt;Pin/Unpin与自引用结构&lt;/li&gt;
-&lt;li&gt;Tokio/Async高级模式&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h4 id=&#34;四社区参与持续进行&#34;&gt;四、社区参与（持续进行）
-&lt;/h4&gt;&lt;ol&gt;
+        <description>&lt;h2 id=&#34;1-基础能力建设&#34;&gt;1. 基础能力建设
+&lt;/h2&gt;&lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;代码贡献&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Rust 语言精通&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;参与&lt;code&gt;tokio&lt;/code&gt;等知名项目&lt;/li&gt;
-&lt;li&gt;解决&lt;code&gt;good-first-issue&lt;/code&gt;标签问题&lt;/li&gt;
+&lt;li&gt;深入理解所有权、生命周期、trait 系统&lt;/li&gt;
+&lt;li&gt;掌握 unsafe Rust 和 FFI&lt;/li&gt;
+&lt;li&gt;研究标准库实现&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;知识输出&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;算法与数据结构&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;写技术博客解释Rust概念&lt;/li&gt;
-&lt;li&gt;在StackOverflow回答问题&lt;/li&gt;
+&lt;li&gt;实现常用数据结构和算法&lt;/li&gt;
+&lt;li&gt;学习字符串搜索算法（Boyer-Moore, Aho-Corasick 等）&lt;/li&gt;
+&lt;li&gt;理解时间/空间复杂度分析&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;核心学习资源&lt;/strong&gt;&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-diff&#34; data-lang=&#34;diff&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;+ 2024推荐：
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;- 书籍：《Command-Line Rust》(O&amp;#39;Reilly)
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;- 视频：Jon Gjengset的&amp;#34;Crust of Rust&amp;#34;系列
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;- 社区：r/rust 每日阅读
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;- 实践：Advent of Code挑战
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;p&gt;&lt;strong&gt;系统编程&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;深入理解操作系统原理&lt;/li&gt;
+&lt;li&gt;学习文件系统、内存管理、并发模型&lt;/li&gt;
+&lt;li&gt;掌握性能分析和调优技术&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-工程实践&#34;&gt;2. 工程实践
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;开源贡献&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从修复小 bug 开始参与开源项目&lt;/li&gt;
+&lt;li&gt;学习阅读和理解大型代码库&lt;/li&gt;
+&lt;li&gt;参与代码审查，学习他人代码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;代码质量&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;编写全面的测试用例&lt;/li&gt;
+&lt;li&gt;实践持续集成&lt;/li&gt;
+&lt;li&gt;学习设计模式和架构原则&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;性能优化&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;学习使用性能分析工具（perf, dtrace 等）&lt;/li&gt;
+&lt;li&gt;理解 CPU 缓存、分支预测等底层细节&lt;/li&gt;
+&lt;li&gt;实践基准测试和性能调优&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-学习资源&#34;&gt;3. 学习资源
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;必读书籍&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;《Rust 程序设计语言》&lt;/li&gt;
+&lt;li&gt;《Rust 权威指南》&lt;/li&gt;
+&lt;li&gt;《代码整洁之道》&lt;/li&gt;
+&lt;li&gt;《深入理解计算机系统》&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;学习路径&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-mermaid&#34; data-lang=&#34;mermaid&#34;&gt;graph TD
+  A[Rust 基础] --&amp;gt; B[标准库实现]
+  B --&amp;gt; C[开源项目贡献]
+  C --&amp;gt; D[性能优化]
+  D --&amp;gt; E[系统设计]
+  E --&amp;gt; F[独立项目]
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;4-实践项目&#34;&gt;4. 实践项目
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;命令行工具&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;实现简单的 grep 功能&lt;/li&gt;
+&lt;li&gt;添加正则表达式支持&lt;/li&gt;
+&lt;li&gt;优化性能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;并发处理&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;实现工作窃取线程池&lt;/li&gt;
+&lt;li&gt;学习无锁编程&lt;/li&gt;
+&lt;li&gt;实现并行算法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;性能优化&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;使用 SIMD 指令优化字符串处理&lt;/li&gt;
+&lt;li&gt;实现内存池&lt;/li&gt;
+&lt;li&gt;优化 I/O 性能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
 &lt;/ol&gt;
-&lt;h4 id=&#34;最后建议&#34;&gt;最后建议
-&lt;/h4&gt;&lt;p&gt;当遇到困难时：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;使用 cargo clippy 和 cargo miri 辅助诊断&lt;/li&gt;
-&lt;li&gt;在 &lt;a class=&#34;link&#34; href=&#34;https://users.rust-lang.org/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
-    &gt;Rust用户论坛&lt;/a&gt; 提问&lt;/li&gt;
-&lt;li&gt;阅读标准库相关模块源码（&lt;code&gt;std::collections&lt;/code&gt; 是很好的起点））&lt;/li&gt;
+&lt;h2 id=&#34;5-思维习惯&#34;&gt;5. 思维习惯
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;持续学习&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;每天阅读优秀源码&lt;/li&gt;
+&lt;li&gt;定期参与技术讨论&lt;/li&gt;
+&lt;li&gt;写技术博客分享心得&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;代码审查&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;学习他人代码风格&lt;/li&gt;
+&lt;li&gt;接受并理解批评&lt;/li&gt;
+&lt;li&gt;不断重构和改进&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;问题解决&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;深入理解问题本质&lt;/li&gt;
+&lt;li&gt;设计多种解决方案&lt;/li&gt;
+&lt;li&gt;基准测试验证优化效果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;6-具体行动建议&#34;&gt;6. 具体行动建议
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;每天花 1 小时阅读 Rust 标准库源码&lt;/li&gt;
+&lt;li&gt;每周研究一个开源项目的架构设计&lt;/li&gt;
+&lt;li&gt;每月完成一个具有挑战性的编程练习&lt;/li&gt;
+&lt;li&gt;每季度参与一次开源贡献&lt;/li&gt;
+&lt;li&gt;每年开发一个展示个人技术水平的项目&lt;/li&gt;
 &lt;/ol&gt;
+&lt;p&gt;记住，成为顶尖开发者是场马拉松，而非短跑。保持耐心和持续学习的心态是关键。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;每日阅读-rust-标准库源码计划&#34;&gt;每日阅读 Rust 标准库源码计划
+&lt;/h1&gt;&lt;p&gt;是的，借助 AI 阅读 Rust 标准库源码是个很好的学习方式。以下是一个具体的学习计划：&lt;/p&gt;
+&lt;h2 id=&#34;学习策略&#34;&gt;学习策略
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;基础阶段（1-2周）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从简单的模块开始，如 &lt;code&gt;std::option&lt;/code&gt; 和 &lt;code&gt;std::result&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;重点关注标准库中的 trait 实现和常用类型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;中级阶段（3-8周）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;研究集合类型：&lt;code&gt;Vec&lt;/code&gt;、&lt;code&gt;HashMap&lt;/code&gt;、&lt;code&gt;String&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;学习迭代器和闭包实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;高级阶段（9周+）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;并发原语：&lt;code&gt;Arc&lt;/code&gt;、&lt;code&gt;Mutex&lt;/code&gt;、&lt;code&gt;RwLock&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;异步运行时和 future 实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;使用-ai-辅助学习&#34;&gt;使用 AI 辅助学习
+&lt;/h2&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 示例：使用 AI 分析标准库代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 1. 选择要学习的模块
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; module &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;std::collections::hash_map&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 2. 让 AI 解释核心概念
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Q: 请解释 HashMap 的 robin hood hashing 实现
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Q: 这个 unsafe 块的作用是什么？
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 3. 做笔记和总结
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;take_notes&lt;/span&gt;(concept: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;, examples: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 记录学习要点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;每日学习流程&#34;&gt;每日学习流程
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;准备阶段（5分钟）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;确定今天要学习的模块&lt;/li&gt;
+&lt;li&gt;设置学习目标&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;核心学习（45分钟）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;阅读源码（25分钟）&lt;/li&gt;
+&lt;li&gt;使用 AI 解答疑问（15分钟）&lt;/li&gt;
+&lt;li&gt;做笔记（5分钟）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;复习阶段（10分钟）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;总结今日所学&lt;/li&gt;
+&lt;li&gt;记录未解决的问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;实用技巧&#34;&gt;实用技巧
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;使用 &lt;code&gt;rustup doc --std&lt;/code&gt; 查看本地文档&lt;/li&gt;
+&lt;li&gt;在 playground 中编写测试代码&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;cargo-expand&lt;/code&gt; 查看宏展开&lt;/li&gt;
+&lt;li&gt;关注标准库中的测试用例&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;推荐的学习顺序&#34;&gt;推荐的学习顺序
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;std::option&lt;/code&gt; 和 &lt;code&gt;std::result&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::iter&lt;/code&gt; 和迭代器&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::collections&lt;/code&gt; 中的集合类型&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::sync&lt;/code&gt; 和 &lt;code&gt;std::thread&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::future&lt;/code&gt; 和异步编程&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;制定-rust-标准库学习目标的方法&#34;&gt;制定 Rust 标准库学习目标的方法
+&lt;/h1&gt;&lt;h2 id=&#34;1-按模块划分目标&#34;&gt;1. 按模块划分目标
+&lt;/h2&gt;&lt;h3 id=&#34;基础模块1-2周模块&#34;&gt;基础模块（1-2周/模块）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;std::option&lt;/code&gt; 和 &lt;code&gt;std::result&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;理解 &lt;code&gt;Option&lt;/code&gt; 和 &lt;code&gt;Result&lt;/code&gt; 的实现&lt;/li&gt;
+&lt;li&gt;学习组合子方法（&lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/ignore/src/lib.rs:466:4-475:5&#34; &gt;map&lt;/a&gt;, &lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/core/flags/parse.rs:41:4-52:5&#34; &gt;and_then&lt;/a&gt;, &lt;code&gt;unwrap_or&lt;/code&gt;等）&lt;/li&gt;
+&lt;li&gt;目标：能解释为什么 &lt;code&gt;Option&amp;lt;T&amp;gt;&lt;/code&gt; 在内存中与 &lt;code&gt;T&lt;/code&gt; 大小相同&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;std::iter&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;理解 &lt;code&gt;Iterator&lt;/code&gt; trait 的设计&lt;/li&gt;
+&lt;li&gt;学习常见迭代器适配器&lt;/li&gt;
+&lt;li&gt;目标：能实现自定义迭代器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-按主题划分目标&#34;&gt;2. 按主题划分目标
+&lt;/h2&gt;&lt;h3 id=&#34;所有权和生命周期2周&#34;&gt;所有权和生命周期（2周）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;研究 &lt;code&gt;std::mem&lt;/code&gt; 模块&lt;/li&gt;
+&lt;li&gt;分析 &lt;code&gt;Box&lt;/code&gt;, &lt;code&gt;Rc&lt;/code&gt;, &lt;code&gt;Arc&lt;/code&gt; 的实现&lt;/li&gt;
+&lt;li&gt;目标：能解释 Rust 的所有权系统如何影响标准库设计&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;并发编程3周&#34;&gt;并发编程（3周）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;学习 &lt;code&gt;std::sync&lt;/code&gt; 中的原语&lt;/li&gt;
+&lt;li&gt;研究 &lt;code&gt;std::thread&lt;/code&gt; 和 &lt;code&gt;std::sync::mpsc&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;目标：能解释 &lt;code&gt;Mutex&lt;/code&gt; 和 &lt;code&gt;RwLock&lt;/code&gt; 的区别和适用场景&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-smart-目标制定法&#34;&gt;3. SMART 目标制定法
+&lt;/h2&gt;&lt;h3 id=&#34;具体-specific&#34;&gt;具体 (Specific)
+&lt;/h3&gt;&lt;p&gt;❌ 模糊目标：学习集合类型
+✅ 明确目标：理解 &lt;code&gt;Vec&amp;lt;T&amp;gt;&lt;/code&gt; 的内存布局和扩容策略&lt;/p&gt;
+&lt;h3 id=&#34;可衡量-measurable&#34;&gt;可衡量 (Measurable)
+&lt;/h3&gt;&lt;p&gt;❌ 不明确：了解迭代器
+✅ 可衡量：能实现3种不同的迭代器适配器&lt;/p&gt;
+&lt;h3 id=&#34;可实现-achievable&#34;&gt;可实现 (Achievable)
+&lt;/h3&gt;&lt;p&gt;❌ 不切实际：一周内掌握整个异步运行时
+✅ 可实现：一周内理解 &lt;code&gt;Future&lt;/code&gt; trait 和基本的执行器原理&lt;/p&gt;
+&lt;h3 id=&#34;相关性-relevant&#34;&gt;相关性 (Relevant)
+&lt;/h3&gt;&lt;p&gt;❌ 不相关：学习网络协议实现（如果是为了理解集合类型）
+✅ 相关：研究 &lt;code&gt;HashMap&lt;/code&gt; 的实现来理解 trait 约束&lt;/p&gt;
+&lt;h3 id=&#34;有时限-time-bound&#34;&gt;有时限 (Time-bound)
+&lt;/h3&gt;&lt;p&gt;❌ 无期限：某天学习错误处理
+✅ 有时限：本周内完成 &lt;code&gt;std::error::Error&lt;/code&gt; trait 的学习&lt;/p&gt;
+&lt;h2 id=&#34;4-示例学习计划&#34;&gt;4. 示例学习计划
+&lt;/h2&gt;&lt;h3 id=&#34;第1周option-和-result&#34;&gt;第1周：&lt;code&gt;Option&lt;/code&gt; 和 &lt;code&gt;Result&lt;/code&gt;
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;周一：阅读 &lt;code&gt;Option&lt;/code&gt; 定义和基础方法&lt;/li&gt;
+&lt;li&gt;周三：研究 &lt;code&gt;Option&lt;/code&gt; 的内存布局&lt;/li&gt;
+&lt;li&gt;周五：&lt;code&gt;Result&lt;/code&gt; 和错误处理模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;第2周迭代器&#34;&gt;第2周：迭代器
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;周一：&lt;code&gt;Iterator&lt;/code&gt; trait 定义&lt;/li&gt;
+&lt;li&gt;周三：常见适配器实现&lt;/li&gt;
+&lt;li&gt;周五：自定义迭代器实践&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;需要我帮你制定一个具体的学习计划吗？或者你对某个特定主题更感兴趣？&lt;/p&gt;
 </description>
         </item>
         <item>
@@ -2256,31 +2738,22 @@
 &lt;li&gt;
 &lt;p&gt;父作用域会等待所有子协程完成后才继续执行？&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;是的，一个是隐式等待，一个是由coroutineScope构建的显式等待。&lt;/li&gt;
+&lt;li&gt;是的，所有父协程（父作用域）会自动等待所有子协程完成。&lt;code&gt;join()&lt;/code&gt;和&lt;code&gt;wait()&lt;/code&gt;&lt;strong&gt;控制执行顺序&lt;/strong&gt;和&lt;strong&gt;确保在特定节点有结果&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为什么I/O操作支持挂起，而CPU密集操作需要&lt;code&gt;withContext&lt;/code&gt;手动挂起。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;I/O操作需要&lt;strong&gt;等待外部资源&lt;/strong&gt;（文件/网络/数据库响应）就绪，进而CPU就会空闲，空闲下来了，协程就决定&lt;strong&gt;主动释放线程 - 挂起&lt;/strong&gt;，让其他任务去使用线程。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CPU密集操作&lt;strong&gt;持续消耗CPU计算资源&lt;/strong&gt;，CPU不会空闲&lt;/p&gt;
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-kotlin&#34; data-lang=&#34;kotlin&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;suspend&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fun&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;complexTask&lt;/span&gt;() = coroutineScope { &lt;span style=&#34;color:#75715e&#34;&gt;// ⭐父作用域⭐
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;val&lt;/span&gt; deferred1 = async {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        delay(&lt;span style=&#34;color:#ae81ff&#34;&gt;1000&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;结果1&amp;#34;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;val&lt;/span&gt; deferred2 = async {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        delay(&lt;span style=&#34;color:#ae81ff&#34;&gt;1500&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;结果2&amp;#34;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    println(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;组合结果: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;${deferred1.await()}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt; + &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;${deferred2.await()}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;) 
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 🚫 会等待两个async都完成才执行
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;runBlocking {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    println(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;开始任务&amp;#34;&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    complexTask() &lt;span style=&#34;color:#75715e&#34;&gt;// 👇挂起点👇
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    println(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;✅ 所有嵌套协程完成&amp;#34;&lt;/span&gt;) &lt;span style=&#34;color:#75715e&#34;&gt;// 在complexTask内部完成后执行
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+</description>
         </item>
         <item>
         <title>协程原理</title>
@@ -3453,6 +3926,12 @@ GPU在单个像素点重复绘制超过2.5次（1x绘制+1.5x半透明混合）�
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;简单解法&lt;/strong&gt;：使用&lt;code&gt;Event&lt;/code&gt;包装数据。事件消费后置空值，避免旧数据触发更新。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;但是这个不支持多观察者&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用&lt;code&gt;SharedFlow&lt;/code&gt;&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
@@ -3474,7 +3953,7 @@ ViewModel对象存储在&lt;code&gt;ViewModelStore&lt;/code&gt;中。当配置�
 &lt;li&gt;&lt;strong&gt;最佳实践&lt;/strong&gt;：
 &lt;ol&gt;
 &lt;li&gt;ViewModel解决配置变更的&lt;strong&gt;临时数据保存&lt;/strong&gt;（内存级）。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;SavedStateHandle&lt;/code&gt;解决进程被杀死时的&lt;strong&gt;关键数据持久化&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;在ViewModel使用&lt;code&gt;SavedStateHandle&lt;/code&gt;解决进程被杀死时的&lt;strong&gt;关键数据持久化&lt;/strong&gt;。&lt;/li&gt;
 &lt;li&gt;复杂数据应使用数据库等持久化方案。&lt;/li&gt;
 &lt;li&gt;避免内存泄漏：勿在ViewModel持有Context/View引用，必要时用&lt;code&gt;Application Context&lt;/code&gt;代替。&lt;/li&gt;
 &lt;/ol&gt;

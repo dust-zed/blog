@@ -333,31 +333,22 @@
 <li>
 <p>父作用域会等待所有子协程完成后才继续执行？</p>
 <ul>
-<li>是的，一个是隐式等待，一个是由coroutineScope构建的显式等待。</li>
+<li>是的，所有父协程（父作用域）会自动等待所有子协程完成。<code>join()</code>和<code>wait()</code><strong>控制执行顺序</strong>和<strong>确保在特定节点有结果</strong></li>
+</ul>
+</li>
+<li>
+<p>为什么I/O操作支持挂起，而CPU密集操作需要<code>withContext</code>手动挂起。</p>
+<ul>
+<li>
+<p>I/O操作需要<strong>等待外部资源</strong>（文件/网络/数据库响应）就绪，进而CPU就会空闲，空闲下来了，协程就决定<strong>主动释放线程 - 挂起</strong>，让其他任务去使用线程。</p>
+</li>
+<li>
+<p>CPU密集操作<strong>持续消耗CPU计算资源</strong>，CPU不会空闲</p>
+</li>
 </ul>
 </li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">complexTask</span>() = coroutineScope { <span style="color:#75715e">// ⭐父作用域⭐
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">val</span> deferred1 = async {
-</span></span><span style="display:flex;"><span>        delay(<span style="color:#ae81ff">1000</span>)
-</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;结果1&#34;</span>
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>    
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> deferred2 = async {
-</span></span><span style="display:flex;"><span>        delay(<span style="color:#ae81ff">1500</span>)
-</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;结果2&#34;</span>
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>    
-</span></span><span style="display:flex;"><span>    println(<span style="color:#e6db74">&#34;组合结果: </span><span style="color:#e6db74">${deferred1.await()}</span><span style="color:#e6db74"> + </span><span style="color:#e6db74">${deferred2.await()}</span><span style="color:#e6db74">&#34;</span>) 
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 🚫 会等待两个async都完成才执行
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>runBlocking {
-</span></span><span style="display:flex;"><span>    println(<span style="color:#e6db74">&#34;开始任务&#34;</span>)
-</span></span><span style="display:flex;"><span>    complexTask() <span style="color:#75715e">// 👇挂起点👇
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    println(<span style="color:#e6db74">&#34;✅ 所有嵌套协程完成&#34;</span>) <span style="color:#75715e">// 在complexTask内部完成后执行
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span></code></pre></div>
+
 </section>
 
 

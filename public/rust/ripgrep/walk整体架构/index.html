@@ -192,7 +192,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 6 分钟
+                    阅读时长: 9 分钟
                 </time>
             </div>
         
@@ -651,6 +651,277 @@
 <li>进入子目录时 <code>self.depth += 1</code></li>
 <li>退出子目录时 <code>self.depth -= 1</code></li>
 <li>遇到新条目时更新 <code>self.depth = dent.depth()</code></li>
+</ul>
+</li>
+</ol>
+<h3 id="walkparallel">WalkParallel
+</h3><h5 id="1核心构成">1.核心构成
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">WalkParallel</span> {
+</span></span><span style="display:flex;"><span>    paths: <span style="color:#a6e22e">std</span>::vec::IntoIter<span style="color:#f92672">&lt;</span>PathBuf<span style="color:#f92672">&gt;</span>,  <span style="color:#75715e">// 要遍历的路径
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ig_root: <span style="color:#a6e22e">Ignore</span>,                    <span style="color:#75715e">// 根目录的忽略规则
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    max_filesize: Option<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">u64</span><span style="color:#f92672">&gt;</span>,          <span style="color:#75715e">// 文件大小限制
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    max_depth: Option<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">usize</span><span style="color:#f92672">&gt;</span>,           <span style="color:#75715e">// 最大深度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    follow_links: <span style="color:#66d9ef">bool</span>,                 <span style="color:#75715e">// 是否跟踪符号链接
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    same_file_system: <span style="color:#66d9ef">bool</span>,             <span style="color:#75715e">// 是否限制在同一个文件系统
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    threads: <span style="color:#66d9ef">usize</span>,                     <span style="color:#75715e">// 线程数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    skip: Option<span style="color:#f92672">&lt;</span>Arc<span style="color:#f92672">&lt;</span>Handle<span style="color:#f92672">&gt;&gt;</span>,          <span style="color:#75715e">// 跳过规则
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    filter: Option<span style="color:#f92672">&lt;</span>Filter<span style="color:#f92672">&gt;</span>,             <span style="color:#75715e">// 自定义过滤器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Worker</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;s</span><span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    visitor: Box<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">dyn</span> ParallelVisitor<span style="color:#f92672">&gt;</span>,  <span style="color:#75715e">// 处理文件/目录的回调
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    stack: <span style="color:#a6e22e">Stack</span>,                      <span style="color:#75715e">// 任务栈
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    quit_now: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>AtomicBool<span style="color:#f92672">&gt;</span>,         <span style="color:#75715e">// 提前终止标志
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    active_workers: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>AtomicUsize<span style="color:#f92672">&gt;</span>,  <span style="color:#75715e">// 活跃工作线程计数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ... 其他状态
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h5 id="2-构建初始化">2. 构建初始化
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// 1. 创建并行遍历器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> walker <span style="color:#f92672">=</span> WalkBuilder::new(<span style="color:#e6db74">&#34;/path&#34;</span>)
+</span></span><span style="display:flex;"><span>    .threads(<span style="color:#ae81ff">4</span>)  <span style="color:#75715e">// 设置线程数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .build_parallel();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 2. 运行遍历
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>walker.run(<span style="color:#f92672">||</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 每个线程的初始化代码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    Box::new(<span style="color:#f92672">|</span>result<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 处理每个文件/目录
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">match</span> result {
+</span></span><span style="display:flex;"><span>            Ok(entry) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">println!</span>(<span style="color:#e6db74">&#34;Found: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span>, entry.path().display()),
+</span></span><span style="display:flex;"><span>            Err(err) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">eprintln!</span>(<span style="color:#e6db74">&#34;Error: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span>, err),
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        WalkState::Continue  <span style="color:#75715e">// 控制遍历流程
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    })
+</span></span><span style="display:flex;"><span>});
+</span></span></code></pre></div><h5 id="3-关键组件">3. 关键组件
+</h5><ul>
+<li><strong>ParallelVisitor</strong>：定义如何处理遍历结果</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">trait</span> ParallelVisitor: Send {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">visit</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, entry: Result<span style="color:#f92672">&lt;</span>DirEntry, Error<span style="color:#f92672">&gt;</span>) -&gt; <span style="color:#a6e22e">WalkState</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li><strong>Work</strong>任务单元：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Work</span> {
+</span></span><span style="display:flex;"><span>  dent: <span style="color:#a6e22e">DirEntry</span>, 	<span style="color:#75715e">//目录项
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  ignore: <span style="color:#a6e22e">Ignore</span>,		<span style="color:#75715e">//忽略规则
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  root_device: <span style="color:#66d9ef">u64</span>,	<span style="color:#75715e">//设备号（用于跨文件系统检查）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h5 id="4-执行流程">4. 执行流程
+</h5><ol>
+<li>创建工作线程池</li>
+<li>将初始路径加入工作队列</li>
+<li>每个工作线程：
+<ul>
+<li>从队列获取任务</li>
+<li>处理目录项</li>
+<li>发现子目录生成新任务</li>
+<li>处理ignore规则</li>
+</ul>
+</li>
+</ol>
+<h4 id="流程详解">流程详解
+</h4><h5 id="1-初始化阶段">1. 初始化阶段
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> walker <span style="color:#f92672">=</span> WalkBuilder::new(<span style="color:#e6db74">&#34;/path&#34;</span>)
+</span></span><span style="display:flex;"><span>    .threads(<span style="color:#ae81ff">4</span>)  <span style="color:#75715e">// 4个工作线程
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .build_parallel();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>walker.run(<span style="color:#f92672">||</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 每个线程初始化时执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    Box::new(<span style="color:#f92672">|</span>result<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 处理每个文件/目录
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">println!</span>(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{:?}</span><span style="color:#e6db74">&#34;</span>, result<span style="color:#f92672">?</span>);
+</span></span><span style="display:flex;"><span>        WalkState::Continue
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>});
+</span></span></code></pre></div><h5 id="2-核心方法">2. 核心方法
+</h5><h6 id="21-visit方法">2.1 <code>visit</code>方法
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">visit</span>(<span style="color:#66d9ef">mut</span> self, builder: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> <span style="color:#66d9ef">dyn</span> ParallelVisitorBuilder<span style="color:#f92672">&lt;</span>&#39;_<span style="color:#f92672">&gt;</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 初始化工作队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">let</span> threads <span style="color:#f92672">=</span> self.threads();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> stack <span style="color:#f92672">=</span> <span style="color:#a6e22e">vec!</span>[];
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 处理初始路径
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> visitor <span style="color:#f92672">=</span> builder.build();
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ... 处理初始路径并填充 stack ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 创建工作线程
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">let</span> quit_now <span style="color:#f92672">=</span> Arc::new(AtomicBool::new(<span style="color:#66d9ef">false</span>));
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> active_workers <span style="color:#f92672">=</span> Arc::new(AtomicUsize::new(threads));
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> stacks <span style="color:#f92672">=</span> Stack::new_for_each_thread(threads, stack);
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 4. 启动工作线程
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    std::thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> handles: Vec<span style="color:#f92672">&lt;</span>_<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> stacks
+</span></span><span style="display:flex;"><span>            .into_iter()
+</span></span><span style="display:flex;"><span>            .map(<span style="color:#f92672">|</span>stack<span style="color:#f92672">|</span> Worker { <span style="color:#75715e">/* ... */</span> })
+</span></span><span style="display:flex;"><span>            .map(<span style="color:#f92672">|</span>worker<span style="color:#f92672">|</span> s.spawn(<span style="color:#f92672">||</span> worker.run()))
+</span></span><span style="display:flex;"><span>            .collect();
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 5. 等待所有工作线程完成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> handle <span style="color:#66d9ef">in</span> handles {
+</span></span><span style="display:flex;"><span>            handle.join().unwrap();
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="22-workerrun方法">2.2 <code>Worker::run</code>方法
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">run</span>(<span style="color:#66d9ef">mut</span> self) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span> <span style="color:#66d9ef">let</span> Some(work) <span style="color:#f92672">=</span> self.get_work() {	<span style="color:#75715e">//获取工作项
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> WalkState::Quit <span style="color:#f92672">=</span> self.run_one(work) {		<span style="color:#75715e">//处理工作项
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      self.quit_now()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="23-workerrun_one方法">2.3 <code>Worker::run_one</code>方法
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">run_one</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, work: <span style="color:#a6e22e">Work</span>) -&gt; <span style="color:#a6e22e">WalkState</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 如果是文件或符号链接，直接处理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> work.is_symlink() <span style="color:#f92672">||</span> <span style="color:#f92672">!</span>work.is_dir() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self.visitor.visit(Ok(work.dent));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 读取目录内容
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">let</span> readdir <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> work.read_dir() {
+</span></span><span style="display:flex;"><span>        Ok(readdir) <span style="color:#f92672">=&gt;</span> readdir,
+</span></span><span style="display:flex;"><span>        Err(err) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span> self.visitor.visit(Err(err)),
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 处理目录中的每个条目
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span> result <span style="color:#66d9ef">in</span> readdir {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> state <span style="color:#f92672">=</span> self.generate_work(<span style="color:#75715e">/* ... */</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> state.is_quit() {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> state;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    WalkState::Continue
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="24-workerget_work方法">2.4 <code>Worker::get_work</code>方法
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">get_work</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self) -&gt; Option<span style="color:#f92672">&lt;</span>Work<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 先尝试从自己的队列获取工作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(work) <span style="color:#f92672">=</span> self.stack.pop() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Some(work);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 尝试从其他线程窃取工作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(work) <span style="color:#f92672">=</span> self.stack.steal() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Some(work);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 如果都失败，等待工作或退出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    self.stack.recv()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-工作流程">3. 工作流程
+</h5><h6 id="1-初始化阶段-1">1. 初始化阶段
+</h6><ul>
+<li>创建指定数量的工作线程</li>
+<li>将初始工作项分配到工作队列</li>
+</ul>
+<h6 id="2-工作阶段">2. 工作阶段
+</h6><ul>
+<li>每个工作线程从自己的队列获取工作</li>
+<li>处理文件或遍历目录</li>
+<li>将新发现的工作放入队列</li>
+</ul>
+<h6 id="3-工作窃取">3. 工作窃取
+</h6><ul>
+<li>当线程自己的队列为空时，尝试从其他线程窃取工作</li>
+<li>使用原子操作保证线程安全</li>
+</ul>
+<h6 id="4-终止条件">4. 终止条件
+</h6><ul>
+<li>所有工作队列为空时</li>
+<li>所有工作线程都处于空闲状态</li>
+<li>收到退出信号</li>
+</ul>
+<h5 id="4-关键设计点">4. 关键设计点
+</h5><ol>
+<li>工作窃取：使用工作窃取算法实现负载均衡</li>
+<li>无锁设计：使用<code>channel</code>进行线程间通信</li>
+<li>优雅退出：使用原子布尔值控制工作线程退出</li>
+<li>资源管理：使用<code>RAII</code>确保资源正确释放</li>
+</ol>
+<h4 id="总结">总结
+</h4><ul>
+<li>
+<p>文件发现获得文件的绝对路径，之后使用绝对路径便可读取文件内容</p>
+</li>
+<li>
+<p>多线程模式使用广度优先遍历，单线程使用了深度优先遍历</p>
+</li>
+</ul>
+<h3 id="ignore的结构">Ignore的结构
+</h3><p>结构体<code>Ignore</code>负责管理忽略规则。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#e6db74">/// Ignore is a matcher useful for recursively walking one or more directories.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#75715e">#[derive(Clone, Debug)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Ignore</span>(Arc<span style="color:#f92672">&lt;</span>IgnoreInner<span style="color:#f92672">&gt;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#[derive(Clone, Debug)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">IgnoreInner</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// A map of all existing directories that have already been
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    <span style="color:#e6db74">/// compiled into matchers.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    <span style="color:#e6db74">///
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    <span style="color:#e6db74">/// Note that this is never used during matching, only when adding new
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    <span style="color:#e6db74">/// parent directory matchers. This avoids needing to rebuild glob sets for
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    <span style="color:#e6db74">/// parent directories if many paths are being searched.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    compiled: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>RwLock<span style="color:#f92672">&lt;</span>HashMap<span style="color:#f92672">&lt;</span>OsString, Weak<span style="color:#f92672">&lt;</span>IgnoreInner<span style="color:#f92672">&gt;&gt;&gt;&gt;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// The path to the directory that this matcher was built from.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    dir: <span style="color:#a6e22e">PathBuf</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// An override matcher (default is empty).
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    overrides: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>Override<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// A file type matcher.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    types: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>Types<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// The parent directory to match next.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    parent: <span style="color:#a6e22e">Ignore</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether this matcher should be compiled case insensitively.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    case_insensitive: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to match hidden files.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    hidden: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to read .ignore files.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    ignore: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to respect any ignore files in parent directories.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    parents: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to read git&#39;s global gitignore file.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    git_global: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to read .gitignore files.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    git_ignore: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to read .git/info/exclude files.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    git_exclude: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether to ignore files case insensitively
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    ignore_case_insensitive: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Whether a git repository must be present in order to apply any
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    <span style="color:#e6db74">/// git-related ignore rules.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    require_git: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="关键组件解析">关键组件解析
+</h5><ol>
+<li>Ignore结构体
+<ul>
+<li>使用<code>Arc</code>进行引用计数，允许多线程共享</li>
+<li>实际实现在<code>IgnoreInner</code>中</li>
+</ul>
+</li>
+<li><code>IgnoreInner</code>字段
+<ul>
+<li><code>compiled</code>：缓存已编译的目录匹配器，避免重复构建</li>
+<li><code>dir</code>:当前匹配器对应的目录路径</li>
+<li><code>overrides</code>：覆盖规则，优先级最高</li>
+<li><code>types</code>：文件类型匹配器</li>
+<li><code>parent</code>: 父目录的匹配器，形成链式结构</li>
+<li>各种标志位：控制忽略规则的行为(如是否忽略隐藏文件、是否读取.gitignore等)</li>
+</ul>
+</li>
+<li>忽略规则的优先级
+<ul>
+<li>从高到低
+<ol>
+<li>显式覆盖规则(<code>overrides</code>)</li>
+<li>当前目录的.gitignore</li>
+<li>父目录的.gitignore</li>
+<li>全局gitignore</li>
+</ol>
+</li>
 </ul>
 </li>
 </ol>

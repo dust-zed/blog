@@ -792,3 +792,70 @@ fn get_work(&mut self) -> Option<Work> {
 * 文件发现获得文件的绝对路径，之后使用绝对路径便可读取文件内容
 
 * 多线程模式使用广度优先遍历，单线程使用了深度优先遍历
+
+### Ignore的结构
+
+结构体`Ignore`负责管理忽略规则。
+
+```rust
+/// Ignore is a matcher useful for recursively walking one or more directories.
+#[derive(Clone, Debug)]
+pub(crate) struct Ignore(Arc<IgnoreInner>);
+
+#[derive(Clone, Debug)]
+struct IgnoreInner {
+    /// A map of all existing directories that have already been
+    /// compiled into matchers.
+    ///
+    /// Note that this is never used during matching, only when adding new
+    /// parent directory matchers. This avoids needing to rebuild glob sets for
+    /// parent directories if many paths are being searched.
+    compiled: Arc<RwLock<HashMap<OsString, Weak<IgnoreInner>>>>,
+    /// The path to the directory that this matcher was built from.
+    dir: PathBuf,
+    /// An override matcher (default is empty).
+    overrides: Arc<Override>,
+    /// A file type matcher.
+    types: Arc<Types>,
+    /// The parent directory to match next.
+    parent: Ignore,
+    /// Whether this matcher should be compiled case insensitively.
+    case_insensitive: bool,
+    /// Whether to match hidden files.
+    hidden: bool,
+    /// Whether to read .ignore files.
+    ignore: bool,
+    /// Whether to respect any ignore files in parent directories.
+    parents: bool,
+    /// Whether to read git's global gitignore file.
+    git_global: bool,
+    /// Whether to read .gitignore files.
+    git_ignore: bool,
+    /// Whether to read .git/info/exclude files.
+    git_exclude: bool,
+    /// Whether to ignore files case insensitively
+    ignore_case_insensitive: bool,
+    /// Whether a git repository must be present in order to apply any
+    /// git-related ignore rules.
+    require_git: bool,
+}
+```
+
+##### 关键组件解析
+
+1. Ignore结构体
+   * 使用`Arc`进行引用计数，允许多线程共享
+   * 实际实现在`IgnoreInner`中
+2. `IgnoreInner`字段
+   * `compiled`：缓存已编译的目录匹配器，避免重复构建
+   * `dir`:当前匹配器对应的目录路径
+   * `overrides`：覆盖规则，优先级最高
+   * `types`：文件类型匹配器
+   * `parent`: 父目录的匹配器，形成链式结构
+   * 各种标志位：控制忽略规则的行为(如是否忽略隐藏文件、是否读取.gitignore等)
+3. 忽略规则的优先级
+   * 从高到低
+     1. 显式覆盖规则(`overrides`)
+     2. 当前目录的.gitignore
+     3. 父目录的.gitignore
+     4. 全局gitignore

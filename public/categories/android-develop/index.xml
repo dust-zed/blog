@@ -219,31 +219,22 @@
 &lt;li&gt;
 &lt;p&gt;父作用域会等待所有子协程完成后才继续执行？&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;是的，一个是隐式等待，一个是由coroutineScope构建的显式等待。&lt;/li&gt;
+&lt;li&gt;是的，所有父协程（父作用域）会自动等待所有子协程完成。&lt;code&gt;join()&lt;/code&gt;和&lt;code&gt;wait()&lt;/code&gt;&lt;strong&gt;控制执行顺序&lt;/strong&gt;和&lt;strong&gt;确保在特定节点有结果&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为什么I/O操作支持挂起，而CPU密集操作需要&lt;code&gt;withContext&lt;/code&gt;手动挂起。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;I/O操作需要&lt;strong&gt;等待外部资源&lt;/strong&gt;（文件/网络/数据库响应）就绪，进而CPU就会空闲，空闲下来了，协程就决定&lt;strong&gt;主动释放线程 - 挂起&lt;/strong&gt;，让其他任务去使用线程。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CPU密集操作&lt;strong&gt;持续消耗CPU计算资源&lt;/strong&gt;，CPU不会空闲&lt;/p&gt;
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-kotlin&#34; data-lang=&#34;kotlin&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;suspend&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fun&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;complexTask&lt;/span&gt;() = coroutineScope { &lt;span style=&#34;color:#75715e&#34;&gt;// ⭐父作用域⭐
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;val&lt;/span&gt; deferred1 = async {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        delay(&lt;span style=&#34;color:#ae81ff&#34;&gt;1000&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;结果1&amp;#34;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;val&lt;/span&gt; deferred2 = async {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        delay(&lt;span style=&#34;color:#ae81ff&#34;&gt;1500&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;结果2&amp;#34;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    println(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;组合结果: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;${deferred1.await()}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt; + &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;${deferred2.await()}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;) 
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 🚫 会等待两个async都完成才执行
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;runBlocking {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    println(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;开始任务&amp;#34;&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    complexTask() &lt;span style=&#34;color:#75715e&#34;&gt;// 👇挂起点👇
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    println(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;✅ 所有嵌套协程完成&amp;#34;&lt;/span&gt;) &lt;span style=&#34;color:#75715e&#34;&gt;// 在complexTask内部完成后执行
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+</description>
         </item>
         <item>
         <title>协程原理</title>
@@ -1416,6 +1407,12 @@ GPU在单个像素点重复绘制超过2.5次（1x绘制+1.5x半透明混合）�
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;简单解法&lt;/strong&gt;：使用&lt;code&gt;Event&lt;/code&gt;包装数据。事件消费后置空值，避免旧数据触发更新。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;但是这个不支持多观察者&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;使用&lt;code&gt;SharedFlow&lt;/code&gt;&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
@@ -1437,7 +1434,7 @@ ViewModel对象存储在&lt;code&gt;ViewModelStore&lt;/code&gt;中。当配置�
 &lt;li&gt;&lt;strong&gt;最佳实践&lt;/strong&gt;：
 &lt;ol&gt;
 &lt;li&gt;ViewModel解决配置变更的&lt;strong&gt;临时数据保存&lt;/strong&gt;（内存级）。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;SavedStateHandle&lt;/code&gt;解决进程被杀死时的&lt;strong&gt;关键数据持久化&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;在ViewModel使用&lt;code&gt;SavedStateHandle&lt;/code&gt;解决进程被杀死时的&lt;strong&gt;关键数据持久化&lt;/strong&gt;。&lt;/li&gt;
 &lt;li&gt;复杂数据应使用数据库等持久化方案。&lt;/li&gt;
 &lt;li&gt;避免内存泄漏：勿在ViewModel持有Context/View引用，必要时用&lt;code&gt;Application Context&lt;/code&gt;代替。&lt;/li&gt;
 &lt;/ol&gt;
