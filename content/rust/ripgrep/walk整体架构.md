@@ -792,6 +792,7 @@ fn get_work(&mut self) -> Option<Work> {
 * 文件发现获得文件的绝对路径，之后使用绝对路径便可读取文件内容
 
 * 多线程模式使用广度优先遍历，单线程使用了深度优先遍历
+* Worker是任务调度，Work是任务定义，Visitor是任务处理
 
 ### Ignore的结构
 
