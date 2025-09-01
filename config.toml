@@ -35,6 +35,11 @@ reviews = "reviews/:slug"
     name = "ripgrep"
     url = "/rust/ripgrep"
     weight = 1
+    
+  [[menu.main.children]]
+    name = "std"
+    url = "/rust/std"
+    weight = 1
 
 [params]
 text_color = ""
