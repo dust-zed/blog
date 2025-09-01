@@ -1,753 +1,255 @@
-<!DOCTYPE html>
-<html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n">
-<title>HiArgs和lowArgs</title>
-
-<link rel='canonical' href='http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/'>
-
-<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="HiArgs和lowArgs">
-<meta property='og:description' content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n">
-<meta property='og:url' content='http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/'>
-<meta property='og:site_name' content='zed的博客'>
-<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-08-24T20:57:16&#43;08:00'/><meta property='article:modified_time' content='2025-08-24T20:57:16&#43;08:00'/>
-<meta name="twitter:title" content="HiArgs和lowArgs">
-<meta name="twitter:description" content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n">
-    </head>
-    <body class="
-    article-page
-    ">
-    <script>
-        (function() {
-            const colorSchemeKey = 'StackColorScheme';
-            if(!localStorage.getItem(colorSchemeKey)){
-                localStorage.setItem(colorSchemeKey, "auto");
-            }
-        })();
-    </script><script>
-    (function() {
-        const colorSchemeKey = 'StackColorScheme';
-        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
-        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
-
-        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
-            
-
-            document.documentElement.dataset.scheme = 'dark';
-        } else {
-            document.documentElement.dataset.scheme = 'light';
-        }
-    })();
-</script>
-<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
-    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
-        <span class="hamburger-box">
-            <span class="hamburger-inner"></span>
-        </span>
-    </button>
-
-    <header>
-        
-            
-            <figure class="site-avatar">
-                <a href="/">
-                
-                    
-                    
-                    
-                        
-                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
-                            height="300" class="site-logo" loading="lazy" alt="Avatar">
-                    
-                
-                </a>
-                
-            </figure>
-            
-        
-        
-        <div class="site-meta">
-            <h1 class="site-name"><a href="/">zed的博客</a></h1>
-            <h2 class="site-description"></h2>
-        </div>
-    </header><ol class="menu" id="main-menu">
-        
-        
-        
-        <li >
-            <a href='/rust' >
-                
-                
-                
-                <span>rust</span>
-            </a>
-        </li>
-        
-        
-        <li >
-            <a href='/android-develop/' >
-                
-                
-                
-                <span>Android-Develops</span>
-            </a>
-        </li>
-        
-        
-        <li >
-            <a href='/tutorials/' >
-                
-                
-                
-                <span>Tutorials</span>
-            </a>
-        </li>
-        
-        <li class="menu-bottom-section">
-            <ol class="menu">
-
-                
-                    <li id="dark-mode-toggle">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="8" cy="12" r="2" />
-  <rect x="2" y="6" width="20" height="12" rx="6" />
-</svg>
-
-
-
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="16" cy="12" r="2" />
-  <rect x="2" y="6" width="20" height="12" rx="6" />
-</svg>
-
-
-
-                        <span>暗色模式</span>
-                    </li>
-                
-            </ol>
-        </li>
-    </ol>
-</aside>
-
-    
-
-            <main class="main full-width">
-    <article class="main-article">
-    <header class="article-header">
-
-    <div class="article-details">
-    
-    <header class="article-category">
-        
-            <a href="/categories/rust/" >
-                Rust
-            </a>
-        
-            <a href="/categories/ripgrep/" >
-                Ripgrep
-            </a>
-        
-    </header>
-    
-
-    <div class="article-title-wrapper">
-        <h2 class="article-title">
-            <a href="/rust/ripgrep/hiargs%E5%92%8Clowargs/">HiArgs和lowArgs</a>
-        </h2>
-    
-        
-    </div>
-
-    
-    
-    
-    
-    <footer class="article-time">
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-  <circle cx="18" cy="18" r="4" />
-  <path d="M15 3v4" />
-  <path d="M7 3v4" />
-  <path d="M3 11h16" />
-  <path d="M18 16.496v1.504l1 1" />
-</svg>
-                <time class="article-time--published">Aug 24, 2025</time>
-            </div>
-        
-
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="12" cy="12" r="9" />
-  <polyline points="12 7 12 12 15 15" />
-</svg>
-
-
-
-                <time class="article-time--reading">
-                    阅读时长: 5 分钟
-                </time>
-            </div>
-        
-    </footer>
-    
-
-    
-</div>
-
-</header>
-
-    <section class="article-content">
-    
-    
-    <h3 id="核心设计模式">核心设计模式
-</h3><h4 id="1-两层参数结构">1. 两层参数结构
-</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>LowArgs (<span style="color:#960050;background-color:#1e0010">原始参数</span>) <span style="color:#960050;background-color:#1e0010">→</span> HiArgs (<span style="color:#960050;background-color:#1e0010">处理后的配置</span>)
-</span></span></code></pre></div><p><strong>设计理念</strong></p>
-<ul>
-<li><strong>LowArgs</strong>：接近CLI原始输入，最小验证</li>
-<li><strong>HiArgs</strong>：业务就绪的配置，包含复杂对象和计算结果</li>
-<li><strong>最小验证</strong>：最小验证的核心是<strong>将不受信任数据快速转变为可信数据</strong></li>
-</ul>
-<h4 id="2-字段组织策略">2. 字段组织策略
-</h4><p><strong>简单配置字段</strong>：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>byte_offset: <span style="color:#66d9ef">bool</span>,
-</span></span><span style="display:flex;"><span>column: <span style="color:#66d9ef">bool</span>,
-</span></span><span style="display:flex;"><span>heading: <span style="color:#66d9ef">bool</span>,
-</span></span><span style="display:flex;"><span>quiet: <span style="color:#66d9ef">bool</span>,
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// ... 直接从LowArgs 复制或简单计算
-</span></span></span></code></pre></div><p><strong>复杂构建对象</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>globs: <span style="color:#a6e22e">ignore</span>::overrides::Override,
-</span></span><span style="display:flex;"><span>pre_globs: <span style="color:#a6e22e">ignore</span>::overrides::Overrode,
-</span></span><span style="display:flex;"><span>types: <span style="color:#a6e22e">ignore</span>::types::Types,
-</span></span><span style="display:flex;"><span>patterns: <span style="color:#a6e22e">Patterns</span>,
-</span></span><span style="display:flex;"><span>paths: <span style="color:#a6e22e">Paths</span>,
-</span></span></code></pre></div><p><strong>环境感知字段</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>is_terminal_stdout: <span style="color:#66d9ef">bool</span>,                   <span style="color:#75715e">// 检测输出终端
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>mmap_choice: <span style="color:#a6e22e">grep</span>::searcher::MmapChoice,    <span style="color:#75715e">// 内存映射策略
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>hyperlink_config: <span style="color:#a6e22e">grep</span>::printer::HyperLinkConfig, <span style="color:#75715e">// 超链接配置
-</span></span></span></code></pre></div><h3 id="关键设计原则">关键设计原则
-</h3><h4 id="1-延迟构建模式">1. 延迟构建模式
-</h4><p>复杂对象在 <code>from_low_args</code> 中统一构建：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> globs <span style="color:#f92672">=</span> globs(<span style="color:#f92672">&amp;</span>state, <span style="color:#f92672">&amp;</span>low)<span style="color:#f92672">?</span>;           <span style="color:#75715e">// 需要所有 glob 模式
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> types <span style="color:#f92672">=</span> types(<span style="color:#f92672">&amp;</span>low)<span style="color:#f92672">?</span>;                   <span style="color:#75715e">// 需要所有类型规则
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> patterns <span style="color:#f92672">=</span> Patterns::from_low_args(<span style="color:#f92672">..</span>.)<span style="color:#f92672">?</span>; <span style="color:#75715e">// 需要所有模式
-</span></span></span></code></pre></div><h4 id="2-状态依赖管理">2. 状态依赖管理
-</h4><p>通过 <code>State</code> 结构体管理环境状态</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> state <span style="color:#f92672">=</span> State::new()<span style="color:#f92672">?</span>;
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// state 包含：终端检测、stdin_cosumed、工作目录等
-</span></span></span></code></pre></div><h4 id="3-配置计算模式">3. 配置计算模式
-</h4><p>根据环境和标志动态计算最终配置：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> color <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> low.color {
-</span></span><span style="display:flex;"><span>  ColorChoice::Auto <span style="color:#66d9ef">if</span> <span style="color:#f92672">!</span>state.is_terminal_stdout <span style="color:#f92672">=&gt;</span> ColorChoice::Never,
-</span></span><span style="display:flex;"><span>  _ <span style="color:#f92672">=&gt;</span> low.color,
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> heading <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> low.heading {
-</span></span><span style="display:flex;"><span>  None <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">!</span>low.vimgrep <span style="color:#f92672">&amp;&amp;</span> state.is_terminal_stdout,  <span style="color:#75715e">// 智能默认值
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  Some(value) <span style="color:#f92672">=&gt;</span> value <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>low.vimgrep,              <span style="color:#75715e">// 考虑标志冲突
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>};
-</span></span></code></pre></div><p>通过 <code>HiArgs</code> 和 <code>LowArgs</code> 这种分层设计，将“解析”和“配置”职责分离，使得代码更加模块化，每层都有明确的职责边界。</p>
-<h3 id="核心构建方法">核心构建方法
-</h3><h4 id="matcher-方法的设计模式">matcher() 方法的设计模式
-</h4><p><strong>策略模式</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">matcher</span>(<span style="color:#f92672">&amp;</span>self) -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>PatternMatcher<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">match</span> self.engine {
-</span></span><span style="display:flex;"><span>        EngineChoice::Default <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">match</span> self.matcher_rust() {
-</span></span><span style="display:flex;"><span>            Ok(m) <span style="color:#f92672">=&gt;</span> Ok(m),
-</span></span><span style="display:flex;"><span>            Err(err) <span style="color:#f92672">=&gt;</span> anyhow::<span style="color:#a6e22e">bail!</span>(suggest_other_engine(err.to_string())),
-</span></span><span style="display:flex;"><span>        },
-</span></span><span style="display:flex;"><span>        EngineChoice::<span style="color:#66d9ef">PCRE2</span> <span style="color:#f92672">=&gt;</span> Ok(self.matcher_pcre2()<span style="color:#f92672">?</span>),
-</span></span><span style="display:flex;"><span>        EngineChoice::Auto <span style="color:#f92672">=&gt;</span> {
-</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 尝试 Rust 引擎，失败则尝试 PCRE2
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">let</span> rust_err <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> self.matcher_rust() {
-</span></span><span style="display:flex;"><span>                Ok(m) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span> Ok(m),
-</span></span><span style="display:flex;"><span>                Err(err) <span style="color:#f92672">=&gt;</span> err,
-</span></span><span style="display:flex;"><span>            };
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">let</span> pcre_err <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> self.matcher_pcre2() {
-</span></span><span style="display:flex;"><span>                Ok(m) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span> Ok(m),
-</span></span><span style="display:flex;"><span>                Err(err) <span style="color:#f92672">=&gt;</span> err,
-</span></span><span style="display:flex;"><span>            };
-</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 两个都失败，提供详细错误信息
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            anyhow::<span style="color:#a6e22e">bail!</span>(<span style="color:#e6db74">&#34;regex could not be compiled with either engine...&#34;</span>);
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>设计思路</strong></p>
-<ul>
-<li>根据用户选择的引擎类型，动态选择不同的匹配器实现</li>
-<li><code>Auto</code> 模式体现了优雅的降级策略：先尝试默认引擎，失败则尝试 PCRE2</li>
-</ul>
-<p><strong>建造者模式</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">matcher_rust</span>(<span style="color:#f92672">&amp;</span>self) -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>PatternMatcher<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> builder <span style="color:#f92672">=</span> grep::regex::RegexMatcherBuilder::new();
-</span></span><span style="display:flex;"><span>    builder
-</span></span><span style="display:flex;"><span>        .multi_line(<span style="color:#66d9ef">true</span>)
-</span></span><span style="display:flex;"><span>        .unicode(<span style="color:#f92672">!</span>self.no_unicode)
-</span></span><span style="display:flex;"><span>        .octal(<span style="color:#66d9ef">false</span>)
-</span></span><span style="display:flex;"><span>        .fixed_strings(self.fixed_strings);
-</span></span><span style="display:flex;"><span>    
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 根据配置逐步构建
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">match</span> self.case {
-</span></span><span style="display:flex;"><span>        CaseMode::Sensitive <span style="color:#f92672">=&gt;</span> builder.case_insensitive(<span style="color:#66d9ef">false</span>),
-</span></span><span style="display:flex;"><span>        CaseMode::Insensitive <span style="color:#f92672">=&gt;</span> builder.case_insensitive(<span style="color:#66d9ef">true</span>),
-</span></span><span style="display:flex;"><span>        CaseMode::Smart <span style="color:#f92672">=&gt;</span> builder.case_smart(<span style="color:#66d9ef">true</span>),
-</span></span><span style="display:flex;"><span>    };
-</span></span><span style="display:flex;"><span>    
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 最终构建
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">let</span> m <span style="color:#f92672">=</span> builder.build_many(<span style="color:#f92672">&amp;</span>self.patterns.patterns)<span style="color:#f92672">?</span>;
-</span></span><span style="display:flex;"><span>    Ok(PatternMatcher::RustRegex(m))
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>设计思路</strong></p>
-<ul>
-<li>使用建造者模式逐步配置复杂对象</li>
-<li>链式调用提供流畅的 API</li>
-<li>最后调用 <code>build_many()</code> 完成构建</li>
-</ul>
-<h4 id="条件编译和特性门控">条件编译和特性门控
-</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">matcher_pcre2</span>(<span style="color:#f92672">&amp;</span>self) -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>PatternMatcher<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#[cfg(feature = </span><span style="color:#e6db74">&#34;pcre2&#34;</span><span style="color:#75715e">)]</span>
-</span></span><span style="display:flex;"><span>    {
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// PCRE2 实现
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> builder <span style="color:#f92672">=</span> grep::pcre2::RegexMatcherBuilder::new();
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ... 配置代码
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Ok(PatternMatcher::<span style="color:#66d9ef">PCRE2</span>(m))
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#[cfg(not(feature = </span><span style="color:#e6db74">&#34;pcre2&#34;</span><span style="color:#75715e">))]</span>
-</span></span><span style="display:flex;"><span>    {
-</span></span><span style="display:flex;"><span>        Err(anyhow::<span style="color:#a6e22e">anyhow!</span>(<span style="color:#e6db74">&#34;PCRE2 is not available in this build&#34;</span>))
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>设计思路</strong></p>
-<ul>
-<li>
-<p>使用 Rust 的条件编译特性</p>
-</li>
-<li>
-<p>特性定义（<code>Cargo.toml</code>）</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span>[<span style="color:#a6e22e">features</span>]
-</span></span><span style="display:flex;"><span><span style="color:#a6e22e">pcre2</span> = [<span style="color:#e6db74">&#34;grep/pcre2&#34;</span>]  <span style="color:#960050;background-color:#1e0010">//</span> <span style="color:#960050;background-color:#1e0010">定义</span> <span style="color:#a6e22e">pcre2</span> <span style="color:#960050;background-color:#1e0010">特性，依赖于</span> <span style="color:#a6e22e">grep</span> <span style="color:#a6e22e">crate</span> <span style="color:#960050;background-color:#1e0010">的</span> <span style="color:#a6e22e">pcre2</span> <span style="color:#960050;background-color:#1e0010">特性</span>
-</span></span></code></pre></div></li>
-<li>
-<p>在编译时决定是否包含 PCRE2 支持</p>
-</li>
-</ul>
-<h3 id="其他方法">其他方法
-</h3><p><code>searcher()</code>、<code>printer()</code> 等其他构造方法基本采用建造者模式。<code>search_worker()</code> 方法单独说明：</p>
-<h4 id="组件组合模式">组件组合模式
-</h4><p><code>search_worker</code> 体现经典的 <strong>组合模式</strong>：</p>
-<pre tabindex="0"><code>SearchWorker
+<!doctype html><html lang=zh-cn dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n"><title>HiArgs和lowArgs</title><link rel=canonical href=https://www.dust-zed.site/rust/ripgrep/hiargs%E5%92%8Clowargs/><link rel=stylesheet href=/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css><meta property='og:title' content="HiArgs和lowArgs"><meta property='og:description' content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n"><meta property='og:url' content='https://www.dust-zed.site/rust/ripgrep/hiargs%E5%92%8Clowargs/'><meta property='og:site_name' content='zed的博客'><meta property='og:type' content='article'><meta property='article:section' content='Rust'><meta property='article:published_time' content='2025-08-24T20:57:16+08:00'><meta property='article:modified_time' content='2025-08-24T20:57:16+08:00'><meta name=twitter:title content="HiArgs和lowArgs"><meta name=twitter:description content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n"></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label=切换菜单>
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu_f509edb42ecc0ebd.png width=300 height=300 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>zed的博客</a></h1><h2 class=site-description></h2></div></header><ol class=menu id=main-menu><li><a href=/rust><span>rust</span></a></li><li><a href=/android-develop/><span>Android-Develops</span></a></li><li><a href=/tutorials/><span>Tutorials</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>暗色模式</span></li></ol></li></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/rust/>Rust
+</a><a href=/categories/ripgrep/>Ripgrep</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/rust/ripgrep/hiargs%E5%92%8Clowargs/>HiArgs和lowArgs</a></h2></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Aug 24, 2025</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>阅读时长: 5 分钟</time></div></footer></div></header><section class=article-content><h3 id=核心设计模式>核心设计模式</h3><h4 id=1-两层参数结构>1. 两层参数结构</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span>LowArgs (<span style=color:#960050;background-color:#1e0010>原始参数</span>) <span style=color:#960050;background-color:#1e0010>→</span> HiArgs (<span style=color:#960050;background-color:#1e0010>处理后的配置</span>)
+</span></span></code></pre></div><p><strong>设计理念</strong></p><ul><li><strong>LowArgs</strong>：接近CLI原始输入，最小验证</li><li><strong>HiArgs</strong>：业务就绪的配置，包含复杂对象和计算结果</li><li><strong>最小验证</strong>：最小验证的核心是<strong>将不受信任数据快速转变为可信数据</strong></li></ul><h4 id=2-字段组织策略>2. 字段组织策略</h4><p><strong>简单配置字段</strong>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span>byte_offset: <span style=color:#66d9ef>bool</span>,
+</span></span><span style=display:flex><span>column: <span style=color:#66d9ef>bool</span>,
+</span></span><span style=display:flex><span>heading: <span style=color:#66d9ef>bool</span>,
+</span></span><span style=display:flex><span>quiet: <span style=color:#66d9ef>bool</span>,
+</span></span><span style=display:flex><span><span style=color:#75715e>// ... 直接从LowArgs 复制或简单计算
+</span></span></span></code></pre></div><p><strong>复杂构建对象</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span>globs: <span style=color:#a6e22e>ignore</span>::overrides::Override,
+</span></span><span style=display:flex><span>pre_globs: <span style=color:#a6e22e>ignore</span>::overrides::Overrode,
+</span></span><span style=display:flex><span>types: <span style=color:#a6e22e>ignore</span>::types::Types,
+</span></span><span style=display:flex><span>patterns: <span style=color:#a6e22e>Patterns</span>,
+</span></span><span style=display:flex><span>paths: <span style=color:#a6e22e>Paths</span>,
+</span></span></code></pre></div><p><strong>环境感知字段</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span>is_terminal_stdout: <span style=color:#66d9ef>bool</span>,                   <span style=color:#75715e>// 检测输出终端
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>mmap_choice: <span style=color:#a6e22e>grep</span>::searcher::MmapChoice,    <span style=color:#75715e>// 内存映射策略
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>hyperlink_config: <span style=color:#a6e22e>grep</span>::printer::HyperLinkConfig, <span style=color:#75715e>// 超链接配置
+</span></span></span></code></pre></div><h3 id=关键设计原则>关键设计原则</h3><h4 id=1-延迟构建模式>1. 延迟构建模式</h4><p>复杂对象在 <code>from_low_args</code> 中统一构建：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>let</span> globs <span style=color:#f92672>=</span> globs(<span style=color:#f92672>&amp;</span>state, <span style=color:#f92672>&amp;</span>low)<span style=color:#f92672>?</span>;           <span style=color:#75715e>// 需要所有 glob 模式
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>let</span> types <span style=color:#f92672>=</span> types(<span style=color:#f92672>&amp;</span>low)<span style=color:#f92672>?</span>;                   <span style=color:#75715e>// 需要所有类型规则
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>let</span> patterns <span style=color:#f92672>=</span> Patterns::from_low_args(<span style=color:#f92672>..</span>.)<span style=color:#f92672>?</span>; <span style=color:#75715e>// 需要所有模式
+</span></span></span></code></pre></div><h4 id=2-状态依赖管理>2. 状态依赖管理</h4><p>通过 <code>State</code> 结构体管理环境状态</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>let</span> <span style=color:#66d9ef>mut</span> state <span style=color:#f92672>=</span> State::new()<span style=color:#f92672>?</span>;
+</span></span><span style=display:flex><span><span style=color:#75715e>// state 包含：终端检测、stdin_cosumed、工作目录等
+</span></span></span></code></pre></div><h4 id=3-配置计算模式>3. 配置计算模式</h4><p>根据环境和标志动态计算最终配置：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>let</span> color <span style=color:#f92672>=</span> <span style=color:#66d9ef>match</span> low.color {
+</span></span><span style=display:flex><span>  ColorChoice::Auto <span style=color:#66d9ef>if</span> <span style=color:#f92672>!</span>state.is_terminal_stdout <span style=color:#f92672>=&gt;</span> ColorChoice::Never,
+</span></span><span style=display:flex><span>  _ <span style=color:#f92672>=&gt;</span> low.color,
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> heading <span style=color:#f92672>=</span> <span style=color:#66d9ef>match</span> low.heading {
+</span></span><span style=display:flex><span>  None <span style=color:#f92672>=&gt;</span> <span style=color:#f92672>!</span>low.vimgrep <span style=color:#f92672>&amp;&amp;</span> state.is_terminal_stdout,  <span style=color:#75715e>// 智能默认值
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  Some(value) <span style=color:#f92672>=&gt;</span> value <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>!</span>low.vimgrep,              <span style=color:#75715e>// 考虑标志冲突
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><p>通过 <code>HiArgs</code> 和 <code>LowArgs</code> 这种分层设计，将“解析”和“配置”职责分离，使得代码更加模块化，每层都有明确的职责边界。</p><h3 id=核心构建方法>核心构建方法</h3><h4 id=matcher-方法的设计模式>matcher() 方法的设计模式</h4><p><strong>策略模式</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>pub</span>(<span style=color:#66d9ef>crate</span>) <span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>matcher</span>(<span style=color:#f92672>&amp;</span>self) -&gt; <span style=color:#a6e22e>anyhow</span>::Result<span style=color:#f92672>&lt;</span>PatternMatcher<span style=color:#f92672>&gt;</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>match</span> self.engine {
+</span></span><span style=display:flex><span>        EngineChoice::Default <span style=color:#f92672>=&gt;</span> <span style=color:#66d9ef>match</span> self.matcher_rust() {
+</span></span><span style=display:flex><span>            Ok(m) <span style=color:#f92672>=&gt;</span> Ok(m),
+</span></span><span style=display:flex><span>            Err(err) <span style=color:#f92672>=&gt;</span> anyhow::<span style=color:#a6e22e>bail!</span>(suggest_other_engine(err.to_string())),
+</span></span><span style=display:flex><span>        },
+</span></span><span style=display:flex><span>        EngineChoice::<span style=color:#66d9ef>PCRE2</span> <span style=color:#f92672>=&gt;</span> Ok(self.matcher_pcre2()<span style=color:#f92672>?</span>),
+</span></span><span style=display:flex><span>        EngineChoice::Auto <span style=color:#f92672>=&gt;</span> {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// 尝试 Rust 引擎，失败则尝试 PCRE2
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>            <span style=color:#66d9ef>let</span> rust_err <span style=color:#f92672>=</span> <span style=color:#66d9ef>match</span> self.matcher_rust() {
+</span></span><span style=display:flex><span>                Ok(m) <span style=color:#f92672>=&gt;</span> <span style=color:#66d9ef>return</span> Ok(m),
+</span></span><span style=display:flex><span>                Err(err) <span style=color:#f92672>=&gt;</span> err,
+</span></span><span style=display:flex><span>            };
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>let</span> pcre_err <span style=color:#f92672>=</span> <span style=color:#66d9ef>match</span> self.matcher_pcre2() {
+</span></span><span style=display:flex><span>                Ok(m) <span style=color:#f92672>=&gt;</span> <span style=color:#66d9ef>return</span> Ok(m),
+</span></span><span style=display:flex><span>                Err(err) <span style=color:#f92672>=&gt;</span> err,
+</span></span><span style=display:flex><span>            };
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// 两个都失败，提供详细错误信息
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>            anyhow::<span style=color:#a6e22e>bail!</span>(<span style=color:#e6db74>&#34;regex could not be compiled with either engine...&#34;</span>);
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>设计思路</strong></p><ul><li>根据用户选择的引擎类型，动态选择不同的匹配器实现</li><li><code>Auto</code> 模式体现了优雅的降级策略：先尝试默认引擎，失败则尝试 PCRE2</li></ul><p><strong>建造者模式</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>matcher_rust</span>(<span style=color:#f92672>&amp;</span>self) -&gt; <span style=color:#a6e22e>anyhow</span>::Result<span style=color:#f92672>&lt;</span>PatternMatcher<span style=color:#f92672>&gt;</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>let</span> <span style=color:#66d9ef>mut</span> builder <span style=color:#f92672>=</span> grep::regex::RegexMatcherBuilder::new();
+</span></span><span style=display:flex><span>    builder
+</span></span><span style=display:flex><span>        .multi_line(<span style=color:#66d9ef>true</span>)
+</span></span><span style=display:flex><span>        .unicode(<span style=color:#f92672>!</span>self.no_unicode)
+</span></span><span style=display:flex><span>        .octal(<span style=color:#66d9ef>false</span>)
+</span></span><span style=display:flex><span>        .fixed_strings(self.fixed_strings);
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 根据配置逐步构建
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#66d9ef>match</span> self.case {
+</span></span><span style=display:flex><span>        CaseMode::Sensitive <span style=color:#f92672>=&gt;</span> builder.case_insensitive(<span style=color:#66d9ef>false</span>),
+</span></span><span style=display:flex><span>        CaseMode::Insensitive <span style=color:#f92672>=&gt;</span> builder.case_insensitive(<span style=color:#66d9ef>true</span>),
+</span></span><span style=display:flex><span>        CaseMode::Smart <span style=color:#f92672>=&gt;</span> builder.case_smart(<span style=color:#66d9ef>true</span>),
+</span></span><span style=display:flex><span>    };
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 最终构建
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#66d9ef>let</span> m <span style=color:#f92672>=</span> builder.build_many(<span style=color:#f92672>&amp;</span>self.patterns.patterns)<span style=color:#f92672>?</span>;
+</span></span><span style=display:flex><span>    Ok(PatternMatcher::RustRegex(m))
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>设计思路</strong></p><ul><li>使用建造者模式逐步配置复杂对象</li><li>链式调用提供流畅的 API</li><li>最后调用 <code>build_many()</code> 完成构建</li></ul><h4 id=条件编译和特性门控>条件编译和特性门控</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>matcher_pcre2</span>(<span style=color:#f92672>&amp;</span>self) -&gt; <span style=color:#a6e22e>anyhow</span>::Result<span style=color:#f92672>&lt;</span>PatternMatcher<span style=color:#f92672>&gt;</span> {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>#[cfg(feature = </span><span style=color:#e6db74>&#34;pcre2&#34;</span><span style=color:#75715e>)]</span>
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// PCRE2 实现
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#66d9ef>let</span> <span style=color:#66d9ef>mut</span> builder <span style=color:#f92672>=</span> grep::pcre2::RegexMatcherBuilder::new();
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// ... 配置代码
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        Ok(PatternMatcher::<span style=color:#66d9ef>PCRE2</span>(m))
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#75715e>#[cfg(not(feature = </span><span style=color:#e6db74>&#34;pcre2&#34;</span><span style=color:#75715e>))]</span>
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        Err(anyhow::<span style=color:#a6e22e>anyhow!</span>(<span style=color:#e6db74>&#34;PCRE2 is not available in this build&#34;</span>))
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>设计思路</strong></p><ul><li><p>使用 Rust 的条件编译特性</p></li><li><p>特性定义（<code>Cargo.toml</code>）</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-toml data-lang=toml><span style=display:flex><span>[<span style=color:#a6e22e>features</span>]
+</span></span><span style=display:flex><span><span style=color:#a6e22e>pcre2</span> = [<span style=color:#e6db74>&#34;grep/pcre2&#34;</span>]  <span style=color:#960050;background-color:#1e0010>//</span> <span style=color:#960050;background-color:#1e0010>定义</span> <span style=color:#a6e22e>pcre2</span> <span style=color:#960050;background-color:#1e0010>特性，依赖于</span> <span style=color:#a6e22e>grep</span> <span style=color:#a6e22e>crate</span> <span style=color:#960050;background-color:#1e0010>的</span> <span style=color:#a6e22e>pcre2</span> <span style=color:#960050;background-color:#1e0010>特性</span>
+</span></span></code></pre></div></li><li><p>在编译时决定是否包含 PCRE2 支持</p></li></ul><h3 id=其他方法>其他方法</h3><p><code>searcher()</code>、<code>printer()</code> 等其他构造方法基本采用建造者模式。<code>search_worker()</code> 方法单独说明：</p><h4 id=组件组合模式>组件组合模式</h4><p><code>search_worker</code> 体现经典的 <strong>组合模式</strong>：</p><pre tabindex=0><code>SearchWorker
 ├── PatternMatcher (模式匹配)
 ├── Searcher (文件搜索)
 └── Printer (结果输出)
-</code></pre><p>每个组件职责：</p>
-<ol>
-<li><code>PatternMatcher</code>：判断文本是否匹配模式</li>
-<li><code>Searcher</code>：读取文件内容，按行处理</li>
-<li><code>Printer</code>：格式化并输出匹配结果</li>
-</ol>
-<p><strong>设计优势</strong></p>
-<ul>
-<li>职责分离：每个组件专注于自己的功能</li>
-<li>可测试性：可以独立测试每个组件</li>
-<li>可扩展性：可以替换任何组件的实现</li>
-</ul>
-<h4 id="walk_builder">walk_builder()
-</h4><h5 id="职责分层">职责分层
-</h5><p>包含四个核心职责：</p>
-<ol>
-<li><strong>路径管理</strong></li>
-</ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> builder <span style="color:#f92672">=</span> ignore::WalkBuilder::new(<span style="color:#f92672">&amp;</span>self.paths.paths[<span style="color:#ae81ff">0</span>]);
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> path <span style="color:#66d9ef">in</span> self.paths.paths.iter().skip(<span style="color:#ae81ff">1</span>) {
-</span></span><span style="display:flex;"><span>  builder.add(path)
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><ul>
-<li>初始化：使用第一个路径作为根路径</li>
-<li>扩展：添加所有额外的搜索路径</li>
-</ul>
-<ol start="2">
-<li><strong>忽略文件系统配置</strong></li>
-</ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// 用户自定义忽略文件
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> <span style="color:#f92672">!</span>self.no_ignore_files {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> path <span style="color:#66d9ef">in</span> self.ignore_file.iter() {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(err) <span style="color:#f92672">=</span> builder.add_ignore(path) {
-</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">ignore_message!</span>(<span style="color:#e6db74">&#34;{err}&#34;</span>);
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Git 集成忽略规则
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>.git_global(<span style="color:#f92672">!</span>self.no_ignore_vcs <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>self.no_ignore_global)
-</span></span><span style="display:flex;"><span>.git_ignore(<span style="color:#f92672">!</span>self.no_ignore_vcs)
-</span></span><span style="display:flex;"><span>.git_exclude(<span style="color:#f92672">!</span>self.no_ignore_vcs <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>self.no_ignore_exclude)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// 通用忽略文件
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>.ignore(<span style="color:#f92672">!</span>self.no_ignore_dot)
-</span></span><span style="display:flex;"><span>.parents(<span style="color:#f92672">!</span>self.no_ignore_parent)
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// ripgrep 专用忽略文件
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> <span style="color:#f92672">!</span>self.no_ignore_dot {
-</span></span><span style="display:flex;"><span>    builder.add_custom_ignore_filename(<span style="color:#e6db74">&#34;.rgignore&#34;</span>);
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><ol start="3">
-<li><strong>遍历行为配置</strong></li>
-</ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>builder
-</span></span><span style="display:flex;"><span>    .max_depth(self.max_depth)           <span style="color:#75715e">// 最大递归深度
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .follow_links(self.follow)           <span style="color:#75715e">// 是否跟随符号链接
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .max_filesize(self.max_filesize)     <span style="color:#75715e">// 最大文件大小
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .threads(self.threads)               <span style="color:#75715e">// 线程数
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .same_file_system(self.one_file_system) <span style="color:#75715e">// 是否限制在同一文件系统
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .skip_stdout(<span style="color:#a6e22e">matches!</span>(self.mode, Mode::Search(_))) <span style="color:#75715e">// 跳过标准输出
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .hidden(<span style="color:#f92672">!</span>self.hidden)                <span style="color:#75715e">// 是否包含隐藏文件
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .require_git(<span style="color:#f92672">!</span>self.no_require_git)   <span style="color:#75715e">// 是否要求 Git 仓库
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    .ignore_case_insensitive(self.ignore_file_case_insensitive); <span style="color:#75715e">// 忽略文件大小写
-</span></span></span></code></pre></div><ol start="4">
-<li><strong>高级功能配置</strong></li>
-</ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// 文件类型过滤
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>.overrides(self.globs.clone())
-</span></span><span style="display:flex;"><span>.types(self.types.clone())
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// 排序优化
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(<span style="color:#66d9ef">ref</span> sort) <span style="color:#f92672">=</span> self.sort {
-</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">assert_eq!</span>(<span style="color:#ae81ff">1</span>, self.threads, <span style="color:#e6db74">&#34;sorting implies single threaded&#34;</span>);
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">!</span>sort.reverse <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">matches!</span>(sort.kind, SortModeKind::Path) {
-</span></span><span style="display:flex;"><span>        builder.sort_by_file_name(<span style="color:#f92672">|</span>a, b<span style="color:#f92672">|</span> a.cmp(b));
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><code>walk_builder</code> 是系统集成点：</p>
-<ul>
-<li><strong>底层</strong>：文件系统遍历（<code>ignore::WalkBuilder</code>）</li>
-<li><strong>中层</strong>：忽略规则处理（Git、自定义、类型过滤）</li>
-<li><strong>上层</strong>：用户配置映射（命令行参数到行为）</li>
-</ul>
-<h4 id="current_dir">current_dir()
-</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">current_dir</span>() -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>PathBuf<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> err <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> std::env::current_dir() {
-</span></span><span style="display:flex;"><span>        Err(err) <span style="color:#f92672">=&gt;</span> err,                    <span style="color:#75715e">// 保存错误，继续尝试回退方案
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Ok(cwd) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span> Ok(cwd),          <span style="color:#75715e">// 成功则直接返回
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    };
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(cwd) <span style="color:#f92672">=</span> std::env::var_os(<span style="color:#e6db74">&#34;PWD&#34;</span>) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">!</span>cwd.is_empty() {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> Ok(PathBuf::from(cwd));
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>    anyhow::<span style="color:#a6e22e">bail!</span>(
-</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;failed to get current working directory: {err}</span><span style="color:#ae81ff">\n\</span><span style="color:#e6db74">
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">         did your CWD get deleted?&#34;</span>,
-</span></span><span style="display:flex;"><span>    )
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>此方法获取当前工作目录时的异常处理：</p>
-<ul>
-<li><strong>目录被删除</strong> - 进程所在目录可能被其他进程删除</li>
-<li><strong>权限问题</strong> - 无读取当前目录权限</li>
-<li><strong>符号链接问题</strong> - 当前目录是损坏的符号链接</li>
-</ul>
-<p>为何需要复杂处理？</p>
-<ol>
-<li>需要 cwd 将相对路径转绝对路径（如 <code>rg &quot;pattern&quot; ../other_projects/</code>）</li>
-<li>通过 <code>PWD</code> 环境变量回退保证健壮性</li>
-</ol>
-<p><code>hiargs.rs</code> 中其他方法均基于 <code>LowArgs</code> 完善 <code>HiArgs</code>：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// 核心数据结构
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> patterns <span style="color:#f92672">=</span> Patterns::from_low_args(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> state, <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> low)<span style="color:#f92672">?</span>;
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> paths <span style="color:#f92672">=</span> Paths::from_low_args(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> state, <span style="color:#f92672">&amp;</span>patterns, <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> low)<span style="color:#f92672">?</span>;
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> binary <span style="color:#f92672">=</span> BinaryDetection::from_low_args(<span style="color:#f92672">&amp;</span>state, <span style="color:#f92672">&amp;</span>low);
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// 辅助功能配置
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> colors <span style="color:#f92672">=</span> take_color_specs(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> state, <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> low);
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> hyperlink_config <span style="color:#f92672">=</span> take_hyperlink_config(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> state, <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> low)<span style="color:#f92672">?</span>;
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> stats <span style="color:#f92672">=</span> stats(<span style="color:#f92672">&amp;</span>low);
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> types <span style="color:#f92672">=</span> types(<span style="color:#f92672">&amp;</span>low)<span style="color:#f92672">?</span>;
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> globs <span style="color:#f92672">=</span> globs(<span style="color:#f92672">&amp;</span>state, <span style="color:#f92672">&amp;</span>low)<span style="color:#f92672">?</span>;           <span style="color:#75715e">// 文件匹配规则
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> pre_globs <span style="color:#f92672">=</span> preprocessor_globs(<span style="color:#f92672">&amp;</span>state, <span style="color:#f92672">&amp;</span>low)<span style="color:#f92672">?</span>;  <span style="color:#75715e">// 预处理器规则
-</span></span></span></code></pre></div><h3 id="核心结构体">核心结构体
-</h3><h4 id="patterns">Patterns
-</h4><p>表示要匹配的内容：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Patterns</span> {
-</span></span><span style="display:flex;"><span>  patterns: Vec<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span>,
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>模式来源的统一处理：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">from_low_args</span>(state: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> State, low: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> LowArgs)
-</span></span><span style="display:flex;"><span>    -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>Patterns<span style="color:#f92672">&gt;</span>
-</span></span></code></pre></div><p>三种模式来源：</p>
-<ol>
-<li>positional：<code>rg &quot;pattern&quot; file.txt</code></li>
-<li><code>-e/--regexp</code>: <code>rg -e &quot;pattern1&quot; -e &quot;pattern2&quot;</code></li>
-<li><code>-f/--file</code>: <code>rg -f patterns.txt</code></li>
-</ol>
-<p><code>-e/--regexp</code> 对应 <code>Pattern</code> flag 的 update 逻辑：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">update</span>(<span style="color:#f92672">&amp;</span>self, v: <span style="color:#a6e22e">FlagValue</span>, args: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> LowArgs) {
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> regexp <span style="color:#f92672">=</span> convert::string(v.unwrap_value());
-</span></span><span style="display:flex;"><span>  args.patterns.push(PatternSource::Regexp(regexp));
-</span></span><span style="display:flex;"><span>  Ok(())
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><code>-f/--file</code> 对应 <code>File</code> flag 的 update 逻辑：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">update</span>(<span style="color:#f92672">&amp;</span>self, v: <span style="color:#a6e22e">FlagValue</span>, args: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> LowArgs) {
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> path <span style="color:#f92672">=</span> PathBuf::from(v.unwrap_value());
-</span></span><span style="display:flex;"><span>  args.patterns.push(PatternSource::File(path));
-</span></span><span style="display:flex;"><span>  Ok(())
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><code>Patterns::from_low_args</code> 从三种来源构造去重(利用<code>HashSet</code>)的 <code>Patterns::patterns: Vec&lt;String&gt;</code> 。<code>-f file.txt, --file=file.txt</code>中<code>file.txt(pattern文件)</code>存放着需要匹配的<code>patterns</code>。</p>
-<h4 id="paths---路径管理系统">Paths - 路径管理系统
-</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Paths</span> {
-</span></span><span style="display:flex;"><span>  paths: Vec<span style="color:#f92672">&lt;</span>PathBuf<span style="color:#f92672">&gt;</span>,         <span style="color:#75715e">// 实际路径列表
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  has_implicit_path: <span style="color:#66d9ef">bool</span>,     <span style="color:#75715e">// 是否有隐式路径
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  is_one_file: <span style="color:#66d9ef">bool</span>,           <span style="color:#75715e">// 是否只搜索单个文件
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span></code></pre></div><p>要么从<code>positional</code>中读取文件路径，要么就是智能路径推断。</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">from_low_args</span>(
-</span></span><span style="display:flex;"><span>    state: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> State,
-</span></span><span style="display:flex;"><span>    _: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Patterns</span>,  <span style="color:#75715e">// 虽然不使用，但强制要求存在
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    low: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">mut</span> LowArgs,
-</span></span><span style="display:flex;"><span>) -&gt; <span style="color:#a6e22e">anyhow</span>::Result<span style="color:#f92672">&lt;</span>Paths<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span> 	<span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> paths <span style="color:#f92672">=</span> Vec::with_capacity(low.positional.len());
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> osarg <span style="color:#66d9ef">in</span> low.positional.drain(<span style="color:#f92672">..</span>) {
-</span></span><span style="display:flex;"><span>  	<span style="color:#66d9ef">let</span> path <span style="color:#f92672">=</span> PathBuf::from(osarg);
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> state.stdin_consumed <span style="color:#f92672">&amp;&amp;</span> path <span style="color:#f92672">==</span> Path::new(<span style="color:#e6db74">&#34;-&#34;</span>) {
-</span></span><span style="display:flex;"><span>    	anyhow::<span style="color:#a6e22e">bail!</span>(
-</span></span><span style="display:flex;"><span>         <span style="color:#e6db74">&#34;error: attempted to read patterns from stdin </span><span style="color:#ae81ff">\</span><span style="color:#e6db74">
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          while also searching stdin&#34;</span>,
-</span></span><span style="display:flex;"><span>      );
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>   	paths.push(path);
-</span></span><span style="display:flex;"><span> 	}
-</span></span><span style="display:flex;"><span>  <span style="color:#f92672">..</span>.
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> use_cwd <span style="color:#f92672">=</span> <span style="color:#f92672">!</span>is_readable_stdin
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">||</span> state.stdin_consumed
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">||</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">matches!</span>(low.mode, Mode::Search(_));
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">let</span> (path, is_one_file) <span style="color:#f92672">=</span> <span style="color:#66d9ef">if</span> use_cwd {
-</span></span><span style="display:flex;"><span>    (PathBuf::from(<span style="color:#e6db74">&#34;./&#34;</span>), <span style="color:#66d9ef">false</span>)  <span style="color:#75715e">// 搜索当前目录
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	} <span style="color:#66d9ef">else</span> {
-</span></span><span style="display:flex;"><span>    (PathBuf::from(<span style="color:#e6db74">&#34;-&#34;</span>), <span style="color:#66d9ef">true</span>)    <span style="color:#75715e">// 搜索 stdin
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	};
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><code>Paths::from_low_args()</code>函数使用了一个非常巧妙的<strong>编译时依赖约束</strong>设计，这个设计确保了</p>
-<ul>
-<li>调用着必须先构造<code>Patterns</code></li>
-<li>编译器会检查这个约束</li>
-<li>无法意外地颠倒调用顺序</li>
-</ul>
-<p>设计<strong>编译时依赖约束</strong>的原因是<code>Patterns</code>和<code>Paths</code>都使用了<code>positional</code>,此数据消费顺序不可颠倒。</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// Patterns::from_low_args 中：
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> low.patterns.is_empty() {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> ospat <span style="color:#f92672">=</span> low.positional.remove(<span style="color:#ae81ff">0</span>);  <span style="color:#75715e">// 消费第一个位置参数
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> Ok(Patterns { patterns: <span style="color:#a6e22e">vec</span><span style="color:#f92672">!</span>[pat] });
-</span></span><span style="display:flex;"><span>}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Paths::from_low_args 中：
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> osarg <span style="color:#66d9ef">in</span> low.positional.drain(<span style="color:#f92672">..</span>) {  <span style="color:#75715e">// 处理剩余的位置参数
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    paths.push(PathBuf::from(osarg));
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p><strong>编译时依赖约束设计优势</strong></p>
-<ol>
-<li><strong>编译时安全</strong> - 类型系统防止错误调用顺序</li>
-<li><strong>自文档化</strong> - 函数签名清楚表达依赖关系</li>
-<li><strong>零运行时成本</strong> - 约束在编译时检查，运行时无开销</li>
-<li><strong>API 清晰性</strong> - 强制调用者理解正确的使用方式</li>
-</ol>
-<p>单文件优化检测：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> is_one_file <span style="color:#f92672">=</span> paths.len() <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&amp;&amp;</span> (paths[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">==</span> Path::new(<span style="color:#e6db74">&#34;-&#34;</span>) <span style="color:#f92672">||</span> <span style="color:#f92672">!</span>paths[<span style="color:#ae81ff">0</span>].is_dir());
-</span></span></code></pre></div><ul>
-<li>使用 <code>!is_dir()</code> 而非 <code>is_file()</code> 更准确</li>
-<li>stdin (<code>-</code>) 被视为单文件</li>
-<li>单文件搜索启用特定优化</li>
-</ul>
-<h4 id="binarydetection---二进制文件检测系统">BinaryDetection - 二进制文件检测系统
-</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">BinaryDetection</span> {
-</span></span><span style="display:flex;"><span>    explicit: <span style="color:#a6e22e">grep</span>::searcher::BinaryDetection <span style="color:#75715e">// 显式指定文件的检测策略
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    implicit: <span style="color:#a6e22e">grep</span>::searcher::BinaryDetection <span style="color:#75715e">// 隐式发现文件的检测策略
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span></code></pre></div><p><strong>显式 vs 隐式文件处理</strong>：</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> explicit <span style="color:#f92672">=</span> <span style="color:#66d9ef">if</span> none {
-</span></span><span style="display:flex;"><span>    grep::searcher::BinaryDetection::none()
-</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">else</span> {
-</span></span><span style="display:flex;"><span>    grep::searcher::BinaryDetection::convert(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;\x00&#39;</span>)
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> implicit <span style="color:#f92672">=</span> <span style="color:#66d9ef">if</span> none {
-</span></span><span style="display:flex;"><span>    grep::searcher::BinaryDetection::none()
-</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> convert {
-</span></span><span style="display:flex;"><span>    grep::searcher::BinaryDetection::convert(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;\x00&#39;</span>)
-</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">else</span> {
-</span></span><span style="display:flex;"><span>    grep::searcher::BinaryDetection::quit(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;\x00&#39;</span>)  <span style="color:#75715e">// 关键差异
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>};
-</span></span></code></pre></div><ul>
-<li><strong>显式文件</strong>：用户明确指定，必须搜索，不能“退出”</li>
-<li><strong>隐式文件</strong>：目录遍历发现，可以跳过二进制文件</li>
-</ul>
-<p><strong>三种检测模式</strong>：</p>
-<ol>
-<li><code>none</code>：禁用二进制检测，当作文本处理 (<code>--text</code> 或 <code>--null-data</code>)</li>
-<li><code>convert(b'\x00')</code>：将 null 字节转换为换行符继续搜索 (<code>--binary</code>)</li>
-<li><code>quit(b'\x00')</code>：遇到 null 字节立即停止搜索该文件</li>
-</ol>
-<p>默认策略：</p>
-<ul>
-<li>显式文件：<code>convert(b'\x00')</code></li>
-<li>隐式文件：<code>quit(b'\x00')</code></li>
-</ul>
-<h4 id="state---解析状态管理">State - 解析状态管理
-</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">State</span> {
-</span></span><span style="display:flex;"><span>    is_terminal_stdout: <span style="color:#66d9ef">bool</span>,  <span style="color:#75715e">// stdout 是否连接到终端
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    stdin_consumed: <span style="color:#66d9ef">bool</span>,      <span style="color:#75715e">// stdin 是否已被消费
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    cwd: <span style="color:#a6e22e">PathBuf</span>,              <span style="color:#75715e">// 当前工作目录
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span></code></pre></div><ul>
-<li><code>is_terminal_stdout</code>：影响颜色输出、缓冲策略等（需跨平台处理）</li>
-<li><code>stdin_consumed</code>：防止同时从 stdin 读取模式和内容</li>
-</ul>
-<h3 id="结构体设计的核心思想">结构体设计的核心思想
-</h3><h4 id="1-职责分离">1. 职责分离
-</h4><ul>
-<li><code>Patterns</code>：模式收集和去重</li>
-<li><code>Paths</code>：路径管理和推断</li>
-<li><code>BinaryDetection</code>：二进制文件处理策略</li>
-<li><code>State</code>：解析状态跟踪</li>
-</ul>
-
-</section>
-
-
-    <footer class="article-footer">
-    
-
-    </footer>
-
-
-    
-</article>
-
-    
-
-    
-
-     
-    
-        
-    
-
-    <footer class="site-footer">
-    <section class="copyright">
-        &copy; 
-        
-        2025 zed的博客
-    </section>
-    
-    <section class="powerby">
-        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
-        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
-    </section>
-</footer>
-
-
-    
-<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
-
-    
-    <div class="pswp__bg"></div>
-
-    
-    <div class="pswp__scroll-wrap">
-
-        
-        <div class="pswp__container">
-            <div class="pswp__item"></div>
-            <div class="pswp__item"></div>
-            <div class="pswp__item"></div>
-        </div>
-
-        
-        <div class="pswp__ui pswp__ui--hidden">
-
-            <div class="pswp__top-bar">
-
-                
-
-                <div class="pswp__counter"></div>
-
-                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-
-                <button class="pswp__button pswp__button--share" title="Share"></button>
-
-                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-
-                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
-
-                
-                
-                <div class="pswp__preloader">
-                    <div class="pswp__preloader__icn">
-                        <div class="pswp__preloader__cut">
-                            <div class="pswp__preloader__donut"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
-                <div class="pswp__share-tooltip"></div>
-            </div>
-
-            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
-            </button>
-
-            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
-            </button>
-
-            <div class="pswp__caption">
-                <div class="pswp__caption__center"></div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div><script 
-                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
-                defer
-                >
-            </script><script 
-                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
-                defer
-                >
-            </script><link 
-                rel="stylesheet" 
-                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
-            ><link 
-                rel="stylesheet" 
-                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
-            >
-
-            </main>
-        </div>
-        <script 
-                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
-                
-                >
-            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
-<script>
-    (function () {
-        const customFont = document.createElement('link');
-        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
-
-        customFont.type = "text/css";
-        customFont.rel = "stylesheet";
-
-        document.head.appendChild(customFont);
-    }());
-</script>
-
-    </body>
-</html>
+</code></pre><p>每个组件职责：</p><ol><li><code>PatternMatcher</code>：判断文本是否匹配模式</li><li><code>Searcher</code>：读取文件内容，按行处理</li><li><code>Printer</code>：格式化并输出匹配结果</li></ol><p><strong>设计优势</strong></p><ul><li>职责分离：每个组件专注于自己的功能</li><li>可测试性：可以独立测试每个组件</li><li>可扩展性：可以替换任何组件的实现</li></ul><h4 id=walk_builder>walk_builder()</h4><h5 id=职责分层>职责分层</h5><p>包含四个核心职责：</p><ol><li><strong>路径管理</strong></li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>let</span> <span style=color:#66d9ef>mut</span> builder <span style=color:#f92672>=</span> ignore::WalkBuilder::new(<span style=color:#f92672>&amp;</span>self.paths.paths[<span style=color:#ae81ff>0</span>]);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span> path <span style=color:#66d9ef>in</span> self.paths.paths.iter().skip(<span style=color:#ae81ff>1</span>) {
+</span></span><span style=display:flex><span>  builder.add(path)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><ul><li>初始化：使用第一个路径作为根路径</li><li>扩展：添加所有额外的搜索路径</li></ul><ol start=2><li><strong>忽略文件系统配置</strong></li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#75715e>// 用户自定义忽略文件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>if</span> <span style=color:#f92672>!</span>self.no_ignore_files {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> path <span style=color:#66d9ef>in</span> self.ignore_file.iter() {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> <span style=color:#66d9ef>let</span> Some(err) <span style=color:#f92672>=</span> builder.add_ignore(path) {
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>ignore_message!</span>(<span style=color:#e6db74>&#34;{err}&#34;</span>);
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Git 集成忽略规则
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.git_global(<span style=color:#f92672>!</span>self.no_ignore_vcs <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>!</span>self.no_ignore_global)
+</span></span><span style=display:flex><span>.git_ignore(<span style=color:#f92672>!</span>self.no_ignore_vcs)
+</span></span><span style=display:flex><span>.git_exclude(<span style=color:#f92672>!</span>self.no_ignore_vcs <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>!</span>self.no_ignore_exclude)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// 通用忽略文件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.ignore(<span style=color:#f92672>!</span>self.no_ignore_dot)
+</span></span><span style=display:flex><span>.parents(<span style=color:#f92672>!</span>self.no_ignore_parent)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// ripgrep 专用忽略文件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>if</span> <span style=color:#f92672>!</span>self.no_ignore_dot {
+</span></span><span style=display:flex><span>    builder.add_custom_ignore_filename(<span style=color:#e6db74>&#34;.rgignore&#34;</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><ol start=3><li><strong>遍历行为配置</strong></li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span>builder
+</span></span><span style=display:flex><span>    .max_depth(self.max_depth)           <span style=color:#75715e>// 最大递归深度
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .follow_links(self.follow)           <span style=color:#75715e>// 是否跟随符号链接
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .max_filesize(self.max_filesize)     <span style=color:#75715e>// 最大文件大小
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .threads(self.threads)               <span style=color:#75715e>// 线程数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .same_file_system(self.one_file_system) <span style=color:#75715e>// 是否限制在同一文件系统
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .skip_stdout(<span style=color:#a6e22e>matches!</span>(self.mode, Mode::Search(_))) <span style=color:#75715e>// 跳过标准输出
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .hidden(<span style=color:#f92672>!</span>self.hidden)                <span style=color:#75715e>// 是否包含隐藏文件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .require_git(<span style=color:#f92672>!</span>self.no_require_git)   <span style=color:#75715e>// 是否要求 Git 仓库
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    .ignore_case_insensitive(self.ignore_file_case_insensitive); <span style=color:#75715e>// 忽略文件大小写
+</span></span></span></code></pre></div><ol start=4><li><strong>高级功能配置</strong></li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#75715e>// 文件类型过滤
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.overrides(self.globs.clone())
+</span></span><span style=display:flex><span>.types(self.types.clone())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// 排序优化
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>if</span> <span style=color:#66d9ef>let</span> Some(<span style=color:#66d9ef>ref</span> sort) <span style=color:#f92672>=</span> self.sort {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>assert_eq!</span>(<span style=color:#ae81ff>1</span>, self.threads, <span style=color:#e6db74>&#34;sorting implies single threaded&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> <span style=color:#f92672>!</span>sort.reverse <span style=color:#f92672>&amp;&amp;</span> <span style=color:#a6e22e>matches!</span>(sort.kind, SortModeKind::Path) {
+</span></span><span style=display:flex><span>        builder.sort_by_file_name(<span style=color:#f92672>|</span>a, b<span style=color:#f92672>|</span> a.cmp(b));
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>walk_builder</code> 是系统集成点：</p><ul><li><strong>底层</strong>：文件系统遍历（<code>ignore::WalkBuilder</code>）</li><li><strong>中层</strong>：忽略规则处理（Git、自定义、类型过滤）</li><li><strong>上层</strong>：用户配置映射（命令行参数到行为）</li></ul><h4 id=current_dir>current_dir()</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>current_dir</span>() -&gt; <span style=color:#a6e22e>anyhow</span>::Result<span style=color:#f92672>&lt;</span>PathBuf<span style=color:#f92672>&gt;</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>let</span> err <span style=color:#f92672>=</span> <span style=color:#66d9ef>match</span> std::env::current_dir() {
+</span></span><span style=display:flex><span>        Err(err) <span style=color:#f92672>=&gt;</span> err,                    <span style=color:#75715e>// 保存错误，继续尝试回退方案
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        Ok(cwd) <span style=color:#f92672>=&gt;</span> <span style=color:#66d9ef>return</span> Ok(cwd),          <span style=color:#75715e>// 成功则直接返回
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    };
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> <span style=color:#66d9ef>let</span> Some(cwd) <span style=color:#f92672>=</span> std::env::var_os(<span style=color:#e6db74>&#34;PWD&#34;</span>) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> <span style=color:#f92672>!</span>cwd.is_empty() {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span> Ok(PathBuf::from(cwd));
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    anyhow::<span style=color:#a6e22e>bail!</span>(
+</span></span><span style=display:flex><span>        <span style=color:#e6db74>&#34;failed to get current working directory: {err}</span><span style=color:#ae81ff>\n\</span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>         did your CWD get deleted?&#34;</span>,
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>此方法获取当前工作目录时的异常处理：</p><ul><li><strong>目录被删除</strong> - 进程所在目录可能被其他进程删除</li><li><strong>权限问题</strong> - 无读取当前目录权限</li><li><strong>符号链接问题</strong> - 当前目录是损坏的符号链接</li></ul><p>为何需要复杂处理？</p><ol><li>需要 cwd 将相对路径转绝对路径（如 <code>rg "pattern" ../other_projects/</code>）</li><li>通过 <code>PWD</code> 环境变量回退保证健壮性</li></ol><p><code>hiargs.rs</code> 中其他方法均基于 <code>LowArgs</code> 完善 <code>HiArgs</code>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#75715e>// 核心数据结构
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>let</span> patterns <span style=color:#f92672>=</span> Patterns::from_low_args(<span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> state, <span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> low)<span style=color:#f92672>?</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> paths <span style=color:#f92672>=</span> Paths::from_low_args(<span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> state, <span style=color:#f92672>&amp;</span>patterns, <span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> low)<span style=color:#f92672>?</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> binary <span style=color:#f92672>=</span> BinaryDetection::from_low_args(<span style=color:#f92672>&amp;</span>state, <span style=color:#f92672>&amp;</span>low);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// 辅助功能配置
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>let</span> colors <span style=color:#f92672>=</span> take_color_specs(<span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> state, <span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> low);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> hyperlink_config <span style=color:#f92672>=</span> take_hyperlink_config(<span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> state, <span style=color:#f92672>&amp;</span><span style=color:#66d9ef>mut</span> low)<span style=color:#f92672>?</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> stats <span style=color:#f92672>=</span> stats(<span style=color:#f92672>&amp;</span>low);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> types <span style=color:#f92672>=</span> types(<span style=color:#f92672>&amp;</span>low)<span style=color:#f92672>?</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> globs <span style=color:#f92672>=</span> globs(<span style=color:#f92672>&amp;</span>state, <span style=color:#f92672>&amp;</span>low)<span style=color:#f92672>?</span>;           <span style=color:#75715e>// 文件匹配规则
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>let</span> pre_globs <span style=color:#f92672>=</span> preprocessor_globs(<span style=color:#f92672>&amp;</span>state, <span style=color:#f92672>&amp;</span>low)<span style=color:#f92672>?</span>;  <span style=color:#75715e>// 预处理器规则
+</span></span></span></code></pre></div><h3 id=核心结构体>核心结构体</h3><h4 id=patterns>Patterns</h4><p>表示要匹配的内容：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Patterns</span> {
+</span></span><span style=display:flex><span>  patterns: Vec<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;</span>,
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>模式来源的统一处理：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>from_low_args</span>(state: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> State, low: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> LowArgs)
+</span></span><span style=display:flex><span>    -&gt; <span style=color:#a6e22e>anyhow</span>::Result<span style=color:#f92672>&lt;</span>Patterns<span style=color:#f92672>&gt;</span>
+</span></span></code></pre></div><p>三种模式来源：</p><ol><li>positional：<code>rg "pattern" file.txt</code></li><li><code>-e/--regexp</code>: <code>rg -e "pattern1" -e "pattern2"</code></li><li><code>-f/--file</code>: <code>rg -f patterns.txt</code></li></ol><p><code>-e/--regexp</code> 对应 <code>Pattern</code> flag 的 update 逻辑：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>update</span>(<span style=color:#f92672>&amp;</span>self, v: <span style=color:#a6e22e>FlagValue</span>, args: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> LowArgs) {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>let</span> regexp <span style=color:#f92672>=</span> convert::string(v.unwrap_value());
+</span></span><span style=display:flex><span>  args.patterns.push(PatternSource::Regexp(regexp));
+</span></span><span style=display:flex><span>  Ok(())
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>-f/--file</code> 对应 <code>File</code> flag 的 update 逻辑：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>update</span>(<span style=color:#f92672>&amp;</span>self, v: <span style=color:#a6e22e>FlagValue</span>, args: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> LowArgs) {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>let</span> path <span style=color:#f92672>=</span> PathBuf::from(v.unwrap_value());
+</span></span><span style=display:flex><span>  args.patterns.push(PatternSource::File(path));
+</span></span><span style=display:flex><span>  Ok(())
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>Patterns::from_low_args</code> 从三种来源构造去重(利用<code>HashSet</code>)的 <code>Patterns::patterns: Vec&lt;String></code> 。<code>-f file.txt, --file=file.txt</code>中<code>file.txt(pattern文件)</code>存放着需要匹配的<code>patterns</code>。</p><h4 id=paths---路径管理系统>Paths - 路径管理系统</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Paths</span> {
+</span></span><span style=display:flex><span>  paths: Vec<span style=color:#f92672>&lt;</span>PathBuf<span style=color:#f92672>&gt;</span>,         <span style=color:#75715e>// 实际路径列表
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  has_implicit_path: <span style=color:#66d9ef>bool</span>,     <span style=color:#75715e>// 是否有隐式路径
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  is_one_file: <span style=color:#66d9ef>bool</span>,           <span style=color:#75715e>// 是否只搜索单个文件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p>要么从<code>positional</code>中读取文件路径，要么就是智能路径推断。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>from_low_args</span>(
+</span></span><span style=display:flex><span>    state: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> State,
+</span></span><span style=display:flex><span>    _: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>Patterns</span>,  <span style=color:#75715e>// 虽然不使用，但强制要求存在
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    low: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> LowArgs,
+</span></span><span style=display:flex><span>) -&gt; <span style=color:#a6e22e>anyhow</span>::Result<span style=color:#f92672>&lt;</span>Paths<span style=color:#f92672>&gt;</span> {
+</span></span><span style=display:flex><span> 	<span style=color:#66d9ef>let</span> <span style=color:#66d9ef>mut</span> paths <span style=color:#f92672>=</span> Vec::with_capacity(low.positional.len());
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span> osarg <span style=color:#66d9ef>in</span> low.positional.drain(<span style=color:#f92672>..</span>) {
+</span></span><span style=display:flex><span>  	<span style=color:#66d9ef>let</span> path <span style=color:#f92672>=</span> PathBuf::from(osarg);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> state.stdin_consumed <span style=color:#f92672>&amp;&amp;</span> path <span style=color:#f92672>==</span> Path::new(<span style=color:#e6db74>&#34;-&#34;</span>) {
+</span></span><span style=display:flex><span>    	anyhow::<span style=color:#a6e22e>bail!</span>(
+</span></span><span style=display:flex><span>         <span style=color:#e6db74>&#34;error: attempted to read patterns from stdin </span><span style=color:#ae81ff>\</span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>          while also searching stdin&#34;</span>,
+</span></span><span style=display:flex><span>      );
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>   	paths.push(path);
+</span></span><span style=display:flex><span> 	}
+</span></span><span style=display:flex><span>  <span style=color:#f92672>..</span>.
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>let</span> use_cwd <span style=color:#f92672>=</span> <span style=color:#f92672>!</span>is_readable_stdin
+</span></span><span style=display:flex><span>    <span style=color:#f92672>||</span> state.stdin_consumed
+</span></span><span style=display:flex><span>    <span style=color:#f92672>||</span> <span style=color:#f92672>!</span><span style=color:#a6e22e>matches!</span>(low.mode, Mode::Search(_));
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>let</span> (path, is_one_file) <span style=color:#f92672>=</span> <span style=color:#66d9ef>if</span> use_cwd {
+</span></span><span style=display:flex><span>    (PathBuf::from(<span style=color:#e6db74>&#34;./&#34;</span>), <span style=color:#66d9ef>false</span>)  <span style=color:#75715e>// 搜索当前目录
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    (PathBuf::from(<span style=color:#e6db74>&#34;-&#34;</span>), <span style=color:#66d9ef>true</span>)    <span style=color:#75715e>// 搜索 stdin
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	};
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>Paths::from_low_args()</code>函数使用了一个非常巧妙的<strong>编译时依赖约束</strong>设计，这个设计确保了</p><ul><li>调用着必须先构造<code>Patterns</code></li><li>编译器会检查这个约束</li><li>无法意外地颠倒调用顺序</li></ul><p>设计<strong>编译时依赖约束</strong>的原因是<code>Patterns</code>和<code>Paths</code>都使用了<code>positional</code>,此数据消费顺序不可颠倒。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#75715e>// Patterns::from_low_args 中：
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>if</span> low.patterns.is_empty() {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>let</span> ospat <span style=color:#f92672>=</span> low.positional.remove(<span style=color:#ae81ff>0</span>);  <span style=color:#75715e>// 消费第一个位置参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> Ok(Patterns { patterns: <span style=color:#a6e22e>vec</span><span style=color:#f92672>!</span>[pat] });
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Paths::from_low_args 中：
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> osarg <span style=color:#66d9ef>in</span> low.positional.drain(<span style=color:#f92672>..</span>) {  <span style=color:#75715e>// 处理剩余的位置参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    paths.push(PathBuf::from(osarg));
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><strong>编译时依赖约束设计优势</strong></p><ol><li><strong>编译时安全</strong> - 类型系统防止错误调用顺序</li><li><strong>自文档化</strong> - 函数签名清楚表达依赖关系</li><li><strong>零运行时成本</strong> - 约束在编译时检查，运行时无开销</li><li><strong>API 清晰性</strong> - 强制调用者理解正确的使用方式</li></ol><p>单文件优化检测：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>let</span> is_one_file <span style=color:#f92672>=</span> paths.len() <span style=color:#f92672>==</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&amp;&amp;</span> (paths[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> Path::new(<span style=color:#e6db74>&#34;-&#34;</span>) <span style=color:#f92672>||</span> <span style=color:#f92672>!</span>paths[<span style=color:#ae81ff>0</span>].is_dir());
+</span></span></code></pre></div><ul><li>使用 <code>!is_dir()</code> 而非 <code>is_file()</code> 更准确</li><li>stdin (<code>-</code>) 被视为单文件</li><li>单文件搜索启用特定优化</li></ul><h4 id=binarydetection---二进制文件检测系统>BinaryDetection - 二进制文件检测系统</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>BinaryDetection</span> {
+</span></span><span style=display:flex><span>    explicit: <span style=color:#a6e22e>grep</span>::searcher::BinaryDetection <span style=color:#75715e>// 显式指定文件的检测策略
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    implicit: <span style=color:#a6e22e>grep</span>::searcher::BinaryDetection <span style=color:#75715e>// 隐式发现文件的检测策略
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p><strong>显式 vs 隐式文件处理</strong>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>let</span> explicit <span style=color:#f92672>=</span> <span style=color:#66d9ef>if</span> none {
+</span></span><span style=display:flex><span>    grep::searcher::BinaryDetection::none()
+</span></span><span style=display:flex><span>} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    grep::searcher::BinaryDetection::convert(<span style=color:#e6db74>b</span><span style=color:#e6db74>&#39;\x00&#39;</span>)
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>let</span> implicit <span style=color:#f92672>=</span> <span style=color:#66d9ef>if</span> none {
+</span></span><span style=display:flex><span>    grep::searcher::BinaryDetection::none()
+</span></span><span style=display:flex><span>} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> convert {
+</span></span><span style=display:flex><span>    grep::searcher::BinaryDetection::convert(<span style=color:#e6db74>b</span><span style=color:#e6db74>&#39;\x00&#39;</span>)
+</span></span><span style=display:flex><span>} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    grep::searcher::BinaryDetection::quit(<span style=color:#e6db74>b</span><span style=color:#e6db74>&#39;\x00&#39;</span>)  <span style=color:#75715e>// 关键差异
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><ul><li><strong>显式文件</strong>：用户明确指定，必须搜索，不能“退出”</li><li><strong>隐式文件</strong>：目录遍历发现，可以跳过二进制文件</li></ul><p><strong>三种检测模式</strong>：</p><ol><li><code>none</code>：禁用二进制检测，当作文本处理 (<code>--text</code> 或 <code>--null-data</code>)</li><li><code>convert(b'\x00')</code>：将 null 字节转换为换行符继续搜索 (<code>--binary</code>)</li><li><code>quit(b'\x00')</code>：遇到 null 字节立即停止搜索该文件</li></ol><p>默认策略：</p><ul><li>显式文件：<code>convert(b'\x00')</code></li><li>隐式文件：<code>quit(b'\x00')</code></li></ul><h4 id=state---解析状态管理>State - 解析状态管理</h4><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>State</span> {
+</span></span><span style=display:flex><span>    is_terminal_stdout: <span style=color:#66d9ef>bool</span>,  <span style=color:#75715e>// stdout 是否连接到终端
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    stdin_consumed: <span style=color:#66d9ef>bool</span>,      <span style=color:#75715e>// stdin 是否已被消费
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    cwd: <span style=color:#a6e22e>PathBuf</span>,              <span style=color:#75715e>// 当前工作目录
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><ul><li><code>is_terminal_stdout</code>：影响颜色输出、缓冲策略等（需跨平台处理）</li><li><code>stdin_consumed</code>：防止同时从 stdin 读取模式和内容</li></ul><h3 id=结构体设计的核心思想>结构体设计的核心思想</h3><h4 id=1-职责分离>1. 职责分离</h4><ul><li><code>Patterns</code>：模式收集和去重</li><li><code>Paths</code>：路径管理和推断</li><li><code>BinaryDetection</code>：二进制文件处理策略</li><li><code>State</code>：解析状态跟踪</li></ul></section><footer class=article-footer></footer></article><footer class=site-footer><section class=copyright>&copy;
+2025 zed的博客</section><section class=powerby>使用 <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> 构建<br>主题 <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.30.0>Stack</a></b> 由 <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a> 设计</section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
