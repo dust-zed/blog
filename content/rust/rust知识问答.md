@@ -59,3 +59,5 @@ let result = f();  // 等价于 FnOnce::call_once(f, ())
 ```
 
 最终f所有权被转移进`call_once`，并随着call_once的结束而`drop`了，f被释放了，内部捕获的所有权自然也被释放。
+
+`FnOnce`、`FnMut`、`Fn`这些是根据如何捕获环境而区分的，并不影响函数签名，`FnMut`也可以接收**所有权参数**

@@ -11,7 +11,7 @@ categories = ['rust', 'std']
 ## 1. 核心基础
 - [x] `core::option` - `Option<T>` 类型
 - [x] `core::result` - `Result<T, E>` 类型
-- [ ] `core::iter` - 迭代器
+- [x] `core::iter` - 迭代器
 - [ ] `core::marker` - 标记 trait
 - [ ] `core::mem` - 内存操作
 - [ ] `core::ops` - 操作符重载
