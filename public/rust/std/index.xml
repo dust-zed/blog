@@ -1,271 +1,299 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>std on zed的博客</title><link>https://www.dust-zed.site/rust/std/</link><description>Recent content in std on zed的博客</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Mon, 01 Sep 2025 10:59:09 +0800</lastBuildDate><atom:link href="https://www.dust-zed.site/rust/std/index.xml" rel="self" type="application/rss+xml"/><item><title>Option</title><link>https://www.dust-zed.site/rust/std/option/</link><pubDate>Mon, 01 Sep 2025 10:59:09 +0800</pubDate><guid>https://www.dust-zed.site/rust/std/option/</guid><description>&lt;p>标准库&lt;code>Option&lt;/code>源码学习&lt;/p>
-&lt;h4 id="基础结构">基础结构
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[derive(Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[rustc_diagnostic_item = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Option&amp;#34;&lt;/span>&lt;span style="color:#75715e">]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">enum&lt;/span> Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">/// No value
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&lt;/span> &lt;span style="color:#75715e">#[lang = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;None&amp;#34;&lt;/span>&lt;span style="color:#75715e">]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">/// Some value `T`
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&lt;/span> &lt;span style="color:#75715e">#[lang = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Some&amp;#34;&lt;/span>&lt;span style="color:#75715e">]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span> T),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点">学习点
-&lt;/h5>&lt;ul>
-&lt;li>&lt;code>#[lang = &amp;quot;...&amp;quot;]&lt;/code>属性表示这是语言项&lt;/li>
-&lt;li>泛型参数T支持任何类型&lt;/li>
-&lt;li>自动派生多个trait(&lt;code>Copy&lt;/code>，&lt;code>PartialEq&lt;/code>等)&lt;/li>
-&lt;/ul>
-&lt;h4 id="2-核心方法map和map_or">2. 核心方法:&lt;code>map&lt;/code>和&lt;code>map_or&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">map&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, F: FnOnce(T) -&amp;gt; &lt;span style="color:#a6e22e">U&lt;/span>&lt;span style="color:#f92672">&amp;gt;&lt;/span>(self, f: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(x) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Some(f(x)),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> None,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">map_or&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, F: FnOnce(T) -&amp;gt; &lt;span style="color:#a6e22e">U&lt;/span>&lt;span style="color:#f92672">&amp;gt;&lt;/span>(self, default: &lt;span style="color:#a6e22e">U&lt;/span>, f: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; &lt;span style="color:#a6e22e">U&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(t) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> f(t),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> default,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-1">学习点
-&lt;/h5>&lt;ul>
-&lt;li>map保留Some/None结构&lt;/li>
-&lt;li>map_or提供默认值&lt;/li>
-&lt;li>使用FnOnce因为闭包最多被调用一次&lt;/li>
-&lt;/ul>
-&lt;h4 id="3解引用实现">3.解引用实现
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">impl&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>T: &lt;span style="color:#a6e22e">Deref&lt;/span>&lt;span style="color:#f92672">&amp;gt;&lt;/span> Deref &lt;span style="color:#66d9ef">for&lt;/span> Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Target&lt;/span> &lt;span style="color:#f92672">=&lt;/span> Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T::Target&lt;span style="color:#f92672">&amp;gt;&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">deref&lt;/span>(&lt;span style="color:#f92672">&amp;amp;&lt;/span>self) -&amp;gt; &lt;span style="color:#66d9ef">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">Self&lt;/span>::Target {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(t) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Some(t.deref()),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> &lt;span style="color:#f92672">&amp;amp;&lt;/span>None,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-2">学习点
-&lt;/h5>&lt;ul>
-&lt;li>为&lt;code>Option&amp;lt;Box&amp;lt;T&amp;gt;&amp;gt;&lt;/code>等类型提供自动解引用&lt;/li>
-&lt;li>实现&lt;code>Deref&lt;/code>而不是直接实现方法，保持一致性&lt;/li>
-&lt;/ul>
-&lt;h4 id="4-and_then和or_else">4. &lt;code>and_then&lt;/code>和&lt;code>or_else&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">and_then&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, F: FnOnce(T) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&amp;gt;&lt;/span>(self, f: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(x) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> f(x),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> None,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">or_else&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>F: FnOnce() -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&amp;gt;&lt;/span>(self, f: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(x) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Some(x),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> f(),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-3">学习点
-&lt;/h5>&lt;ul>
-&lt;li>&lt;code>and_then&lt;/code>用于链式操作&lt;/li>
-&lt;li>&lt;code>or_else&lt;/code>提供回退逻辑&lt;/li>
-&lt;li>闭包&lt;code>F&lt;/code>只在需要时调用&lt;/li>
-&lt;/ul>
-&lt;h4 id="5-transpose方法">5. &lt;code>transpose&lt;/code>方法
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;transpose_result&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.33.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">transpose&lt;/span>(self) -&amp;gt; Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T, E&lt;span style="color:#f92672">&amp;gt;&amp;gt;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(Ok(ok)) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Ok(Some(ok)),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(Err(err)) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Err(err),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Ok(None),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-4">学习点
-&lt;/h5>&lt;ul>
-&lt;li>在&lt;code>Option&lt;/code>和&lt;code>Result&lt;/code>之间转换&lt;/li>
-&lt;li>保持错误传播语义&lt;/li>
-&lt;/ul>
-&lt;h4 id="6-zip和zip_with">6. &lt;code>zip&lt;/code>和&lt;code>zip_with&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;option_zip_option&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.46.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">zip&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&lt;/span>(self, other: Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&lt;/span>) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>(T, U)&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> (self, other) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> (Some(a), Some(b)) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Some((a, b)),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _ &lt;span style="color:#f92672">=&amp;gt;&lt;/span> None,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[unstable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;option_zip&amp;#34;&lt;/span>&lt;span style="color:#75715e">, issue = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;70086&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">zip_with&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, F: FnOnce(T) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&amp;gt;&lt;/span>(self, f: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>U&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Some(x) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> f(x),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> None &lt;span style="color:#f92672">=&amp;gt;&lt;/span> None,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-5">学习点
-&lt;/h5>&lt;ul>
-&lt;li>&lt;code>zip&lt;/code>组合两个&lt;code>Option&lt;/code>值&lt;/li>
-&lt;li>&lt;code>zip_with&lt;/code>提供更灵活的转换&lt;/li>
-&lt;li>使用元组模式匹配处理组合逻辑&lt;/li>
-&lt;/ul>
-&lt;h4 id="7-性能优化optiont">7. 性能优化：&lt;code>Option&amp;lt;&amp;amp;T&amp;gt;&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 编译器对 Option&amp;lt;&amp;amp;T&amp;gt; 有特殊优化
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// size_of::&amp;lt;Option&amp;lt;&amp;amp;T&amp;gt;&amp;gt;() == size_of::&amp;lt;&amp;amp;T&amp;gt;()
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">impl&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span> Option&lt;span style="color:#f92672">&amp;lt;&amp;amp;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">copied&lt;/span>(self) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">where&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> T: Copy,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self.map(&lt;span style="color:#f92672">|&amp;amp;&lt;/span>t&lt;span style="color:#f92672">|&lt;/span> t)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">cloned&lt;/span>(self) -&amp;gt; Option&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">where&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> T: Clone,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self.map(&lt;span style="color:#f92672">|&lt;/span>t&lt;span style="color:#f92672">|&lt;/span> t.clone())
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-6">学习点
-&lt;/h5>&lt;ul>
-&lt;li>零成本抽象&lt;/li>
-&lt;li>为引用类型提供特化实现&lt;/li>
-&lt;li>&lt;code>Copy&lt;/code>和&lt;code>Clone&lt;/code>的区别处理&lt;/li>
-&lt;/ul></description></item><item><title>Result</title><link>https://www.dust-zed.site/rust/std/result/</link><pubDate>Mon, 01 Sep 2025 10:21:06 +0800</pubDate><guid>https://www.dust-zed.site/rust/std/result/</guid><description>&lt;p>标准库的&lt;code>Result&lt;/code>源码学习。&lt;/p>
-&lt;h4 id="1-基础结构">1. 基础结构
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[must_use = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;this `Result` may be an `Err` variant, which should be handled&amp;#34;&lt;/span>&lt;span style="color:#75715e">]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">enum&lt;/span> Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>T, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">/// Contains the success value
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&lt;/span> &lt;span style="color:#75715e">#[lang = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Ok&amp;#34;&lt;/span>&lt;span style="color:#75715e">]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span> T),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">/// Contains the error value
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&lt;/span> &lt;span style="color:#75715e">#[lang = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Err&amp;#34;&lt;/span>&lt;span style="color:#75715e">]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Err(&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span> E),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点">学习点
-&lt;/h5>&lt;ul>
-&lt;li>&lt;code>#[must_use]&lt;/code>属性确保开发者必须处理可能的错误&lt;/li>
-&lt;li>使用泛型&lt;code>T&lt;/code>和&lt;code>E&lt;/code>支持任何类型&lt;/li>
-&lt;li>&lt;code>#[lang]&lt;/code>属性表示这是语言项(lang item)&lt;/li>
-&lt;/ul>
-&lt;h4 id="2-基础方法is_ok和is_err">2. 基础方法：&lt;code>is_ok&lt;/code>和&lt;code>is_err&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">is_ok&lt;/span>(&lt;span style="color:#f92672">&amp;amp;&lt;/span>self) -&amp;gt; &lt;span style="color:#66d9ef">bool&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">matches!&lt;/span>(&lt;span style="color:#f92672">*&lt;/span>self, Ok(_))
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-1">学习点
-&lt;/h5>&lt;ul>
-&lt;li>&lt;code>#[inline]&lt;/code>提示编译器内联优化&lt;/li>
-&lt;li>&lt;code>const fn&lt;/code> 表示编译期可求值&lt;/li>
-&lt;li>使用&lt;code>matches!&lt;/code>宏进行模式匹配&lt;/li>
-&lt;/ul>
-&lt;h4 id="3-所有权管理as_ref">3. 所有权管理：&lt;code>as_ref&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">as_ref&lt;/span>(&lt;span style="color:#f92672">&amp;amp;&lt;/span>self) -&amp;gt; Result&lt;span style="color:#f92672">&amp;lt;&amp;amp;&lt;/span>T, &lt;span style="color:#f92672">&amp;amp;&lt;/span>E&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> &lt;span style="color:#f92672">*&lt;/span>self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(&lt;span style="color:#66d9ef">ref&lt;/span> x) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Ok(x),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Err(&lt;span style="color:#66d9ef">ref&lt;/span> x) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Err(x),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-2">学习点
-&lt;/h5>&lt;ul>
-&lt;li>返回引用避免所有权转移&lt;/li>
-&lt;li>使用&lt;code>ref&lt;/code>模式匹配获取引用&lt;/li>
-&lt;li>保持原始&lt;code>Result&lt;/code>不变&lt;/li>
-&lt;/ul>
-&lt;h4 id="4-组合子map">4. 组合子：&lt;code>map&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">map&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, F: FnOnce(T) -&amp;gt; &lt;span style="color:#a6e22e">U&lt;/span>&lt;span style="color:#f92672">&amp;gt;&lt;/span>(self, op: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(t) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Ok(op(t)),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Err(e) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Err(e),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-3">学习点
-&lt;/h5>&lt;ul>
-&lt;li>高阶函数的使用&lt;/li>
-&lt;li>&lt;code>FnOnce&lt;/code> trait bound允许消费值的闭包&lt;/li>
-&lt;li>模式匹配解构&lt;code>self&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;h4 id="5-链式调用and_then">5. 链式调用：&lt;code>and_then&lt;/code>
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">pub&lt;/span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">and_then&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, F: FnOnce(T) -&amp;gt; Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, E&lt;span style="color:#f92672">&amp;gt;&amp;gt;&lt;/span>(self, op: &lt;span style="color:#a6e22e">F&lt;/span>) -&amp;gt; Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>U, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(t) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> op(t),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Err(e) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> Err(e),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-4">学习点
-&lt;/h5>&lt;ul>
-&lt;li>错误传播模式&lt;/li>
-&lt;li>闭包作为参数&lt;/li>
-&lt;li>组合操作的优雅方式&lt;/li>
-&lt;/ul>
-&lt;h4 id="6-操作符">6. &lt;code>?&lt;/code>操作符
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[unstable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;try_trait_v2&amp;#34;&lt;/span>&lt;span style="color:#75715e">, issue = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;84277&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[rustc_const_unstable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;const_convert&amp;#34;&lt;/span>&lt;span style="color:#75715e">, issue = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;88674&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">impl&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>T, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> ops::Try &lt;span style="color:#66d9ef">for&lt;/span> Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>T, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Output&lt;/span> &lt;span style="color:#f92672">=&lt;/span> T;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Residual&lt;/span> &lt;span style="color:#f92672">=&lt;/span> Result&lt;span style="color:#f92672">&amp;lt;!&lt;/span>, E&lt;span style="color:#f92672">&amp;gt;&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">from_output&lt;/span>(output: &lt;span style="color:#a6e22e">Self&lt;/span>::Output) -&amp;gt; &lt;span style="color:#a6e22e">Self&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(output)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">branch&lt;/span>(self) -&amp;gt; &lt;span style="color:#a6e22e">ControlFlow&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>Self::Residual, Self::Output&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">match&lt;/span> self {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(v) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> ControlFlow::Continue(v),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Err(e) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> ControlFlow::Break(Err(e)),
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-5">学习点
-&lt;/h5>&lt;ul>
-&lt;li>操作符重载&lt;/li>
-&lt;li>控制流抽象&lt;/li>
-&lt;li>编译器魔法背后的实现&lt;/li>
-&lt;/ul>
-&lt;h4 id="7-迭代器集成">7. 迭代器集成
-&lt;/h4>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#[stable(feature = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;rust1&amp;#34;&lt;/span>&lt;span style="color:#75715e">, since = &lt;/span>&lt;span style="color:#e6db74">&amp;#34;1.0.0&amp;#34;&lt;/span>&lt;span style="color:#75715e">)]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">impl&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>T, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> IntoIterator &lt;span style="color:#66d9ef">for&lt;/span> Result&lt;span style="color:#f92672">&amp;lt;&lt;/span>T, E&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Item&lt;/span> &lt;span style="color:#f92672">=&lt;/span> T;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">IntoIter&lt;/span> &lt;span style="color:#f92672">=&lt;/span> IntoIter&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">#[inline]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">into_iter&lt;/span>(self) -&amp;gt; &lt;span style="color:#a6e22e">IntoIter&lt;/span>&lt;span style="color:#f92672">&amp;lt;&lt;/span>T&lt;span style="color:#f92672">&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> IntoIter { inner: &lt;span style="color:#a6e22e">self&lt;/span>.ok() }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="学习点-6">学习点
-&lt;/h5>&lt;ul>
-&lt;li>迭代器模式&lt;/li>
-&lt;li>类型转换&lt;/li>
-&lt;li>零成本抽象&lt;/li>
-&lt;/ul></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>std on zed的博客</title>
+        <link>http://localhost:1313/rust/std/</link>
+        <description>Recent content in std on zed的博客</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <lastBuildDate>Mon, 01 Sep 2025 10:59:09 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/std/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Option</title>
+        <link>http://localhost:1313/rust/std/option/</link>
+        <pubDate>Mon, 01 Sep 2025 10:59:09 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/std/option/</guid>
+        <description>&lt;p&gt;标准库&lt;code&gt;Option&lt;/code&gt;源码学习&lt;/p&gt;
+&lt;h4 id=&#34;基础结构&#34;&gt;基础结构
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[derive(Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[rustc_diagnostic_item = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Option&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// No value
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[lang = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;None&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    None,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Some value `T`
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[lang = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Some&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Some(&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt; T),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;#[lang = &amp;quot;...&amp;quot;]&lt;/code&gt;属性表示这是语言项&lt;/li&gt;
+&lt;li&gt;泛型参数T支持任何类型&lt;/li&gt;
+&lt;li&gt;自动派生多个trait(&lt;code&gt;Copy&lt;/code&gt;，&lt;code&gt;PartialEq&lt;/code&gt;等)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;2-核心方法map和map_or&#34;&gt;2. 核心方法:&lt;code&gt;map&lt;/code&gt;和&lt;code&gt;map_or&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;map&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, F: FnOnce(T) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;U&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(self, f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(x) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Some(f(x)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; None,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;map_or&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, F: FnOnce(T) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;U&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(self, default: &lt;span style=&#34;color:#a6e22e&#34;&gt;U&lt;/span&gt;, f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;U&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(t) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; f(t),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; default,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-1&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;map保留Some/None结构&lt;/li&gt;
+&lt;li&gt;map_or提供默认值&lt;/li&gt;
+&lt;li&gt;使用FnOnce因为闭包最多被调用一次&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3解引用实现&#34;&gt;3.解引用实现
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T: &lt;span style=&#34;color:#a6e22e&#34;&gt;Deref&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; Deref &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Target&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T::Target&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;deref&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;Self&lt;/span&gt;::Target {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Some(t) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Some(t.deref()),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;None,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-2&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;为&lt;code&gt;Option&amp;lt;Box&amp;lt;T&amp;gt;&amp;gt;&lt;/code&gt;等类型提供自动解引用&lt;/li&gt;
+&lt;li&gt;实现&lt;code&gt;Deref&lt;/code&gt;而不是直接实现方法，保持一致性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;4-and_then和or_else&#34;&gt;4. &lt;code&gt;and_then&lt;/code&gt;和&lt;code&gt;or_else&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;and_then&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, F: FnOnce(T) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;(self, f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(x) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; f(x),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; None,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;or_else&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;F: FnOnce() -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;(self, f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(x) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Some(x),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; f(),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-3&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;and_then&lt;/code&gt;用于链式操作&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;or_else&lt;/code&gt;提供回退逻辑&lt;/li&gt;
+&lt;li&gt;闭包&lt;code&gt;F&lt;/code&gt;只在需要时调用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;5-transpose方法&#34;&gt;5. &lt;code&gt;transpose&lt;/code&gt;方法
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;transpose_result&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.33.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;transpose&lt;/span&gt;(self) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(Ok(ok)) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Ok(Some(ok)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(Err(err)) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Err(err),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Ok(None),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-4&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;在&lt;code&gt;Option&lt;/code&gt;和&lt;code&gt;Result&lt;/code&gt;之间转换&lt;/li&gt;
+&lt;li&gt;保持错误传播语义&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;6-zip和zip_with&#34;&gt;6. &lt;code&gt;zip&lt;/code&gt;和&lt;code&gt;zip_with&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;option_zip_option&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.46.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;zip&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(self, other: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(T, U)&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; (self, other) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        (Some(a), Some(b)) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Some((a, b)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        _ &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; None,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[unstable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;option_zip&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, issue = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;70086&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;zip_with&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, F: FnOnce(T) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;(self, f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Some(x) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; f(x),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        None &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; None,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-5&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;zip&lt;/code&gt;组合两个&lt;code&gt;Option&lt;/code&gt;值&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;zip_with&lt;/code&gt;提供更灵活的转换&lt;/li&gt;
+&lt;li&gt;使用元组模式匹配处理组合逻辑&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;7-性能优化optiont&#34;&gt;7. 性能优化：&lt;code&gt;Option&amp;lt;&amp;amp;T&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 编译器对 Option&amp;lt;&amp;amp;T&amp;gt; 有特殊优化
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// size_of::&amp;lt;Option&amp;lt;&amp;amp;T&amp;gt;&amp;gt;() == size_of::&amp;lt;&amp;amp;T&amp;gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;copied&lt;/span&gt;(self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        T: Copy,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        self.map(&lt;span style=&#34;color:#f92672&#34;&gt;|&amp;amp;&lt;/span&gt;t&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; t)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;cloned&lt;/span&gt;(self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        T: Clone,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        self.map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;t&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; t.clone())
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-6&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;零成本抽象&lt;/li&gt;
+&lt;li&gt;为引用类型提供特化实现&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Copy&lt;/code&gt;和&lt;code&gt;Clone&lt;/code&gt;的区别处理&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Result</title>
+        <link>http://localhost:1313/rust/std/result/</link>
+        <pubDate>Mon, 01 Sep 2025 10:21:06 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/std/result/</guid>
+        <description>&lt;p&gt;标准库的&lt;code&gt;Result&lt;/code&gt;源码学习。&lt;/p&gt;
+&lt;h4 id=&#34;1-基础结构&#34;&gt;1. 基础结构
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[must_use = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;this `Result` may be an `Err` variant, which should be handled&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Contains the success value
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[lang = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Ok&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt; T),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Contains the error value
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[lang = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Err&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err(&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt; E),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;#[must_use]&lt;/code&gt;属性确保开发者必须处理可能的错误&lt;/li&gt;
+&lt;li&gt;使用泛型&lt;code&gt;T&lt;/code&gt;和&lt;code&gt;E&lt;/code&gt;支持任何类型&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;#[lang]&lt;/code&gt;属性表示这是语言项(lang item)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;2-基础方法is_ok和is_err&#34;&gt;2. 基础方法：&lt;code&gt;is_ok&lt;/code&gt;和&lt;code&gt;is_err&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;is_ok&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#a6e22e&#34;&gt;matches!&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;self, Ok(_))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-1&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;#[inline]&lt;/code&gt;提示编译器内联优化&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;const fn&lt;/code&gt; 表示编译期可求值&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;matches!&lt;/code&gt;宏进行模式匹配&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-所有权管理as_ref&#34;&gt;3. 所有权管理：&lt;code&gt;as_ref&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;as_ref&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;T, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(&lt;span style=&#34;color:#66d9ef&#34;&gt;ref&lt;/span&gt; x) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Ok(x),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err(&lt;span style=&#34;color:#66d9ef&#34;&gt;ref&lt;/span&gt; x) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Err(x),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-2&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;返回引用避免所有权转移&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;ref&lt;/code&gt;模式匹配获取引用&lt;/li&gt;
+&lt;li&gt;保持原始&lt;code&gt;Result&lt;/code&gt;不变&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;4-组合子map&#34;&gt;4. 组合子：&lt;code&gt;map&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;map&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, F: FnOnce(T) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;U&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(self, op: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(t) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Ok(op(t)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err(e) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Err(e),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-3&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;高阶函数的使用&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FnOnce&lt;/code&gt; trait bound允许消费值的闭包&lt;/li&gt;
+&lt;li&gt;模式匹配解构&lt;code&gt;self&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;5-链式调用and_then&#34;&gt;5. 链式调用：&lt;code&gt;and_then&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;and_then&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, F: FnOnce(T) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;(self, op: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;U, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Ok(t) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; op(t),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Err(e) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; Err(e),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-4&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;错误传播模式&lt;/li&gt;
+&lt;li&gt;闭包作为参数&lt;/li&gt;
+&lt;li&gt;组合操作的优雅方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;6-操作符&#34;&gt;6. &lt;code&gt;?&lt;/code&gt;操作符
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[unstable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;try_trait_v2&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, issue = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;84277&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[rustc_const_unstable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;const_convert&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, issue = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;88674&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; ops::Try &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Output&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; T;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Residual&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;!&lt;/span&gt;, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;from_output&lt;/span&gt;(output: &lt;span style=&#34;color:#a6e22e&#34;&gt;Self&lt;/span&gt;::Output) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Self&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Ok(output)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;branch&lt;/span&gt;(self) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ControlFlow&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self::Residual, Self::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Ok(v) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; ControlFlow::Continue(v),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Err(e) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; ControlFlow::Break(Err(e)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-5&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;操作符重载&lt;/li&gt;
+&lt;li&gt;控制流抽象&lt;/li&gt;
+&lt;li&gt;编译器魔法背后的实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;7-迭代器集成&#34;&gt;7. 迭代器集成
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[stable(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;, since = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.0.0&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; IntoIterator &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, E&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Item&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; T;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;IntoIter&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; IntoIter&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[inline]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;into_iter&lt;/span&gt;(self) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;IntoIter&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        IntoIter { inner: &lt;span style=&#34;color:#a6e22e&#34;&gt;self&lt;/span&gt;.ok() }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;学习点-6&#34;&gt;学习点
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;迭代器模式&lt;/li&gt;
+&lt;li&gt;类型转换&lt;/li&gt;
+&lt;li&gt;零成本抽象&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

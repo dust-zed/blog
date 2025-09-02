@@ -1,405 +1,735 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rust on zed的博客</title><link>https://www.dust-zed.site/rust/</link><description>Recent content in Rust on zed的博客</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 19 Aug 2025 15:02:39 +0800</lastBuildDate><atom:link href="https://www.dust-zed.site/rust/index.xml" rel="self" type="application/rss+xml"/><item><title>需要多熟悉的rust语法</title><link>https://www.dust-zed.site/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link><pubDate>Tue, 19 Aug 2025 15:02:39 +0800</pubDate><guid>https://www.dust-zed.site/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</guid><description>&lt;h4 id="绑定运算符">@(绑定运算符)
-&lt;/h4>&lt;p>在Rust中，&lt;code>@&lt;/code>被称为绑定运算符，用于在模式匹配的值绑定到一个变量，同时允许进一步解构内部结构。&lt;/p>
-&lt;p>&lt;strong>具体解析&lt;/strong>&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">match&lt;/span> self.reader.read(buf) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(len) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> self.size &lt;span style="color:#f92672">-=&lt;/span> len;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Ok(len)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> err &lt;span style="color:#f92672">@&lt;/span> Err(_) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> err
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
-&lt;li>&lt;strong>&lt;code>Ok(len)&lt;/code>分支&lt;/strong>：匹配成功的&lt;code>Ok&lt;/code>变体，提取内部的&lt;code>len&lt;/code>值，然后更新&lt;code>self.size&lt;/code>并返回&lt;code>Ok(len)&lt;/code>&lt;/li>
-&lt;li>**&lt;code>err @ Err(_)&lt;/code>**分支：
-&lt;ul>
-&lt;li>&lt;code>Err(_)&lt;/code>匹配任意&lt;code>Err&lt;/code>变体(不关心内部错误的具体值)&lt;/li>
-&lt;li>&lt;code>@&lt;/code>将整个Err的值(如&lt;code>Err(&amp;quot;io_error&amp;quot;)&lt;/code>)绑定到变量&lt;code>err&lt;/code>&lt;/li>
-&lt;li>分支返回&lt;code>err&lt;/code>，即原始的&lt;code>Err&lt;/code>值&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>解构默认会发生所有权转移，&lt;code>let Data(inner) = &amp;amp;data;&lt;/code>等价于&lt;code>let Data(ref inner) = &amp;amp;data;&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;hr>
-&lt;h4 id="asref">AsRef
-&lt;/h4>&lt;p>&lt;code>AsRef&lt;/code> trait的核心作用是允许一个类型以&lt;strong>零开销&lt;/strong>的方式将自己或引用转换成&lt;strong>另一种类型的引用&lt;/strong>。&lt;code>AsMut&lt;/code>是&lt;code>AsRef&lt;/code>的可变版本&lt;/p>
-&lt;p>&lt;strong>1. 核心机制&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>AsRef&amp;lt;T&amp;gt;&lt;/code>定义了一个方法：&lt;code>fn as_ref(&amp;amp;self) -&amp;gt; &amp;amp;T&lt;/code>&lt;/li>
-&lt;li>它接受&lt;code>&amp;amp;self&lt;/code>，返回目标类型&lt;code>&amp;amp;T&lt;/code>的引用&lt;/li>
-&lt;li>本质上：将&lt;code>&amp;amp;Self&lt;/code>转换为&lt;code>&amp;amp;T&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;p>&lt;strong>2. 转换类型&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>允许的是&lt;code>Self&lt;/code>到&lt;code>T&lt;/code>的引用转换。&lt;/li>
-&lt;li>例如：
-&lt;ul>
-&lt;li>&lt;code>String&lt;/code>实现&lt;code>AsRef&amp;lt;str&amp;gt;&lt;/code>: &lt;code>&amp;amp;String -&amp;gt; &amp;amp;str&lt;/code>&lt;/li>
-&lt;li>&lt;code>Vec&amp;lt;T&amp;gt;&lt;/code> 实现&lt;code>AsRef&amp;lt;[T]&amp;gt;&lt;/code>: &lt;code>&amp;amp;Vec&amp;lt;T&amp;gt; -&amp;gt;&amp;amp;[T]&lt;/code>&lt;/li>
-&lt;li>&lt;code>PathBuf&lt;/code>实现&lt;code>AsRef&amp;lt;Path&amp;gt;&lt;/code>: &lt;code>&amp;amp;PathBuf -&amp;gt; &amp;amp;Path&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;p>**3. 设计目的 **&lt;/p>
-&lt;ul>
-&lt;li>泛型灵活性：让函数接受多种类型参数&lt;/li>
-&lt;li>零开销抽象：转换过程无额外堆分配或复制&lt;/li>
-&lt;/ul>
-&lt;hr>
-&lt;h4 id="零开销">零开销
-&lt;/h4>&lt;p>&lt;strong>什么是零开销&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>栈操作和微小的寄存器复制是允许的&lt;/li>
-&lt;li>没有&lt;strong>堆内存分配&lt;/strong>：绝不调用内存分配器&lt;/li>
-&lt;li>没有&lt;strong>深拷贝&lt;/strong>：不复制底层数据本身（即使是栈上的解构也需要合理区分）&lt;/li>
-&lt;/ul>
-&lt;hr>
-&lt;h4 id="切片引用">切片引用
-&lt;/h4>&lt;p>&lt;strong>切片引用本质就是宽指针&lt;/strong>，由&lt;strong>数据指针&lt;/strong>和&lt;strong>长度&lt;/strong>组成&lt;/p>
-&lt;hr>
-&lt;h4 id="condvar">Condvar
-&lt;/h4>&lt;p>在rust中，&lt;code>Condvar&lt;/code>（条件变量）是用于线程间同步的核心工具，通常与&lt;code>Mutex&lt;/code>结合使用。它的核心功能是让线程在某个条件不满足时&lt;strong>主动阻塞&lt;/strong>，直到其他线程修改条件并通知它继续执行。&lt;/p>
-&lt;ul>
-&lt;li>作用：解决线程间的&lt;strong>等待-通知&lt;/strong>问题，避免busy looping。&lt;/li>
-&lt;li>依赖：必须与&lt;code>Mutex&lt;/code>配合使用（保护共享数据 + 同步条件）&lt;/li>
-&lt;li>典型场景：生产者-消费者模型、任务队列调度、资源池管理等。&lt;/li>
-&lt;/ul>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">use&lt;/span> std::sync::{Arc, Mutex, Condvar};
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">use&lt;/span> std::thread;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">main&lt;/span>() {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//创建共享数据结构：(Mutex&amp;lt;bool&amp;gt;, Condvar)
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">let&lt;/span> pair &lt;span style="color:#f92672">=&lt;/span> Arc::new(Mutex::new(&lt;span style="color:#66d9ef">false&lt;/span>), Condvar::new()));
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">let&lt;/span> pair_clone &lt;span style="color:#f92672">=&lt;/span> Arc::clone(&lt;span style="color:#f92672">&amp;amp;&lt;/span>pair);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">let&lt;/span> consumer &lt;span style="color:#f92672">=&lt;/span> thread::spawn(&lt;span style="color:#66d9ef">move&lt;/span> &lt;span style="color:#f92672">||&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">let&lt;/span> (lock, cvar) &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#f92672">&amp;amp;*&lt;/span>pair_clone;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">let&lt;/span> &lt;span style="color:#66d9ef">mut&lt;/span> condition &lt;span style="color:#f92672">=&lt;/span> lock.lock().unwarp();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//等条件满足
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">while&lt;/span> &lt;span style="color:#f92672">!*&lt;/span>condition {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//释放锁并阻塞，被唤醒后(wait返回后)重新获取锁
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> condition &lt;span style="color:#f92672">=&lt;/span> cvar.wait(condition).unwarp();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">println!&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;消费者：条件已满足！继续执行&amp;#34;&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//消费者的处理逻辑
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> });
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> thread::sleep(Duration::from_secs(&lt;span style="color:#ae81ff">1&lt;/span>));&lt;span style="color:#75715e">//模拟工作耗时
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">let&lt;/span> (lock, cvar) &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#f92672">&amp;amp;*&lt;/span>pair;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">let&lt;/span> &lt;span style="color:#66d9ef">mut&lt;/span> condition &lt;span style="color:#f92672">=&lt;/span> lock.lock().unwarp();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">println!&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;生产者：更新条件并通知消费者...&amp;#34;&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">*&lt;/span>condition &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">true&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 通知一个等待的消费者线程
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> cvar.notify_one();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> consumer.join().unwrap();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">println!&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;主线程: 所有线程执行完成&amp;#34;&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
-&lt;h4 id="pin">PIN
-&lt;/h4>&lt;hr>
-&lt;p>&lt;strong>&lt;code>haystack&lt;/code>&lt;strong>命名源自英语谚语&lt;/strong>&amp;ldquo;looking for a needle in a haystack&amp;rdquo;&lt;/strong>(大海捞针),&lt;code>haystack&lt;/code>表示被搜索的&lt;strong>主体数据&lt;/strong>，&lt;code>needle&lt;/code>表示待查找的&lt;strong>目标元素&lt;/strong>.&lt;/p>
-&lt;p>rust中有两种解引用的方式：&lt;strong>&lt;code>*&lt;/code>&lt;strong>和&lt;/strong>模式匹配解引用&lt;/strong>&lt;/p>
-&lt;hr>
-&lt;h4 id="unicodeascii和utf-8等">Unicode、ASCII和UTF-8等
-&lt;/h4>&lt;ul>
-&lt;li>&lt;strong>Unicode&lt;/strong>为所有字符分配了唯一标识(称为&lt;strong>码点&lt;/strong>)&lt;/li>
-&lt;li>&lt;strong>UTF-8&lt;/strong>等是需要将这些码点转换为用于存储/传输的&lt;strong>字节序列&lt;/strong>,根据&lt;strong>码点值的范围分类&lt;/strong>，确定字节序列的&lt;strong>长度&lt;/strong>。&lt;/li>
-&lt;li>&lt;strong>ASCII&lt;/strong>是Unicode和UTF-8的&lt;strong>特殊兼容子集&lt;/strong>&lt;/li>
-&lt;/ul>
-&lt;hr>
-&lt;h4 id="字符数据">字符数据
-&lt;/h4>&lt;ul>
-&lt;li>&lt;code>b&lt;/code>前缀标识的数据：表示&lt;code>ASCII&lt;/code>字符集的字节数据，类型为&lt;code>u8&lt;/code>或&lt;code>&amp;amp;[u8]&lt;/code>&lt;/li>
-&lt;li>&lt;code>&amp;amp;str&lt;/code>和&lt;code>&amp;amp;[u8]&lt;/code>：&lt;code>&amp;amp;str&lt;/code>是utf-8编码的切片引用且不可变，&lt;code>&amp;amp;[u8]&lt;/code>是对原始字节的切片引用，可变版本是&lt;code>&amp;amp;mut [u8]&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;hr>
-&lt;h4 id="为什么可以手动调用dropx而不能调用xdrop">为什么可以手动调用drop(x)而不能调用x.drop()
-&lt;/h4>&lt;p>关键在于&lt;strong>所有权&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>std::mem::drop&amp;lt;T&amp;gt;(_x: T)&lt;/code>转移了所有权，_x离开drop函数作用域，&lt;strong>自动触发析构逻辑&lt;/strong>（调用&lt;code>Drop::drop&lt;/code> trait的实现）&lt;/li>
-&lt;li>&lt;code>drop(&amp;amp;mut self)&lt;/code>没有发生所有权的转移，如果允许手动调用&lt;code>x.drop&lt;/code>,编译期在作用域结束时仍会再次调用&lt;code>drop&lt;/code>，双重释放，导致内存安全问题。&lt;/li>
-&lt;/ul></description></item><item><title>Rust学习计划</title><link>https://www.dust-zed.site/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</link><pubDate>Fri, 08 Aug 2025 11:37:40 +0800</pubDate><guid>https://www.dust-zed.site/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</guid><description>&lt;h2 id="1-基础能力建设">1. 基础能力建设
-&lt;/h2>&lt;ul>
-&lt;li>
-&lt;p>&lt;strong>Rust 语言精通&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>深入理解所有权、生命周期、trait 系统&lt;/li>
-&lt;li>掌握 unsafe Rust 和 FFI&lt;/li>
-&lt;li>研究标准库实现&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>算法与数据结构&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>实现常用数据结构和算法&lt;/li>
-&lt;li>学习字符串搜索算法（Boyer-Moore, Aho-Corasick 等）&lt;/li>
-&lt;li>理解时间/空间复杂度分析&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>系统编程&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>深入理解操作系统原理&lt;/li>
-&lt;li>学习文件系统、内存管理、并发模型&lt;/li>
-&lt;li>掌握性能分析和调优技术&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;h2 id="2-工程实践">2. 工程实践
-&lt;/h2>&lt;ul>
-&lt;li>
-&lt;p>&lt;strong>开源贡献&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>从修复小 bug 开始参与开源项目&lt;/li>
-&lt;li>学习阅读和理解大型代码库&lt;/li>
-&lt;li>参与代码审查，学习他人代码&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>代码质量&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>编写全面的测试用例&lt;/li>
-&lt;li>实践持续集成&lt;/li>
-&lt;li>学习设计模式和架构原则&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>性能优化&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>学习使用性能分析工具（perf, dtrace 等）&lt;/li>
-&lt;li>理解 CPU 缓存、分支预测等底层细节&lt;/li>
-&lt;li>实践基准测试和性能调优&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;h2 id="3-学习资源">3. 学习资源
-&lt;/h2>&lt;ul>
-&lt;li>
-&lt;p>&lt;strong>必读书籍&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>《Rust 程序设计语言》&lt;/li>
-&lt;li>《Rust 权威指南》&lt;/li>
-&lt;li>《代码整洁之道》&lt;/li>
-&lt;li>《深入理解计算机系统》&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>学习路径&lt;/strong>&lt;/p>
-&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TD
-A[Rust 基础] --&amp;gt; B[标准库实现]
-B --&amp;gt; C[开源项目贡献]
-C --&amp;gt; D[性能优化]
-D --&amp;gt; E[系统设计]
-E --&amp;gt; F[独立项目]
-&lt;/code>&lt;/pre>&lt;/li>
-&lt;/ul>
-&lt;h2 id="4-实践项目">4. 实践项目
-&lt;/h2>&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>命令行工具&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>实现简单的 grep 功能&lt;/li>
-&lt;li>添加正则表达式支持&lt;/li>
-&lt;li>优化性能&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>并发处理&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>实现工作窃取线程池&lt;/li>
-&lt;li>学习无锁编程&lt;/li>
-&lt;li>实现并行算法&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>性能优化&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>使用 SIMD 指令优化字符串处理&lt;/li>
-&lt;li>实现内存池&lt;/li>
-&lt;li>优化 I/O 性能&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;h2 id="5-思维习惯">5. 思维习惯
-&lt;/h2>&lt;ul>
-&lt;li>
-&lt;p>&lt;strong>持续学习&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>每天阅读优秀源码&lt;/li>
-&lt;li>定期参与技术讨论&lt;/li>
-&lt;li>写技术博客分享心得&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>代码审查&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>学习他人代码风格&lt;/li>
-&lt;li>接受并理解批评&lt;/li>
-&lt;li>不断重构和改进&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>问题解决&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>深入理解问题本质&lt;/li>
-&lt;li>设计多种解决方案&lt;/li>
-&lt;li>基准测试验证优化效果&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;h2 id="6-具体行动建议">6. 具体行动建议
-&lt;/h2>&lt;ol>
-&lt;li>每天花 1 小时阅读 Rust 标准库源码&lt;/li>
-&lt;li>每周研究一个开源项目的架构设计&lt;/li>
-&lt;li>每月完成一个具有挑战性的编程练习&lt;/li>
-&lt;li>每季度参与一次开源贡献&lt;/li>
-&lt;li>每年开发一个展示个人技术水平的项目&lt;/li>
-&lt;/ol>
-&lt;p>记住，成为顶尖开发者是场马拉松，而非短跑。保持耐心和持续学习的心态是关键。&lt;/p>
-&lt;hr>
-&lt;h1 id="每日阅读-rust-标准库源码计划">每日阅读 Rust 标准库源码计划
-&lt;/h1>&lt;p>是的，借助 AI 阅读 Rust 标准库源码是个很好的学习方式。以下是一个具体的学习计划：&lt;/p>
-&lt;h2 id="学习策略">学习策略
-&lt;/h2>&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>基础阶段（1-2周）&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>从简单的模块开始，如 &lt;code>std::option&lt;/code> 和 &lt;code>std::result&lt;/code>&lt;/li>
-&lt;li>重点关注标准库中的 trait 实现和常用类型&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>中级阶段（3-8周）&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>研究集合类型：&lt;code>Vec&lt;/code>、&lt;code>HashMap&lt;/code>、&lt;code>String&lt;/code>&lt;/li>
-&lt;li>学习迭代器和闭包实现&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>高级阶段（9周+）&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>并发原语：&lt;code>Arc&lt;/code>、&lt;code>Mutex&lt;/code>、&lt;code>RwLock&lt;/code>&lt;/li>
-&lt;li>异步运行时和 future 实现&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;h2 id="使用-ai-辅助学习">使用 AI 辅助学习
-&lt;/h2>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 示例：使用 AI 分析标准库代码
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 1. 选择要学习的模块
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">let&lt;/span> module &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;std::collections::hash_map&amp;#34;&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 2. 让 AI 解释核心概念
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Q: 请解释 HashMap 的 robin hood hashing 实现
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Q: 这个 unsafe 块的作用是什么？
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 3. 做笔记和总结
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">fn&lt;/span> &lt;span style="color:#a6e22e">take_notes&lt;/span>(concept: &lt;span style="color:#66d9ef">&amp;amp;&lt;/span>&lt;span style="color:#66d9ef">str&lt;/span>, examples: Vec&lt;span style="color:#f92672">&amp;lt;&amp;amp;&lt;/span>&lt;span style="color:#66d9ef">str&lt;/span>&lt;span style="color:#f92672">&amp;gt;&lt;/span>) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 记录学习要点
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="每日学习流程">每日学习流程
-&lt;/h2>&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>准备阶段（5分钟）&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>确定今天要学习的模块&lt;/li>
-&lt;li>设置学习目标&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>核心学习（45分钟）&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>阅读源码（25分钟）&lt;/li>
-&lt;li>使用 AI 解答疑问（15分钟）&lt;/li>
-&lt;li>做笔记（5分钟）&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>复习阶段（10分钟）&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>总结今日所学&lt;/li>
-&lt;li>记录未解决的问题&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;h2 id="实用技巧">实用技巧
-&lt;/h2>&lt;ol>
-&lt;li>使用 &lt;code>rustup doc --std&lt;/code> 查看本地文档&lt;/li>
-&lt;li>在 playground 中编写测试代码&lt;/li>
-&lt;li>使用 &lt;code>cargo-expand&lt;/code> 查看宏展开&lt;/li>
-&lt;li>关注标准库中的测试用例&lt;/li>
-&lt;/ol>
-&lt;h2 id="推荐的学习顺序">推荐的学习顺序
-&lt;/h2>&lt;ol>
-&lt;li>&lt;code>std::option&lt;/code> 和 &lt;code>std::result&lt;/code>&lt;/li>
-&lt;li>&lt;code>std::iter&lt;/code> 和迭代器&lt;/li>
-&lt;li>&lt;code>std::collections&lt;/code> 中的集合类型&lt;/li>
-&lt;li>&lt;code>std::sync&lt;/code> 和 &lt;code>std::thread&lt;/code>&lt;/li>
-&lt;li>&lt;code>std::future&lt;/code> 和异步编程&lt;/li>
-&lt;/ol>
-&lt;hr>
-&lt;h1 id="制定-rust-标准库学习目标的方法">制定 Rust 标准库学习目标的方法
-&lt;/h1>&lt;h2 id="1-按模块划分目标">1. 按模块划分目标
-&lt;/h2>&lt;h3 id="基础模块1-2周模块">基础模块（1-2周/模块）
-&lt;/h3>&lt;ul>
-&lt;li>
-&lt;p>&lt;strong>&lt;code>std::option&lt;/code> 和 &lt;code>std::result&lt;/code>&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>理解 &lt;code>Option&lt;/code> 和 &lt;code>Result&lt;/code> 的实现&lt;/li>
-&lt;li>学习组合子方法（&lt;a class="link" href="cci:1://file:///Users/zed/ripgrep/crates/ignore/src/lib.rs:466:4-475:5" >map&lt;/a>, &lt;a class="link" href="cci:1://file:///Users/zed/ripgrep/crates/core/flags/parse.rs:41:4-52:5" >and_then&lt;/a>, &lt;code>unwrap_or&lt;/code>等）&lt;/li>
-&lt;li>目标：能解释为什么 &lt;code>Option&amp;lt;T&amp;gt;&lt;/code> 在内存中与 &lt;code>T&lt;/code> 大小相同&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>&lt;code>std::iter&lt;/code>&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>理解 &lt;code>Iterator&lt;/code> trait 的设计&lt;/li>
-&lt;li>学习常见迭代器适配器&lt;/li>
-&lt;li>目标：能实现自定义迭代器&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;h2 id="2-按主题划分目标">2. 按主题划分目标
-&lt;/h2>&lt;h3 id="所有权和生命周期2周">所有权和生命周期（2周）
-&lt;/h3>&lt;ul>
-&lt;li>研究 &lt;code>std::mem&lt;/code> 模块&lt;/li>
-&lt;li>分析 &lt;code>Box&lt;/code>, &lt;code>Rc&lt;/code>, &lt;code>Arc&lt;/code> 的实现&lt;/li>
-&lt;li>目标：能解释 Rust 的所有权系统如何影响标准库设计&lt;/li>
-&lt;/ul>
-&lt;h3 id="并发编程3周">并发编程（3周）
-&lt;/h3>&lt;ul>
-&lt;li>学习 &lt;code>std::sync&lt;/code> 中的原语&lt;/li>
-&lt;li>研究 &lt;code>std::thread&lt;/code> 和 &lt;code>std::sync::mpsc&lt;/code>&lt;/li>
-&lt;li>目标：能解释 &lt;code>Mutex&lt;/code> 和 &lt;code>RwLock&lt;/code> 的区别和适用场景&lt;/li>
-&lt;/ul>
-&lt;h2 id="3-smart-目标制定法">3. SMART 目标制定法
-&lt;/h2>&lt;h3 id="具体-specific">具体 (Specific)
-&lt;/h3>&lt;p>❌ 模糊目标：学习集合类型
-✅ 明确目标：理解 &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code> 的内存布局和扩容策略&lt;/p>
-&lt;h3 id="可衡量-measurable">可衡量 (Measurable)
-&lt;/h3>&lt;p>❌ 不明确：了解迭代器
-✅ 可衡量：能实现3种不同的迭代器适配器&lt;/p>
-&lt;h3 id="可实现-achievable">可实现 (Achievable)
-&lt;/h3>&lt;p>❌ 不切实际：一周内掌握整个异步运行时
-✅ 可实现：一周内理解 &lt;code>Future&lt;/code> trait 和基本的执行器原理&lt;/p>
-&lt;h3 id="相关性-relevant">相关性 (Relevant)
-&lt;/h3>&lt;p>❌ 不相关：学习网络协议实现（如果是为了理解集合类型）
-✅ 相关：研究 &lt;code>HashMap&lt;/code> 的实现来理解 trait 约束&lt;/p>
-&lt;h3 id="有时限-time-bound">有时限 (Time-bound)
-&lt;/h3>&lt;p>❌ 无期限：某天学习错误处理
-✅ 有时限：本周内完成 &lt;code>std::error::Error&lt;/code> trait 的学习&lt;/p>
-&lt;h2 id="4-示例学习计划">4. 示例学习计划
-&lt;/h2>&lt;h3 id="第1周option-和-result">第1周：&lt;code>Option&lt;/code> 和 &lt;code>Result&lt;/code>
-&lt;/h3>&lt;ul>
-&lt;li>周一：阅读 &lt;code>Option&lt;/code> 定义和基础方法&lt;/li>
-&lt;li>周三：研究 &lt;code>Option&lt;/code> 的内存布局&lt;/li>
-&lt;li>周五：&lt;code>Result&lt;/code> 和错误处理模式&lt;/li>
-&lt;/ul>
-&lt;h3 id="第2周迭代器">第2周：迭代器
-&lt;/h3>&lt;ul>
-&lt;li>周一：&lt;code>Iterator&lt;/code> trait 定义&lt;/li>
-&lt;li>周三：常见适配器实现&lt;/li>
-&lt;li>周五：自定义迭代器实践&lt;/li>
-&lt;/ul>
-&lt;p>需要我帮你制定一个具体的学习计划吗？或者你对某个特定主题更感兴趣？&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Rust on zed的博客</title>
+        <link>http://localhost:1313/rust/</link>
+        <description>Recent content in Rust on zed的博客</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <lastBuildDate>Mon, 01 Sep 2025 17:16:28 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Rust知识问答</title>
+        <link>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</link>
+        <pubDate>Mon, 01 Sep 2025 17:16:28 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</guid>
+        <description>&lt;h5 id=&#34;为什么fnonce只能调用一次&#34;&gt;为什么FnOnce只能调用一次
+&lt;/h5&gt;&lt;h6 id=&#34;源码分析&#34;&gt;源码分析
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; FnOnce&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Args&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Output&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;extern&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust-call&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;call_once&lt;/span&gt;(self, args: &lt;span style=&#34;color:#a6e22e&#34;&gt;Args&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Self&lt;/span&gt;::Output;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;self&lt;/code&gt;的含义
+&lt;ul&gt;
+&lt;li&gt;接收实现了&lt;code&gt;FnOnce&lt;/code&gt;的具体类型的值&lt;/li&gt;
+&lt;li&gt;这个值会被移动(move)进方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h6 id=&#34;具体例子&#34;&gt;具体例子
+&lt;/h6&gt;&lt;p&gt;假设我们有一个闭包:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; s &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; String::from(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hello&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; f &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, s);  &lt;span style=&#34;color:#75715e&#34;&gt;// 获取 s 的所有权
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    s.len()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;};
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;当这个闭包实现&lt;code&gt;FnOnce&lt;/code&gt;时&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 编译器生成的代码类似这样：
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Closure&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    s: String,  &lt;span style=&#34;color:#75715e&#34;&gt;// 捕获的环境变量
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; FnOnce&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Closure {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Output&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;call_once&lt;/span&gt;(self, _args: ()) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, self.s);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        self.s.len()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h6 id=&#34;调用示例&#34;&gt;调用示例
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; result &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; f();  &lt;span style=&#34;color:#75715e&#34;&gt;// 等价于 FnOnce::call_once(f, ())
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 这里不能再调用 f()，因为 f 已经被移动
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;最终f所有权被转移进&lt;code&gt;call_once&lt;/code&gt;，并随着call_once的结束而&lt;code&gt;drop&lt;/code&gt;了，f被释放了，内部捕获的所有权自然也被释放。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>文件系统</title>
+        <link>http://localhost:1313/rust/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</link>
+        <pubDate>Mon, 01 Sep 2025 17:12:26 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</guid>
+        <description>&lt;h4 id=&#34;文件系统&#34;&gt;文件系统
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;metadata&lt;/code&gt;:本质上就是描述文件信息的数据&lt;/li&gt;
+&lt;li&gt;环境变量和配置文件
+&lt;ul&gt;
+&lt;li&gt;配置文件：存储&lt;strong&gt;默认配置&lt;/strong&gt;或&lt;strong&gt;静态配置&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;环境变量：提供&lt;strong&gt;动态覆盖&lt;/strong&gt;或&lt;strong&gt;环境特定配置&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;挂载（Mount）&lt;/strong&gt;： 将&lt;strong&gt;存储设备&lt;/strong&gt;或&lt;strong&gt;文件系统&lt;/strong&gt;连接到操作系统目录树中特定位置的过程。这个连接点称为&lt;strong&gt;挂载点（Mount Point）&lt;/strong&gt;。类比门和仓库的关系。&lt;/li&gt;
+&lt;li&gt;文件设备号&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>架构设计</title>
+        <link>http://localhost:1313/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</link>
+        <pubDate>Mon, 01 Sep 2025 17:05:55 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</guid>
+        <description>&lt;h4 id=&#34;如何做好职责分离&#34;&gt;如何做好职责分离
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;从“怎么实现”到“怎么组合”
+&lt;ul&gt;
+&lt;li&gt;一体式思维：写一个函数完成所有功能&lt;/li&gt;
+&lt;li&gt;分离式思维：要设计几个组件，然后组合它们实现功能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;从“功能优先”到“测试优先”
+&lt;ul&gt;
+&lt;li&gt;一体式思维：先实现功能，再考虑测试&lt;/li&gt;
+&lt;li&gt;分离式思维：先考虑怎么测试，倒推出职责分离&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ripgrep&lt;/code&gt;的分离式架构
+&lt;ul&gt;
+&lt;li&gt;cli参数 → &lt;code&gt;LowArgs&lt;/code&gt; → &lt;code&gt;HiArgs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;搜索目标：分为文件发现和目标搜索&lt;/li&gt;
+&lt;li&gt;文件遍历再次分离：WalkDir（负责目录树形结构转为线性的Iter）→ WalkEventDir（负责发送事件）→ Walk（添加忽略规则）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+</description>
+        </item>
+        <item>
+        <title>语法速查</title>
+        <link>http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</link>
+        <pubDate>Mon, 01 Sep 2025 16:22:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</guid>
+        <description>&lt;h4 id=&#34;集合或迭代器&#34;&gt;集合或迭代器
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;drain()&lt;/code&gt;方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;所有权&#34;&gt;所有权
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;所有权&lt;/strong&gt;和&lt;strong&gt;可变性&lt;/strong&gt;是独立的&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;所有权完整性&lt;/strong&gt;保护针对集合
+&lt;ul&gt;
+&lt;li&gt;集合需要保证所有元素位置有效&lt;/li&gt;
+&lt;li&gt;集合在内存中是连续的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;结构体允许&lt;strong&gt;字段被转移走所有权&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;结构体字段具有独立性，布局在编译时可知&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;所有者离开作用域，值将被丢弃&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;变量和类型&#34;&gt;变量和类型
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ref&lt;/code&gt;和&lt;code&gt;&amp;amp;&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&amp;amp;用于创建引用&lt;/li&gt;
+&lt;li&gt;&amp;amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用）&lt;/li&gt;
+&lt;li&gt;ref用于模式匹配，获取引用而不是获取所有权&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;T: &#39;static&lt;/code&gt;:表示类型&lt;strong&gt;T内部字段&lt;/strong&gt;要么没有引用，要么引用都是&lt;code&gt;&#39;static&lt;/code&gt;的&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;实现类型&lt;/strong&gt;必须满足：&lt;code&gt;Self: &#39;static&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;和&lt;code&gt;(String, str)&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;Path和str都是DST类型&lt;/li&gt;
+&lt;li&gt;PathBuf和String都是拥有所有权的&lt;/li&gt;
+&lt;li&gt;文件路径长度和字符串长度在编译时未知&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;结构体&#34;&gt;结构体
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;Rust不允许将struct中某个字段标记为可变&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;闭包&#34;&gt;闭包
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;根据闭包捕获环境方式可分为三种
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;FnOnce&lt;/code&gt;获取所有权&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FnMut&lt;/code&gt;获取可变引用&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Fn&lt;/code&gt;获取不可变引用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;并发编程&#34;&gt;并发编程
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;并发编程主要有两种核心范式：&lt;strong&gt;共享状态并发&lt;/strong&gt;和&lt;strong&gt;消息传递并发&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::thread::scope&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;相当于&lt;code&gt;thread::spwan&lt;/code&gt; + &lt;code&gt;thread::join&lt;/code&gt;，但是它们只能借用&lt;code&gt;&#39;static&lt;/code&gt;或者&lt;code&gt;move&lt;/code&gt;变量&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;scope&lt;/code&gt;没有以上限制，有编译器的支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Rust中的IO操作</title>
+        <link>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</link>
+        <pubDate>Fri, 22 Aug 2025 06:01:17 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</guid>
+        <description>&lt;p&gt;在Rust中，I/O操作主要通过&lt;code&gt;Read&lt;/code&gt;和&lt;code&gt;Write&lt;/code&gt;两个核心trait实现，而&lt;code&gt;Cursor&lt;/code&gt;、&lt;code&gt;BufWriter&lt;/code&gt;和&lt;code&gt;ReadBuf&lt;/code&gt;是围绕这些trait的实用工具。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;1-read和write-trait&#34;&gt;1. &lt;code&gt;Read&lt;/code&gt;和&lt;code&gt;Write&lt;/code&gt; trait
+&lt;/h4&gt;&lt;h5 id=&#34;stdioread&#34;&gt;&lt;code&gt;std::io::Read&lt;/code&gt;
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：从数据源（文件、网络等）读取字节流。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;read&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, buf: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; [&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;]) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;尝试读取数据到缓冲区&lt;code&gt;buf&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;返回实际读取的字节数(&lt;code&gt;Ok(n)&lt;/code&gt;)，或错误（&lt;code&gt;Err(e)&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;当读取到EOF时返回&lt;code&gt;Ok(0)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;常用方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;read_to_end(&amp;amp;mut vec)&lt;/code&gt;:读取所有字节到&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;read_to_string(&amp;amp;mut string)&lt;/code&gt;:读取UTF-8字节到&lt;code&gt;String&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;read_exact(&amp;amp;mut buf)&lt;/code&gt;:精确读取&lt;code&gt;buf.len()&lt;/code&gt;字节，否则报错&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;stdiowrite&#34;&gt;&lt;code&gt;std::io::Write&lt;/code&gt;
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：将字节流写入目标&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;write&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, buf: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;[&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;]) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;flush&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;write&lt;/code&gt;尝试写入缓冲区&lt;code&gt;buf&lt;/code&gt;，返回实际写入的字节数&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;flush&lt;/code&gt;确保所有缓冲数据写入目标（如磁盘）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;2-cursort&#34;&gt;2. &lt;code&gt;Cursor&amp;lt;T&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：将内存类型包装成可&lt;code&gt;随机访问&lt;/code&gt;的&lt;code&gt;Read&lt;/code&gt;/&lt;code&gt;Write&lt;/code&gt;对象。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;特点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在内存中模拟文件指针（维护&lt;code&gt;position&lt;/code&gt;）。&lt;/li&gt;
+&lt;li&gt;实现Read和Write（需&lt;code&gt;T: AsMut&amp;lt;[u8]&amp;gt;&lt;/code&gt;)，支持&lt;code&gt;Seek&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;零成本抽象，高性能内存操作。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;使用场景&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;读取数据，或写入到&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;测试时代替真实文件I/O。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-bufwriterw&#34;&gt;3. &lt;code&gt;BufWriter&amp;lt;W&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：包装一个&lt;code&gt;Write&lt;/code&gt;对象，提供&lt;strong&gt;写入缓冲&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;减少系统调用（如磁盘、网络写入）。&lt;/li&gt;
+&lt;li&gt;批量写入提高性能（默认缓冲区大小&lt;strong&gt;8KB&lt;/strong&gt;）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;行为&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;先写入内存缓冲区，满时自动刷新到内部&lt;code&gt;W&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;手动调用&lt;code&gt;flush()&lt;/code&gt;或&lt;code&gt;Drop&lt;/code&gt;时强制刷新缓冲区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;4-bufreaderr&#34;&gt;4. &lt;code&gt;BufReader&amp;lt;R&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：包装&lt;code&gt;Read&lt;/code&gt;对象，提供&lt;strong&gt;读取缓冲&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;减少频繁系统调用（如读取文件时多次小数据读取）&lt;/li&gt;
+&lt;li&gt;支持按行读取（&lt;code&gt;read_line&lt;/code&gt;和&lt;code&gt;lines&lt;/code&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;完整知识图谱&#34;&gt;完整知识图谱
+&lt;/h4&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;I/O 核心 Trait
+│
+├── Read (字节源)
+│   ├── 实现类型：File, TcpStream, Vec&amp;lt;u8&amp;gt;, etc.
+│   ├── 工具：BufReader (缓冲读取), Take (限制读取长度)
+│   └── 扩展：BufRead (提供 read_line, lines 等方法)
+│
+├── Write (字节目标)
+│   ├── 实现类型：File, TcpStream, Vec&amp;lt;u8&amp;gt;, etc.
+│   └── 工具：BufWriter (缓冲写入), LineWriter (行缓冲)
+│
+├── Seek (随机访问)
+│   └── 实现类型：File, Cursor&amp;lt;T&amp;gt;
+│
+└── 内存适配器
+    └── Cursor&amp;lt;T&amp;gt; (内存模拟 I/O)
+        ├── 支持：Read/Write/Seek
+        └── 适用：Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8], String, &amp;amp;str
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
+&lt;h5 id=&#34;关键原则&#34;&gt;关键原则
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;1. 缓冲使用&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;BufReader/BufWriter总是推荐用于文件/网络 I/O。&lt;/li&gt;
+&lt;li&gt;Cursor用于内存数据（如解析二进制格式）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;2. 错误处理&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;所有I/O操作返回&lt;code&gt;Result&lt;/code&gt;，必须处理&lt;code&gt;Err&lt;/code&gt;情况。&lt;/li&gt;
+&lt;li&gt;特别注意&lt;code&gt;flush()&lt;/code&gt;的错误（如磁盘满）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;3. 性能&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;小数据写入用&lt;code&gt;BufWriter&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;避免频繁小数据读取（缓冲或批量化）&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>大端序和小端序</title>
+        <link>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</link>
+        <pubDate>Fri, 22 Aug 2025 03:33:16 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</guid>
+        <description>&lt;p&gt;大端序和小端序是两种不同的&lt;strong&gt;字节存储顺序&lt;/strong&gt;，用于描述多字节数据（如整数、浮点数）在计算机内存中的存储方式。它们的区别在于字节的排列顺序：&lt;/p&gt;
+&lt;h4 id=&#34;大端序&#34;&gt;大端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;高位字节存储在低地址&lt;/strong&gt;，低位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;小端序&#34;&gt;小端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;低位字节存储在低地址&lt;/strong&gt;，高位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;小端序更符合计算机的处理逻辑&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>需要多熟悉的rust语法</title>
+        <link>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link>
+        <pubDate>Tue, 19 Aug 2025 15:02:39 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</guid>
+        <description>&lt;h4 id=&#34;绑定运算符&#34;&gt;@(绑定运算符)
+&lt;/h4&gt;&lt;p&gt;在Rust中，&lt;code&gt;@&lt;/code&gt;被称为绑定运算符，用于在模式匹配的值绑定到一个变量，同时允许进一步解构内部结构。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;具体解析&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self.reader.read(buf) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Ok(len) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    self.size &lt;span style=&#34;color:#f92672&#34;&gt;-=&lt;/span&gt; len;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(len)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  err &lt;span style=&#34;color:#f92672&#34;&gt;@&lt;/span&gt; Err(_) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; err
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;Ok(len)&lt;/code&gt;分支&lt;/strong&gt;：匹配成功的&lt;code&gt;Ok&lt;/code&gt;变体，提取内部的&lt;code&gt;len&lt;/code&gt;值，然后更新&lt;code&gt;self.size&lt;/code&gt;并返回&lt;code&gt;Ok(len)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;**&lt;code&gt;err @ Err(_)&lt;/code&gt;**分支：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Err(_)&lt;/code&gt;匹配任意&lt;code&gt;Err&lt;/code&gt;变体(不关心内部错误的具体值)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;@&lt;/code&gt;将整个Err的值(如&lt;code&gt;Err(&amp;quot;io_error&amp;quot;)&lt;/code&gt;)绑定到变量&lt;code&gt;err&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;分支返回&lt;code&gt;err&lt;/code&gt;，即原始的&lt;code&gt;Err&lt;/code&gt;值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;解构默认会发生所有权转移，&lt;code&gt;let Data(inner) = &amp;amp;data;&lt;/code&gt;等价于&lt;code&gt;let Data(ref inner) = &amp;amp;data;&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;asref&#34;&gt;AsRef
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;AsRef&lt;/code&gt; trait的核心作用是允许一个类型以&lt;strong&gt;零开销&lt;/strong&gt;的方式将自己或引用转换成&lt;strong&gt;另一种类型的引用&lt;/strong&gt;。&lt;code&gt;AsMut&lt;/code&gt;是&lt;code&gt;AsRef&lt;/code&gt;的可变版本&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;1. 核心机制&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AsRef&amp;lt;T&amp;gt;&lt;/code&gt;定义了一个方法：&lt;code&gt;fn as_ref(&amp;amp;self) -&amp;gt; &amp;amp;T&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;它接受&lt;code&gt;&amp;amp;self&lt;/code&gt;，返回目标类型&lt;code&gt;&amp;amp;T&lt;/code&gt;的引用&lt;/li&gt;
+&lt;li&gt;本质上：将&lt;code&gt;&amp;amp;Self&lt;/code&gt;转换为&lt;code&gt;&amp;amp;T&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;2. 转换类型&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;允许的是&lt;code&gt;Self&lt;/code&gt;到&lt;code&gt;T&lt;/code&gt;的引用转换。&lt;/li&gt;
+&lt;li&gt;例如：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;String&lt;/code&gt;实现&lt;code&gt;AsRef&amp;lt;str&amp;gt;&lt;/code&gt;: &lt;code&gt;&amp;amp;String -&amp;gt; &amp;amp;str&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Vec&amp;lt;T&amp;gt;&lt;/code&gt; 实现&lt;code&gt;AsRef&amp;lt;[T]&amp;gt;&lt;/code&gt;: &lt;code&gt;&amp;amp;Vec&amp;lt;T&amp;gt; -&amp;gt;&amp;amp;[T]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PathBuf&lt;/code&gt;实现&lt;code&gt;AsRef&amp;lt;Path&amp;gt;&lt;/code&gt;: &lt;code&gt;&amp;amp;PathBuf -&amp;gt; &amp;amp;Path&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;**3. 设计目的 **&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;泛型灵活性：让函数接受多种类型参数&lt;/li&gt;
+&lt;li&gt;零开销抽象：转换过程无额外堆分配或复制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;零开销&#34;&gt;零开销
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;什么是零开销&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;栈操作和微小的寄存器复制是允许的&lt;/li&gt;
+&lt;li&gt;没有&lt;strong&gt;堆内存分配&lt;/strong&gt;：绝不调用内存分配器&lt;/li&gt;
+&lt;li&gt;没有&lt;strong&gt;深拷贝&lt;/strong&gt;：不复制底层数据本身（即使是栈上的解构也需要合理区分）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;切片引用&#34;&gt;切片引用
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;切片引用本质就是宽指针&lt;/strong&gt;，由&lt;strong&gt;数据指针&lt;/strong&gt;和&lt;strong&gt;长度&lt;/strong&gt;组成&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;condvar&#34;&gt;Condvar
+&lt;/h4&gt;&lt;p&gt;在rust中，&lt;code&gt;Condvar&lt;/code&gt;（条件变量）是用于线程间同步的核心工具，通常与&lt;code&gt;Mutex&lt;/code&gt;结合使用。它的核心功能是让线程在某个条件不满足时&lt;strong&gt;主动阻塞&lt;/strong&gt;，直到其他线程修改条件并通知它继续执行。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;作用：解决线程间的&lt;strong&gt;等待-通知&lt;/strong&gt;问题，避免busy looping。&lt;/li&gt;
+&lt;li&gt;依赖：必须与&lt;code&gt;Mutex&lt;/code&gt;配合使用（保护共享数据 + 同步条件）&lt;/li&gt;
+&lt;li&gt;典型场景：生产者-消费者模型、任务队列调度、资源池管理等。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::sync::{Arc, Mutex, Condvar};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::thread;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//创建共享数据结构：(Mutex&amp;lt;bool&amp;gt;, Condvar)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; pair &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Arc::new(Mutex::new(&lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;), Condvar::new()));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; pair_clone &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Arc::clone(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;pair);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; consumer &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; thread::spawn(&lt;span style=&#34;color:#66d9ef&#34;&gt;move&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (lock, cvar) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;*&lt;/span&gt;pair_clone;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; lock.lock().unwarp();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;//等条件满足
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!*&lt;/span&gt;condition {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#75715e&#34;&gt;//释放锁并阻塞，被唤醒后(wait返回后)重新获取锁
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;      condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; cvar.wait(condition).unwarp();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;消费者：条件已满足！继续执行&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;//消费者的处理逻辑
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	});
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	thread::sleep(Duration::from_secs(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;));&lt;span style=&#34;color:#75715e&#34;&gt;//模拟工作耗时
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (lock, cvar) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;*&lt;/span&gt;pair;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; lock.lock().unwarp();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;生产者：更新条件并通知消费者...&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;condition &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 通知一个等待的消费者线程
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    cvar.notify_one();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	consumer.join().unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;主线程: 所有线程执行完成&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h4 id=&#34;pin&#34;&gt;PIN
+&lt;/h4&gt;&lt;hr&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;haystack&lt;/code&gt;&lt;strong&gt;命名源自英语谚语&lt;/strong&gt;&amp;ldquo;looking for a needle in a haystack&amp;rdquo;&lt;/strong&gt;(大海捞针),&lt;code&gt;haystack&lt;/code&gt;表示被搜索的&lt;strong&gt;主体数据&lt;/strong&gt;，&lt;code&gt;needle&lt;/code&gt;表示待查找的&lt;strong&gt;目标元素&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;rust中有两种解引用的方式：&lt;strong&gt;&lt;code&gt;*&lt;/code&gt;&lt;strong&gt;和&lt;/strong&gt;模式匹配解引用&lt;/strong&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;unicodeascii和utf-8等&#34;&gt;Unicode、ASCII和UTF-8等
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Unicode&lt;/strong&gt;为所有字符分配了唯一标识(称为&lt;strong&gt;码点&lt;/strong&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;UTF-8&lt;/strong&gt;等是需要将这些码点转换为用于存储/传输的&lt;strong&gt;字节序列&lt;/strong&gt;,根据&lt;strong&gt;码点值的范围分类&lt;/strong&gt;，确定字节序列的&lt;strong&gt;长度&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ASCII&lt;/strong&gt;是Unicode和UTF-8的&lt;strong&gt;特殊兼容子集&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;字符数据&#34;&gt;字符数据
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;b&lt;/code&gt;前缀标识的数据：表示&lt;code&gt;ASCII&lt;/code&gt;字符集的字节数据，类型为&lt;code&gt;u8&lt;/code&gt;或&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;amp;str&lt;/code&gt;和&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;：&lt;code&gt;&amp;amp;str&lt;/code&gt;是utf-8编码的切片引用且不可变，&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;是对原始字节的切片引用，可变版本是&lt;code&gt;&amp;amp;mut [u8]&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;为什么可以手动调用dropx而不能调用xdrop&#34;&gt;为什么可以手动调用drop(x)而不能调用x.drop()
+&lt;/h4&gt;&lt;p&gt;关键在于&lt;strong&gt;所有权&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;std::mem::drop&amp;lt;T&amp;gt;(_x: T)&lt;/code&gt;转移了所有权，_x离开drop函数作用域，&lt;strong&gt;自动触发析构逻辑&lt;/strong&gt;（调用&lt;code&gt;Drop::drop&lt;/code&gt; trait的实现）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;drop(&amp;amp;mut self)&lt;/code&gt;没有发生所有权的转移，如果允许手动调用&lt;code&gt;x.drop&lt;/code&gt;,编译期在作用域结束时仍会再次调用&lt;code&gt;drop&lt;/code&gt;，双重释放，导致内存安全问题。&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Rust学习计划</title>
+        <link>http://localhost:1313/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</link>
+        <pubDate>Fri, 08 Aug 2025 11:37:40 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</guid>
+        <description>&lt;h2 id=&#34;1-基础能力建设&#34;&gt;1. 基础能力建设
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Rust 语言精通&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;深入理解所有权、生命周期、trait 系统&lt;/li&gt;
+&lt;li&gt;掌握 unsafe Rust 和 FFI&lt;/li&gt;
+&lt;li&gt;研究标准库实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;算法与数据结构&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;实现常用数据结构和算法&lt;/li&gt;
+&lt;li&gt;学习字符串搜索算法（Boyer-Moore, Aho-Corasick 等）&lt;/li&gt;
+&lt;li&gt;理解时间/空间复杂度分析&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;系统编程&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;深入理解操作系统原理&lt;/li&gt;
+&lt;li&gt;学习文件系统、内存管理、并发模型&lt;/li&gt;
+&lt;li&gt;掌握性能分析和调优技术&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-工程实践&#34;&gt;2. 工程实践
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;开源贡献&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从修复小 bug 开始参与开源项目&lt;/li&gt;
+&lt;li&gt;学习阅读和理解大型代码库&lt;/li&gt;
+&lt;li&gt;参与代码审查，学习他人代码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;代码质量&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;编写全面的测试用例&lt;/li&gt;
+&lt;li&gt;实践持续集成&lt;/li&gt;
+&lt;li&gt;学习设计模式和架构原则&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;性能优化&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;学习使用性能分析工具（perf, dtrace 等）&lt;/li&gt;
+&lt;li&gt;理解 CPU 缓存、分支预测等底层细节&lt;/li&gt;
+&lt;li&gt;实践基准测试和性能调优&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-学习资源&#34;&gt;3. 学习资源
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;必读书籍&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;《Rust 程序设计语言》&lt;/li&gt;
+&lt;li&gt;《Rust 权威指南》&lt;/li&gt;
+&lt;li&gt;《代码整洁之道》&lt;/li&gt;
+&lt;li&gt;《深入理解计算机系统》&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;学习路径&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-mermaid&#34; data-lang=&#34;mermaid&#34;&gt;graph TD
+  A[Rust 基础] --&amp;gt; B[标准库实现]
+  B --&amp;gt; C[开源项目贡献]
+  C --&amp;gt; D[性能优化]
+  D --&amp;gt; E[系统设计]
+  E --&amp;gt; F[独立项目]
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;4-实践项目&#34;&gt;4. 实践项目
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;命令行工具&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;实现简单的 grep 功能&lt;/li&gt;
+&lt;li&gt;添加正则表达式支持&lt;/li&gt;
+&lt;li&gt;优化性能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;并发处理&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;实现工作窃取线程池&lt;/li&gt;
+&lt;li&gt;学习无锁编程&lt;/li&gt;
+&lt;li&gt;实现并行算法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;性能优化&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;使用 SIMD 指令优化字符串处理&lt;/li&gt;
+&lt;li&gt;实现内存池&lt;/li&gt;
+&lt;li&gt;优化 I/O 性能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;5-思维习惯&#34;&gt;5. 思维习惯
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;持续学习&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;每天阅读优秀源码&lt;/li&gt;
+&lt;li&gt;定期参与技术讨论&lt;/li&gt;
+&lt;li&gt;写技术博客分享心得&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;代码审查&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;学习他人代码风格&lt;/li&gt;
+&lt;li&gt;接受并理解批评&lt;/li&gt;
+&lt;li&gt;不断重构和改进&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;问题解决&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;深入理解问题本质&lt;/li&gt;
+&lt;li&gt;设计多种解决方案&lt;/li&gt;
+&lt;li&gt;基准测试验证优化效果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;6-具体行动建议&#34;&gt;6. 具体行动建议
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;每天花 1 小时阅读 Rust 标准库源码&lt;/li&gt;
+&lt;li&gt;每周研究一个开源项目的架构设计&lt;/li&gt;
+&lt;li&gt;每月完成一个具有挑战性的编程练习&lt;/li&gt;
+&lt;li&gt;每季度参与一次开源贡献&lt;/li&gt;
+&lt;li&gt;每年开发一个展示个人技术水平的项目&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;记住，成为顶尖开发者是场马拉松，而非短跑。保持耐心和持续学习的心态是关键。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;每日阅读-rust-标准库源码计划&#34;&gt;每日阅读 Rust 标准库源码计划
+&lt;/h1&gt;&lt;p&gt;是的，借助 AI 阅读 Rust 标准库源码是个很好的学习方式。以下是一个具体的学习计划：&lt;/p&gt;
+&lt;h2 id=&#34;学习策略&#34;&gt;学习策略
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;基础阶段（1-2周）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从简单的模块开始，如 &lt;code&gt;std::option&lt;/code&gt; 和 &lt;code&gt;std::result&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;重点关注标准库中的 trait 实现和常用类型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;中级阶段（3-8周）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;研究集合类型：&lt;code&gt;Vec&lt;/code&gt;、&lt;code&gt;HashMap&lt;/code&gt;、&lt;code&gt;String&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;学习迭代器和闭包实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;高级阶段（9周+）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;并发原语：&lt;code&gt;Arc&lt;/code&gt;、&lt;code&gt;Mutex&lt;/code&gt;、&lt;code&gt;RwLock&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;异步运行时和 future 实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;使用-ai-辅助学习&#34;&gt;使用 AI 辅助学习
+&lt;/h2&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 示例：使用 AI 分析标准库代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 1. 选择要学习的模块
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; module &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;std::collections::hash_map&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 2. 让 AI 解释核心概念
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Q: 请解释 HashMap 的 robin hood hashing 实现
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Q: 这个 unsafe 块的作用是什么？
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 3. 做笔记和总结
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;take_notes&lt;/span&gt;(concept: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;, examples: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 记录学习要点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;每日学习流程&#34;&gt;每日学习流程
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;准备阶段（5分钟）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;确定今天要学习的模块&lt;/li&gt;
+&lt;li&gt;设置学习目标&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;核心学习（45分钟）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;阅读源码（25分钟）&lt;/li&gt;
+&lt;li&gt;使用 AI 解答疑问（15分钟）&lt;/li&gt;
+&lt;li&gt;做笔记（5分钟）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;复习阶段（10分钟）&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;总结今日所学&lt;/li&gt;
+&lt;li&gt;记录未解决的问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;实用技巧&#34;&gt;实用技巧
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;使用 &lt;code&gt;rustup doc --std&lt;/code&gt; 查看本地文档&lt;/li&gt;
+&lt;li&gt;在 playground 中编写测试代码&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;cargo-expand&lt;/code&gt; 查看宏展开&lt;/li&gt;
+&lt;li&gt;关注标准库中的测试用例&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;推荐的学习顺序&#34;&gt;推荐的学习顺序
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;std::option&lt;/code&gt; 和 &lt;code&gt;std::result&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::iter&lt;/code&gt; 和迭代器&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::collections&lt;/code&gt; 中的集合类型&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::sync&lt;/code&gt; 和 &lt;code&gt;std::thread&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;std::future&lt;/code&gt; 和异步编程&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;制定-rust-标准库学习目标的方法&#34;&gt;制定 Rust 标准库学习目标的方法
+&lt;/h1&gt;&lt;h2 id=&#34;1-按模块划分目标&#34;&gt;1. 按模块划分目标
+&lt;/h2&gt;&lt;h3 id=&#34;基础模块1-2周模块&#34;&gt;基础模块（1-2周/模块）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;std::option&lt;/code&gt; 和 &lt;code&gt;std::result&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;理解 &lt;code&gt;Option&lt;/code&gt; 和 &lt;code&gt;Result&lt;/code&gt; 的实现&lt;/li&gt;
+&lt;li&gt;学习组合子方法（&lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/ignore/src/lib.rs:466:4-475:5&#34; &gt;map&lt;/a&gt;, &lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/core/flags/parse.rs:41:4-52:5&#34; &gt;and_then&lt;/a&gt;, &lt;code&gt;unwrap_or&lt;/code&gt;等）&lt;/li&gt;
+&lt;li&gt;目标：能解释为什么 &lt;code&gt;Option&amp;lt;T&amp;gt;&lt;/code&gt; 在内存中与 &lt;code&gt;T&lt;/code&gt; 大小相同&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;std::iter&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;理解 &lt;code&gt;Iterator&lt;/code&gt; trait 的设计&lt;/li&gt;
+&lt;li&gt;学习常见迭代器适配器&lt;/li&gt;
+&lt;li&gt;目标：能实现自定义迭代器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-按主题划分目标&#34;&gt;2. 按主题划分目标
+&lt;/h2&gt;&lt;h3 id=&#34;所有权和生命周期2周&#34;&gt;所有权和生命周期（2周）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;研究 &lt;code&gt;std::mem&lt;/code&gt; 模块&lt;/li&gt;
+&lt;li&gt;分析 &lt;code&gt;Box&lt;/code&gt;, &lt;code&gt;Rc&lt;/code&gt;, &lt;code&gt;Arc&lt;/code&gt; 的实现&lt;/li&gt;
+&lt;li&gt;目标：能解释 Rust 的所有权系统如何影响标准库设计&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;并发编程3周&#34;&gt;并发编程（3周）
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;学习 &lt;code&gt;std::sync&lt;/code&gt; 中的原语&lt;/li&gt;
+&lt;li&gt;研究 &lt;code&gt;std::thread&lt;/code&gt; 和 &lt;code&gt;std::sync::mpsc&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;目标：能解释 &lt;code&gt;Mutex&lt;/code&gt; 和 &lt;code&gt;RwLock&lt;/code&gt; 的区别和适用场景&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-smart-目标制定法&#34;&gt;3. SMART 目标制定法
+&lt;/h2&gt;&lt;h3 id=&#34;具体-specific&#34;&gt;具体 (Specific)
+&lt;/h3&gt;&lt;p&gt;❌ 模糊目标：学习集合类型
+✅ 明确目标：理解 &lt;code&gt;Vec&amp;lt;T&amp;gt;&lt;/code&gt; 的内存布局和扩容策略&lt;/p&gt;
+&lt;h3 id=&#34;可衡量-measurable&#34;&gt;可衡量 (Measurable)
+&lt;/h3&gt;&lt;p&gt;❌ 不明确：了解迭代器
+✅ 可衡量：能实现3种不同的迭代器适配器&lt;/p&gt;
+&lt;h3 id=&#34;可实现-achievable&#34;&gt;可实现 (Achievable)
+&lt;/h3&gt;&lt;p&gt;❌ 不切实际：一周内掌握整个异步运行时
+✅ 可实现：一周内理解 &lt;code&gt;Future&lt;/code&gt; trait 和基本的执行器原理&lt;/p&gt;
+&lt;h3 id=&#34;相关性-relevant&#34;&gt;相关性 (Relevant)
+&lt;/h3&gt;&lt;p&gt;❌ 不相关：学习网络协议实现（如果是为了理解集合类型）
+✅ 相关：研究 &lt;code&gt;HashMap&lt;/code&gt; 的实现来理解 trait 约束&lt;/p&gt;
+&lt;h3 id=&#34;有时限-time-bound&#34;&gt;有时限 (Time-bound)
+&lt;/h3&gt;&lt;p&gt;❌ 无期限：某天学习错误处理
+✅ 有时限：本周内完成 &lt;code&gt;std::error::Error&lt;/code&gt; trait 的学习&lt;/p&gt;
+&lt;h2 id=&#34;4-示例学习计划&#34;&gt;4. 示例学习计划
+&lt;/h2&gt;&lt;h3 id=&#34;第1周option-和-result&#34;&gt;第1周：&lt;code&gt;Option&lt;/code&gt; 和 &lt;code&gt;Result&lt;/code&gt;
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;周一：阅读 &lt;code&gt;Option&lt;/code&gt; 定义和基础方法&lt;/li&gt;
+&lt;li&gt;周三：研究 &lt;code&gt;Option&lt;/code&gt; 的内存布局&lt;/li&gt;
+&lt;li&gt;周五：&lt;code&gt;Result&lt;/code&gt; 和错误处理模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;第2周迭代器&#34;&gt;第2周：迭代器
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;周一：&lt;code&gt;Iterator&lt;/code&gt; trait 定义&lt;/li&gt;
+&lt;li&gt;周三：常见适配器实现&lt;/li&gt;
+&lt;li&gt;周五：自定义迭代器实践&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;需要我帮你制定一个具体的学习计划吗？或者你对某个特定主题更感兴趣？&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

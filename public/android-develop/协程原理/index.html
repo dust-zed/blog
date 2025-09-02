@@ -1,49 +1,449 @@
-<!doctype html><html lang=zh-cn dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation<T>，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation<String>, var label: Int = 0 ) : Continuation<Unit> { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result<Any?>) { when(label) { 0 -> { label = 1 fetchPart1(this) } 1 -> { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -> { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n"><title>协程原理</title><link rel=canonical href=https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/><link rel=stylesheet href=/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css><meta property='og:title' content="协程原理"><meta property='og:description' content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation<T>，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation<String>, var label: Int = 0 ) : Continuation<Unit> { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result<Any?>) { when(label) { 0 -> { label = 1 fetchPart1(this) } 1 -> { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -> { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n"><meta property='og:url' content='https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'><meta property='og:site_name' content='zed的博客'><meta property='og:type' content='article'><meta property='article:section' content='Android-Develop'><meta property='article:published_time' content='2025-06-30T15:13:25+08:00'><meta property='article:modified_time' content='2025-06-30T15:13:25+08:00'><meta name=twitter:title content="协程原理"><meta name=twitter:description content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation<T>，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation<String>, var label: Int = 0 ) : Continuation<Unit> { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result<Any?>) { when(label) { 0 -> { label = 1 fetchPart1(this) } 1 -> { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -> { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n"></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label=切换菜单>
-<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu_f509edb42ecc0ebd.png width=300 height=300 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>zed的博客</a></h1><h2 class=site-description></h2></div></header><ol class=menu id=main-menu><li><a href=/rust><span>rust</span></a></li><li class=current><a href=/android-develop/><span>Android-Develops</span></a></li><li><a href=/tutorials/><span>Tutorials</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
-<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
-<span>暗色模式</span></li></ol></li></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/android-develop/>Android-Develop</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/>协程原理</a></h2></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
-<time class=article-time--published>Jun 30, 2025</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
-<time class=article-time--reading>阅读时长: 1 分钟</time></div></footer></div></header><section class=article-content><p>Kotlin协程的本质是<strong>通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象</strong>。其核心原理和状态推进机制如下：</p><h4 id=核心原理>核心原理</h4><h5 id=1-挂起函数>1. 挂起函数</h5><ul><li>用suspend修饰的函数</li><li>编译器会将其编译为<strong>状态机代码</strong>(而非阻塞线程)，支持在任意位置挂起/恢复</li></ul><h5 id=2-续体>2. 续体</h5><ul><li>类似回调的接口<code>Continuation&lt;T></code>，其关键方法是<code>resumeWith(result)</code></li><li>协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文</li></ul><h5 id=3-状态机转换>3. 状态机转换</h5><ul><li>编译器将挂起函数拆解成一个状态机（通过<code>label</code>标记状态）</li><li>每个挂起点对应一个状态迁移</li></ul><hr><h4 id=状态推进流程>状态推进流程</h4><p>以下代码展示状态机的运作：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=display:flex><span><span style=color:#66d9ef>suspend</span> <span style=color:#66d9ef>fun</span> <span style=color:#a6e22e>fetchData</span>(): String {
-</span></span><span style=display:flex><span>  <span style=color:#66d9ef>val</span> data1 = fetchPart1()  <span style=color:#75715e>//挂起点1
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>val</span> data2 = fetchPart2()  <span style=color:#75715e>//挂起点2
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>return</span> data1 + data2
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><p><strong>编译器转换后（伪代码）</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FetchDataStateMachine</span>(
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>val</span> completion: Continuation&lt;String&gt;,
-</span></span><span style=display:flex><span>  <span style=color:#66d9ef>var</span> label: Int = <span style=color:#ae81ff>0</span>
-</span></span><span style=display:flex><span>) : Continuation&lt;Unit&gt; {
-</span></span><span style=display:flex><span>  <span style=color:#66d9ef>var</span> data1: String? = <span style=color:#66d9ef>null</span>
-</span></span><span style=display:flex><span>  <span style=color:#66d9ef>var</span> data2: String? = <span style=color:#66d9ef>null</span>
-</span></span><span style=display:flex><span>  
-</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>fun</span> <span style=color:#a6e22e>resumeWith</span>(result: Result&lt;Any?&gt;) {
-</span></span><span style=display:flex><span>    <span style=color:#66d9ef>when</span>(label) {
-</span></span><span style=display:flex><span>      <span style=color:#ae81ff>0</span> <span style=color:#f92672>-&gt;</span> {
-</span></span><span style=display:flex><span>        label = <span style=color:#ae81ff>1</span>
-</span></span><span style=display:flex><span>        fetchPart1(<span style=color:#66d9ef>this</span>)
-</span></span><span style=display:flex><span>      }
-</span></span><span style=display:flex><span>      <span style=color:#ae81ff>1</span> <span style=color:#f92672>-&gt;</span> {
-</span></span><span style=display:flex><span>        data1 = result.getOrThrow() <span style=color:#66d9ef>as</span> String
-</span></span><span style=display:flex><span>        label = <span style=color:#ae81ff>2</span>
-</span></span><span style=display:flex><span>        fetchPart2(<span style=color:#66d9ef>this</span>)
-</span></span><span style=display:flex><span>      }
-</span></span><span style=display:flex><span>      <span style=color:#ae81ff>2</span> <span style=color:#f92672>-&gt;</span> {
-</span></span><span style=display:flex><span>        data2 = result.getOrThrow() <span style=color:#66d9ef>as</span> String
-</span></span><span style=display:flex><span>        completion.resumeWith(data1 + data2)	<span style=color:#75715e>//返回最终结果
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>      }
-</span></span><span style=display:flex><span>    }
-</span></span><span style=display:flex><span>  }
-</span></span><span style=display:flex><span>}
-</span></span></code></pre></div><hr><h4 id=关键机制>关键机制</h4><h5 id=1-挂起不阻塞线程>1. 挂起不阻塞线程：</h5><ul><li>协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费</li><li>异步操作完成后，任务被派发到合适的线程继续执行（通过<code>Dispatcher</code>）</li></ul><h5 id=2续体传递风格>2.续体传递风格</h5><ul><li>挂起函数被编译为接受额外<code>Continuation</code>参数的函数</li><li>例如<code>suspend fun foo()</code> → <code>fun foo(continuation: Continuation)</code></li></ul><h5 id=3-协程上下文coroutinecontext>3. 协程上下文（CoroutineContext）</h5><ul><li>通过<code>CoroutineContext</code>传递调度器、异常处理器等。</li><li>状态机中通过<code>Continuation.context</code>获取当前上下文</li></ul><h5 id=4-结构化并发>4. 结构化并发</h5><ul><li>协程树通过父-子关系管理生命周期</li><li>父协程取消时，自动取消所有子协程</li></ul><hr><h4 id=状态推进>状态推进</h4><p>在<code>FetchDataStateMachine</code>的<code>resumeWith</code>中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过<strong>递归链式调用与间接跳转</strong>实现的。</p><h5 id=1-单次触发模型>1. 单次触发模型</h5><ul><li>每次resumeWith被调用时只处理当前状态</li><li>通过更新label值标记下一步状态</li><li>不立即处理后续状态，而是等待下一次恢复</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=display:flex><span>label = <span style=color:#ae81ff>2</span>  <span style=color:#75715e>//只标记下一步状态，不立即执行
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>fetchPart2(<span style=color:#66d9ef>this</span>)  <span style=color:#75715e>//触发异步操作（挂起），this就是FetchDataStateMachine，其是Continuation，可通过this调用resumeWith
-</span></span></span></code></pre></div><h5 id=2-链式递归唤醒>2. 链式递归唤醒</h5><ul><li>每个异步操作完成时，都会重新调用resumeWith</li><li>每调用一次，就会处理当前状态并设置下一次状态</li></ul><pre tabindex=0><code>resumeWith(结果) → 处理当前状态
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation&lt;T&gt;，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation&lt;String&gt;, var label: Int = 0 ) : Continuation&lt;Unit&gt; { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result&lt;Any?&gt;) { when(label) { 0 -&gt; { label = 1 fetchPart1(this) } 1 -&gt; { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -&gt; { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n">
+<title>协程原理</title>
+
+<link rel='canonical' href='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="协程原理">
+<meta property='og:description' content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation&lt;T&gt;，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation&lt;String&gt;, var label: Int = 0 ) : Continuation&lt;Unit&gt; { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result&lt;Any?&gt;) { when(label) { 0 -&gt; { label = 1 fetchPart1(this) } 1 -&gt; { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -&gt; { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n">
+<meta property='og:url' content='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-30T15:13:25&#43;08:00'/><meta property='article:modified_time' content='2025-06-30T15:13:25&#43;08:00'/>
+<meta name="twitter:title" content="协程原理">
+<meta name="twitter:description" content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation&lt;T&gt;，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation&lt;String&gt;, var label: Int = 0 ) : Continuation&lt;Unit&gt; { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result&lt;Any?&gt;) { when(label) { 0 -&gt; { label = 1 fetchPart1(this) } 1 -&gt; { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -&gt; { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li  class='current' >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/">协程原理</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jun 30, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>Kotlin协程的本质是<strong>通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象</strong>。其核心原理和状态推进机制如下：</p>
+<h4 id="核心原理">核心原理
+</h4><h5 id="1-挂起函数">1. 挂起函数
+</h5><ul>
+<li>用suspend修饰的函数</li>
+<li>编译器会将其编译为<strong>状态机代码</strong>(而非阻塞线程)，支持在任意位置挂起/恢复</li>
+</ul>
+<h5 id="2-续体">2. 续体
+</h5><ul>
+<li>类似回调的接口<code>Continuation&lt;T&gt;</code>，其关键方法是<code>resumeWith(result)</code></li>
+<li>协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文</li>
+</ul>
+<h5 id="3-状态机转换">3. 状态机转换
+</h5><ul>
+<li>编译器将挂起函数拆解成一个状态机（通过<code>label</code>标记状态）</li>
+<li>每个挂起点对应一个状态迁移</li>
+</ul>
+<hr>
+<h4 id="状态推进流程">状态推进流程
+</h4><p>以下代码展示状态机的运作：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">suspend</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">fetchData</span>(): String {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">val</span> data1 = fetchPart1()  <span style="color:#75715e">//挂起点1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">val</span> data2 = fetchPart2()  <span style="color:#75715e">//挂起点2
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">return</span> data1 + data2
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>编译器转换后（伪代码）</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FetchDataStateMachine</span>(
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">val</span> completion: Continuation&lt;String&gt;,
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> label: Int = <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>) : Continuation&lt;Unit&gt; {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> data1: String? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> data2: String? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">resumeWith</span>(result: Result&lt;Any?&gt;) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">when</span>(label) {
+</span></span><span style="display:flex;"><span>      <span style="color:#ae81ff">0</span> <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        label = <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        fetchPart1(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>      <span style="color:#ae81ff">1</span> <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        data1 = result.getOrThrow() <span style="color:#66d9ef">as</span> String
+</span></span><span style="display:flex;"><span>        label = <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>        fetchPart2(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>      <span style="color:#ae81ff">2</span> <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        data2 = result.getOrThrow() <span style="color:#66d9ef">as</span> String
+</span></span><span style="display:flex;"><span>        completion.resumeWith(data1 + data2)	<span style="color:#75715e">//返回最终结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h4 id="关键机制">关键机制
+</h4><h5 id="1-挂起不阻塞线程">1. 挂起不阻塞线程：
+</h5><ul>
+<li>协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费</li>
+<li>异步操作完成后，任务被派发到合适的线程继续执行（通过<code>Dispatcher</code>）</li>
+</ul>
+<h5 id="2续体传递风格">2.续体传递风格
+</h5><ul>
+<li>挂起函数被编译为接受额外<code>Continuation</code>参数的函数</li>
+<li>例如<code>suspend fun foo()</code> → <code>fun foo(continuation: Continuation)</code></li>
+</ul>
+<h5 id="3-协程上下文coroutinecontext">3. 协程上下文（CoroutineContext）
+</h5><ul>
+<li>通过<code>CoroutineContext</code>传递调度器、异常处理器等。</li>
+<li>状态机中通过<code>Continuation.context</code>获取当前上下文</li>
+</ul>
+<h5 id="4-结构化并发">4. 结构化并发
+</h5><ul>
+<li>协程树通过父-子关系管理生命周期</li>
+<li>父协程取消时，自动取消所有子协程</li>
+</ul>
+<hr>
+<h4 id="状态推进">状态推进
+</h4><p>在<code>FetchDataStateMachine</code>的<code>resumeWith</code>中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过<strong>递归链式调用与间接跳转</strong>实现的。</p>
+<h5 id="1-单次触发模型">1. 单次触发模型
+</h5><ul>
+<li>每次resumeWith被调用时只处理当前状态</li>
+<li>通过更新label值标记下一步状态</li>
+<li>不立即处理后续状态，而是等待下一次恢复</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>label = <span style="color:#ae81ff">2</span>  <span style="color:#75715e">//只标记下一步状态，不立即执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>fetchPart2(<span style="color:#66d9ef">this</span>)  <span style="color:#75715e">//触发异步操作（挂起），this就是FetchDataStateMachine，其是Continuation，可通过this调用resumeWith
+</span></span></span></code></pre></div><h5 id="2-链式递归唤醒">2. 链式递归唤醒
+</h5><ul>
+<li>每个异步操作完成时，都会重新调用resumeWith</li>
+<li>每调用一次，就会处理当前状态并设置下一次状态</li>
+</ul>
+<pre tabindex="0"><code>resumeWith(结果) → 处理当前状态
       ↑               ↓
   异步完成          设置下一状态
       ↑             
   恢复执行        
-</code></pre><h5 id=3-状态变量持久化>3. 状态变量持久化</h5><ul><li>状态机对象在挂起期间持续存在（堆内存）</li><li>成员变量(data1, label)保存中间状态</li><li>每次恢复时从正确状态继续执行</li></ul><h5 id=4-编译器优化技巧>4. 编译器优化技巧</h5><ul><li>尾递归优化：编译器会将状态处理转为循环</li><li>状态折叠 ：合并可优化状态减少跳转次数</li><li>内联状态：简单状态机转为switch跳转表</li></ul><hr><h4 id=对挂起的理解>对挂起的理解</h4><p>协程挂机：在挂起点暂停当前的同步代码，转而去执行消息队列的runnable；这样就是我对挂起的理解，也就是让出线程</p></section><footer class=article-footer></footer></article><footer class=site-footer><section class=copyright>&copy;
-2025 zed的博客</section><section class=powerby>使用 <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> 构建<br>主题 <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.30.0>Stack</a></b> 由 <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a> 设计</section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-<button class="pswp__button pswp__button--share" title=Share></button>
-<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
-</button>
-<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
+</code></pre><h5 id="3-状态变量持久化">3. 状态变量持久化
+</h5><ul>
+<li>状态机对象在挂起期间持续存在（堆内存）</li>
+<li>成员变量(data1, label)保存中间状态</li>
+<li>每次恢复时从正确状态继续执行</li>
+</ul>
+<h5 id="4-编译器优化技巧">4. 编译器优化技巧
+</h5><ul>
+<li>尾递归优化：编译器会将状态处理转为循环</li>
+<li>状态折叠 ：合并可优化状态减少跳转次数</li>
+<li>内联状态：简单状态机转为switch跳转表</li>
+</ul>
+<hr>
+<h4 id="对挂起的理解">对挂起的理解
+</h4><p>协程挂机：在挂起点暂停当前的同步代码，转而去执行消息队列的runnable；这样就是我对挂起的理解，也就是让出线程</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
