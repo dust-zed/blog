@@ -7,11 +7,11 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <lastBuildDate>Tue, 02 Sep 2025 21:41:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/android-develop/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>Android事件分发价值详解</title>
-        <link>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E4%BB%B7%E5%80%BC%E8%AF%A6%E8%A7%A3/</link>
+        <title>Android事件分发机制详解</title>
+        <link>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</link>
         <pubDate>Tue, 02 Sep 2025 21:41:39 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E4%BB%B7%E5%80%BC%E8%AF%A6%E8%A7%A3/</guid>
+        <guid>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</guid>
         <description>&lt;h4 id=&#34;1-事件分发的基本流程&#34;&gt;1. 事件分发的基本流程
 &lt;/h4&gt;&lt;h5 id=&#34;11-事件传递顺序&#34;&gt;1.1 事件传递顺序
 &lt;/h5&gt;&lt;p&gt;事件从Activity开始，按照一下顺序传递：&lt;/p&gt;

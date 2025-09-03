@@ -6,7 +6,15 @@
         <description>Recent content on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Tue, 02 Sep 2025 21:41:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 03 Sep 2025 12:28:49 +0800</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Tokio整体结构</title>
+        <link>http://localhost:1313/rust/tokio/tokio%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/</link>
+        <pubDate>Wed, 03 Sep 2025 12:28:49 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/tokio%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>Android事件分发机制详解</title>
         <link>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</link>
         <pubDate>Tue, 02 Sep 2025 21:41:39 +0800</pubDate>
@@ -213,10 +221,10 @@
         </item>
         <item>
         <title>Reqwest模块架构解析</title>
-        <link>http://localhost:1313/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</link>
+        <link>http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</link>
         <pubDate>Tue, 02 Sep 2025 16:42:46 +0800</pubDate>
         
-        <guid>http://localhost:1313/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</guid>
+        <guid>http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</guid>
         <description>&lt;p&gt;从顶层结构来理解reqwest的模块组织：&lt;/p&gt;
 &lt;h4 id=&#34;核心模块&#34;&gt;核心模块
 &lt;/h4&gt;&lt;h5 id=&#34;1-async_impl&#34;&gt;1. async_impl/
