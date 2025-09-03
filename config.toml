@@ -30,15 +30,20 @@ reviews = "reviews/:slug"
   name = "rust"
   url = "/rust"
   weight = 2
+    
+  [[menu.main.children]]
+    name = "std"
+    url = "/rust/std"
+    weight = 1
 
   [[menu.main.children]]
     name = "ripgrep"
     url = "/rust/ripgrep"
     weight = 1
-    
+
   [[menu.main.children]]
-    name = "std"
-    url = "/rust/std"
+    name = "tokio"
+    url = "/rust/tokio"
     weight = 1
 
   [[menu.main.children]]
