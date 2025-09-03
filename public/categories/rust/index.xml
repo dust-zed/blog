@@ -6,7 +6,323 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Mon, 01 Sep 2025 17:16:28 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 02 Sep 2025 16:42:46 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Reqwest模块架构解析</title>
+        <link>http://localhost:1313/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</link>
+        <pubDate>Tue, 02 Sep 2025 16:42:46 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</guid>
+        <description>&lt;p&gt;从顶层结构来理解reqwest的模块组织：&lt;/p&gt;
+&lt;h4 id=&#34;核心模块&#34;&gt;核心模块
+&lt;/h4&gt;&lt;h5 id=&#34;1-async_impl&#34;&gt;1. async_impl/
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;异步HTTP客户端实现&lt;/li&gt;
+&lt;li&gt;包含&lt;code&gt;Client&lt;/code&gt;、&lt;code&gt;Reqwest&lt;/code&gt;、&lt;code&gt;Response&lt;/code&gt;等核心类型&lt;/li&gt;
+&lt;li&gt;基于&lt;code&gt;hyper&lt;/code&gt;库实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-blocking&#34;&gt;2. blocking/
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;同步HTTP客户端&lt;/li&gt;
+&lt;li&gt;内部使用&lt;code&gt;std::thread&lt;/code&gt;封装异步调用&lt;/li&gt;
+&lt;li&gt;提供阻塞式API&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-dns&#34;&gt;3. dns/
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;DNS解析功能&lt;/li&gt;
+&lt;li&gt;支持系统DNS和自定义解析器&lt;/li&gt;
+&lt;li&gt;包含&lt;code&gt;GaiResolver&lt;/code&gt;等实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-proxy&#34;&gt;4. proxy/
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;代理支持&lt;/li&gt;
+&lt;li&gt;处理HTTP/HTTPS/SOCKS代理&lt;/li&gt;
+&lt;li&gt;代理自动发现和认证&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;5-tls&#34;&gt;5. tls
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;安全传输层实现&lt;/li&gt;
+&lt;li&gt;支持native-tls和rustls&lt;/li&gt;
+&lt;li&gt;证书和身份管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;6-redirect&#34;&gt;6. redirect/
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;重定向处理&lt;/li&gt;
+&lt;li&gt;支持自定义重定向策略&lt;/li&gt;
+&lt;li&gt;处理3xx状态码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;7-wasm&#34;&gt;7. wasm/
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;WebAssembly平台特定实现&lt;/li&gt;
+&lt;li&gt;使用浏览器Fetch API&lt;/li&gt;
+&lt;li&gt;针对Web环境优化&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;辅助模块&#34;&gt;辅助模块
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;cookie/&lt;/strong&gt; - Cookie管理&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;multipart/&lt;/strong&gt; - 多部分表单数据处理&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;retry/&lt;/strong&gt; - 请求重试机制&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;util/&lt;/strong&gt; - 工具函数和辅助类型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;特性开关&#34;&gt;特性开关
+&lt;/h4&gt;&lt;p&gt;通过Cargo features控制功能：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;default-tls&lt;/code&gt; - 默认TLS实现&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;native-tls&lt;/code&gt; - 使用系统原生TLS&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;rustls&lt;/code&gt; - 使用rustls纯Rust实现&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;blocking&lt;/code&gt; -  启用同步API&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;cookies&lt;/code&gt; - Cookie支持&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;json&lt;/code&gt; -  JSON序列化支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;//lib.rs
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;blocking&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mod&lt;/span&gt; blocking;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(feature = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cookies&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mod&lt;/span&gt; cookie;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在 &lt;code&gt;Cargo.toml&lt;/code&gt; 中通过 features 控制哪些实现被编译。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Iterator</title>
+        <link>http://localhost:1313/rust/std/iterator/</link>
+        <pubDate>Tue, 02 Sep 2025 10:12:13 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/std/iterator/</guid>
+        <description>&lt;p&gt;标准库的&lt;code&gt;Iterator&lt;/code&gt;源码学习。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;常见变量命名&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;acc&lt;/code&gt;：是“accumulator”（累加器）的缩写，在函数式编程中用于表示累积计算过程中的中间结果。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fold&lt;/code&gt;：是一个高阶函数，用于将集合中的所有元素通过一个操作“折叠”成单个值。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;1-基础结构&#34;&gt;1. 基础结构
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;//这是 Iterator trait 的定义
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; Iterator {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Item&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//必需方法：获取下一个元素
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;next&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self::Item&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//提供默认实现方法
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//这里有很多实用方法，我们重点看几个关键的
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;2-核心方法&#34;&gt;2. 核心方法
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;next&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self::Item&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;这是迭代器最基础的方法&lt;/li&gt;
+&lt;li&gt;每次调用返回&lt;code&gt;Some(item)&lt;/code&gt;或&lt;code&gt;None&lt;/code&gt;（表示迭代结束）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-常用方法实现&#34;&gt;3. 常用方法实现
+&lt;/h4&gt;&lt;p&gt;让我们看看&lt;code&gt;map&lt;/code&gt;的实现：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;map&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;B, F&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(self, f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Map&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self, F&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Self: Sized,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    F: FnMut(Self::Item) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;B&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Map::new(self, f)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Map 结构体
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Map&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;I, F&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    iter: &lt;span style=&#34;color:#a6e22e&#34;&gt;I&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;B, I: Iterator, F&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; Iterator &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Map&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;I, F&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    F: FnMut(I::Item) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;B&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Item&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; B;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;next&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;B&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      	&lt;span style=&#34;color:#75715e&#34;&gt;//由Option的方法完成map操作
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        self.iter.next().map(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self.f)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;4-其他重要方法&#34;&gt;4. 其他重要方法
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;collect&lt;/code&gt;方法&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;collect&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;B: &lt;span style=&#34;color:#a6e22e&#34;&gt;FromIterator&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self::Item&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;(self) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;B&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Self: Sized,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    FromIterator::from_iter(self)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;filter&lt;/code&gt;方法&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;filter&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;P&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(self, predicate: &lt;span style=&#34;color:#a6e22e&#34;&gt;P&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Filter&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self, P&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Self: Sized,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    P: FnMut(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;Self::Item) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Filter::new(self, predicate)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;5-高级特性-try_fold&#34;&gt;5. 高级特性： &lt;code&gt;try_fold&lt;/code&gt;
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;try_fold&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;B, F, R&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, init: &lt;span style=&#34;color:#a6e22e&#34;&gt;B&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; f: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;R&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Self: Sized,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    F: FnMut(B, Self::Item) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;R&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    R: &lt;span style=&#34;color:#a6e22e&#34;&gt;Try&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Output &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; B&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; accum &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; init;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(x) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.next() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        accum &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; f(accum, x)&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Try::from_ok(accum)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;6-实际使用示例&#34;&gt;6. 实际使用示例
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 自定义迭代器示例
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Counter&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    count: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    max: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Iterator &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Counter {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Item&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;next&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self::Item&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; self.count &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt; self.max {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; result &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Some(self.count);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            self.count &lt;span style=&#34;color:#f92672&#34;&gt;+=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            result
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        } &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            None
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用自定义迭代器
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; sum: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Counter { count: &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, max: &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; x &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .filter(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; x &lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .sum();
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;7-迭代器组合器&#34;&gt;7. 迭代器组合器
+&lt;/h4&gt;&lt;p&gt;标准库中还有许多有用的迭代器适配器：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;take&lt;/code&gt;/&lt;code&gt;take_while&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;skip&lt;/code&gt;/&lt;code&gt;skip_while&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;zip&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;chain&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;enumerate&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;peekable&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fuse&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;8-性能考虑&#34;&gt;8. 性能考虑
+&lt;/h4&gt;&lt;p&gt;Rust迭代器的零成本抽象：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通常会被优化成与手写循环相同的机器码&lt;/li&gt;
+&lt;li&gt;内联优化使得方法调用开销被消除&lt;/li&gt;
+&lt;li&gt;迭代器链会被优化形成单个循环&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;9-结构&#34;&gt;9. 结构
+&lt;/h4&gt;&lt;p&gt;迭代器大部分需要消耗self的方法，都是新建了一个新迭代器，如&lt;code&gt;map&lt;/code&gt;之于&lt;code&gt;Map&lt;/code&gt;，&lt;code&gt;filter&lt;/code&gt;之于&lt;code&gt;Filter&lt;/code&gt;。这种设计模式称为“迭代器适配器模式”，它有几个关键优势：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;惰性求值&lt;/strong&gt;：构建新迭代器不会立即执行计算，直到调用消费方法（如&lt;code&gt;collect&lt;/code&gt;或&lt;code&gt;for&lt;/code&gt;循环）才会真正处理数据。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;组合性&lt;/strong&gt;：每个适配器只关注单一职责，可以通过链式调用任意组合&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;内存高效&lt;/strong&gt;：不需要为中间结果分配额外内存，数据流是管道式的。&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>Std_todolist</title>
+        <link>http://localhost:1313/rust/std/std_todolist/</link>
+        <pubDate>Tue, 02 Sep 2025 08:29:31 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/std/std_todolist/</guid>
+        <description>&lt;h1 id=&#34;rust-标准库学习清单&#34;&gt;Rust 标准库学习清单
+&lt;/h1&gt;&lt;h2 id=&#34;1-核心基础&#34;&gt;1. 核心基础
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;core::option&lt;/code&gt; - &lt;code&gt;Option&amp;lt;T&amp;gt;&lt;/code&gt; 类型&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;core::result&lt;/code&gt; - &lt;code&gt;Result&amp;lt;T, E&amp;gt;&lt;/code&gt; 类型&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;core::iter&lt;/code&gt; - 迭代器&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;core::marker&lt;/code&gt; - 标记 trait&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;core::mem&lt;/code&gt; - 内存操作&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;core::ops&lt;/code&gt; - 操作符重载&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-集合类型&#34;&gt;2. 集合类型
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;alloc::vec::Vec&lt;/code&gt; - 动态数组&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;alloc::collections&lt;/code&gt; - 集合类型
+&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;VecDeque&lt;/code&gt; - 双端队列&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;LinkedList&lt;/code&gt; - 双向链表&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;HashMap&lt;/code&gt;/&lt;code&gt;HashSet&lt;/code&gt; - 哈希表/集合&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;BTreeMap&lt;/code&gt;/&lt;code&gt;BTreeSet&lt;/code&gt; - B树映射/集合&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;BinaryHeap&lt;/code&gt; - 二叉堆&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-字符串处理&#34;&gt;3. 字符串处理
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::string::String&lt;/code&gt; - 可增长字符串&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::str&lt;/code&gt; - 字符串切片&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/ignore/src/walk.rs:255:4-264:5&#34; &gt;std::fmt&lt;/a&gt; - 格式化输出&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/ignore/src/walk.rs:35:4-38:5&#34; &gt;std::path&lt;/a&gt; - 路径处理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;4-并发编程&#34;&gt;4. 并发编程
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::thread&lt;/code&gt; - 线程&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::sync&lt;/code&gt; - 同步原语
+&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;Mutex&lt;/code&gt;/&lt;code&gt;RwLock&lt;/code&gt; - 互斥锁/读写锁&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;Arc&lt;/code&gt;/&lt;code&gt;Rc&lt;/code&gt; - 原子/引用计数&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;mpsc&lt;/code&gt; - 多生产者单消费者通道&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::sync::atomic&lt;/code&gt; - 原子操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;5-异步编程&#34;&gt;5. 异步编程
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::future::Future&lt;/code&gt; - Future trait&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::task&lt;/code&gt; - 异步任务&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::pin&lt;/code&gt; - 固定内存&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;6-文件和io&#34;&gt;6. 文件和I/O
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::fs&lt;/code&gt; - 文件系统操作&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::io&lt;/code&gt; - 输入/输出
+&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;Read&lt;/code&gt;/&lt;code&gt;Write&lt;/code&gt; traits&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;BufReader&lt;/code&gt;/&lt;code&gt;BufWriter&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;Stdout&lt;/code&gt;/&lt;code&gt;Stdin&lt;/code&gt;/&lt;code&gt;Stderr&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;7-错误处理&#34;&gt;7. 错误处理
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::error::Error&lt;/code&gt; - 错误 trait&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::panic&lt;/code&gt; - 恐慌处理&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::result&lt;/code&gt; - 错误处理惯用法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;8-时间和日期&#34;&gt;8. 时间和日期
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::time&lt;/code&gt; - 时间处理&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::time::Duration&lt;/code&gt; - 持续时间&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::time::Instant&lt;/code&gt; - 时间点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;9-类型转换&#34;&gt;9. 类型转换
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::convert&lt;/code&gt; - 类型转换
+&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;From&lt;/code&gt;/&lt;code&gt;Into&lt;/code&gt; traits&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;TryFrom&lt;/code&gt;/&lt;code&gt;TryInto&lt;/code&gt; traits&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;AsRef&lt;/code&gt;/&lt;code&gt;AsMut&lt;/code&gt; traits&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;10-宏系统&#34;&gt;10. 宏系统
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::macros&lt;/code&gt; - 标准宏&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;a class=&#34;link&#34; href=&#34;cci:1://file:///Users/zed/ripgrep/crates/ignore/src/walk.rs:255:4-264:5&#34; &gt;std::fmt&lt;/a&gt; - 格式化宏&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; &lt;code&gt;std::assert&lt;/code&gt; - 断言宏&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;学习建议&#34;&gt;学习建议
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;按顺序学习&lt;/strong&gt;：从核心基础开始，逐步深入&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;动手实践&lt;/strong&gt;：为每个模块编写示例代码&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;阅读源码&lt;/strong&gt;：理解标准库的实现&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;参考文档&lt;/strong&gt;：善用 &lt;a class=&#34;link&#34; href=&#34;https://docs.rs&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;docs.rs&lt;/a&gt; 和 Rust 官方文档&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
         <title>Rust知识问答</title>
         <link>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</link>
         <pubDate>Mon, 01 Sep 2025 17:16:28 +0800</pubDate>
@@ -51,6 +367,7 @@
 &lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; result &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; f();  &lt;span style=&#34;color:#75715e&#34;&gt;// 等价于 FnOnce::call_once(f, ())
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 这里不能再调用 f()，因为 f 已经被移动
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;最终f所有权被转移进&lt;code&gt;call_once&lt;/code&gt;，并随着call_once的结束而&lt;code&gt;drop&lt;/code&gt;了，f被释放了，内部捕获的所有权自然也被释放。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;FnOnce&lt;/code&gt;、&lt;code&gt;FnMut&lt;/code&gt;、&lt;code&gt;Fn&lt;/code&gt;这些是根据如何捕获环境而区分的，并不影响函数签名，&lt;code&gt;FnMut&lt;/code&gt;也可以接收&lt;strong&gt;所有权参数&lt;/strong&gt;&lt;/p&gt;
 </description>
         </item>
         <item>

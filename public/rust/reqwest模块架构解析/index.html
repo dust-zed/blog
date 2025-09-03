@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="为什么FnOnce只能调用一次 源码分析 pub trait FnOnce&lt;Args&gt; { type Output; extern &#34;rust-call&#34; fn call_once(self, args: Args) -&gt; Self::Output; } self的含义 接收实现了FnOnce的具体类型的值 这个值会被移动(move)进方法 具体例子 假设我们有一个闭包:\nlet s = String::from(&#34;hello&#34;); let f = || { println!(&#34;{}&#34;, s); // 获取 s 的所有权 s.len() }; 当这个闭包实现FnOnce时\n// 编译器生成的代码类似这样： struct Closure { s: String, // 捕获的环境变量 } impl FnOnce&lt;()&gt; for Closure { type Output = usize; fn call_once(self, _args: ()) -&gt; usize { println!(&#34;{}&#34;, self.s); self.s.len() } } 调用示例 let result = f(); // 等价于 FnOnce::call_once(f, ()) // 这里不能再调用 f()，因为 f 已经被移动 最终f所有权被转移进call_once，并随着call_once的结束而drop了，f被释放了，内部捕获的所有权自然也被释放。\n">
-<title>Rust知识问答</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="从顶层结构来理解reqwest的模块组织：\n核心模块 1. async_impl/ 异步HTTP客户端实现 包含Client、Reqwest、Response等核心类型 基于hyper库实现 2. blocking/ 同步HTTP客户端 内部使用std::thread封装异步调用 提供阻塞式API 3. dns/ DNS解析功能 支持系统DNS和自定义解析器 包含GaiResolver等实现 4. proxy/ 代理支持 处理HTTP/HTTPS/SOCKS代理 代理自动发现和认证 5. tls 安全传输层实现 支持native-tls和rustls 证书和身份管理 6. redirect/ 重定向处理 支持自定义重定向策略 处理3xx状态码 7. wasm/ WebAssembly平台特定实现 使用浏览器Fetch API 针对Web环境优化 辅助模块 cookie/ - Cookie管理 multipart/ - 多部分表单数据处理 retry/ - 请求重试机制 util/ - 工具函数和辅助类型 特性开关 通过Cargo features控制功能：\ndefault-tls - 默认TLS实现 native-tls - 使用系统原生TLS rustls - 使用rustls纯Rust实现 blocking - 启用同步API cookies - Cookie支持 json - JSON序列化支持 //lib.rs #[cfg(feature = &#34;blocking&#34;)] pub mod blocking; #[cfg(feature = &#34;cookies&#34;)] pub mod cookie; 在 Cargo.toml 中通过 features 控制哪些实现被编译。\n">
+<title>Reqwest模块架构解析</title>
 
-<link rel='canonical' href='http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/'>
+<link rel='canonical' href='http://localhost:1313/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/'>
 
-<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Rust知识问答">
-<meta property='og:description' content="为什么FnOnce只能调用一次 源码分析 pub trait FnOnce&lt;Args&gt; { type Output; extern &#34;rust-call&#34; fn call_once(self, args: Args) -&gt; Self::Output; } self的含义 接收实现了FnOnce的具体类型的值 这个值会被移动(move)进方法 具体例子 假设我们有一个闭包:\nlet s = String::from(&#34;hello&#34;); let f = || { println!(&#34;{}&#34;, s); // 获取 s 的所有权 s.len() }; 当这个闭包实现FnOnce时\n// 编译器生成的代码类似这样： struct Closure { s: String, // 捕获的环境变量 } impl FnOnce&lt;()&gt; for Closure { type Output = usize; fn call_once(self, _args: ()) -&gt; usize { println!(&#34;{}&#34;, self.s); self.s.len() } } 调用示例 let result = f(); // 等价于 FnOnce::call_once(f, ()) // 这里不能再调用 f()，因为 f 已经被移动 最终f所有权被转移进call_once，并随着call_once的结束而drop了，f被释放了，内部捕获的所有权自然也被释放。\n">
-<meta property='og:url' content='http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/'>
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Reqwest模块架构解析">
+<meta property='og:description' content="从顶层结构来理解reqwest的模块组织：\n核心模块 1. async_impl/ 异步HTTP客户端实现 包含Client、Reqwest、Response等核心类型 基于hyper库实现 2. blocking/ 同步HTTP客户端 内部使用std::thread封装异步调用 提供阻塞式API 3. dns/ DNS解析功能 支持系统DNS和自定义解析器 包含GaiResolver等实现 4. proxy/ 代理支持 处理HTTP/HTTPS/SOCKS代理 代理自动发现和认证 5. tls 安全传输层实现 支持native-tls和rustls 证书和身份管理 6. redirect/ 重定向处理 支持自定义重定向策略 处理3xx状态码 7. wasm/ WebAssembly平台特定实现 使用浏览器Fetch API 针对Web环境优化 辅助模块 cookie/ - Cookie管理 multipart/ - 多部分表单数据处理 retry/ - 请求重试机制 util/ - 工具函数和辅助类型 特性开关 通过Cargo features控制功能：\ndefault-tls - 默认TLS实现 native-tls - 使用系统原生TLS rustls - 使用rustls纯Rust实现 blocking - 启用同步API cookies - Cookie支持 json - JSON序列化支持 //lib.rs #[cfg(feature = &#34;blocking&#34;)] pub mod blocking; #[cfg(feature = &#34;cookies&#34;)] pub mod cookie; 在 Cargo.toml 中通过 features 控制哪些实现被编译。\n">
+<meta property='og:url' content='http://localhost:1313/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/'>
 <meta property='og:site_name' content='zed的博客'>
-<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-01T17:16:28&#43;08:00'/><meta property='article:modified_time' content='2025-09-01T17:16:28&#43;08:00'/>
-<meta name="twitter:title" content="Rust知识问答">
-<meta name="twitter:description" content="为什么FnOnce只能调用一次 源码分析 pub trait FnOnce&lt;Args&gt; { type Output; extern &#34;rust-call&#34; fn call_once(self, args: Args) -&gt; Self::Output; } self的含义 接收实现了FnOnce的具体类型的值 这个值会被移动(move)进方法 具体例子 假设我们有一个闭包:\nlet s = String::from(&#34;hello&#34;); let f = || { println!(&#34;{}&#34;, s); // 获取 s 的所有权 s.len() }; 当这个闭包实现FnOnce时\n// 编译器生成的代码类似这样： struct Closure { s: String, // 捕获的环境变量 } impl FnOnce&lt;()&gt; for Closure { type Output = usize; fn call_once(self, _args: ()) -&gt; usize { println!(&#34;{}&#34;, self.s); self.s.len() } } 调用示例 let result = f(); // 等价于 FnOnce::call_once(f, ()) // 这里不能再调用 f()，因为 f 已经被移动 最终f所有权被转移进call_once，并随着call_once的结束而drop了，f被释放了，内部捕获的所有权自然也被释放。\n">
+<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-02T16:42:46&#43;08:00'/><meta property='article:modified_time' content='2025-09-02T16:42:46&#43;08:00'/>
+<meta name="twitter:title" content="Reqwest模块架构解析">
+<meta name="twitter:description" content="从顶层结构来理解reqwest的模块组织：\n核心模块 1. async_impl/ 异步HTTP客户端实现 包含Client、Reqwest、Response等核心类型 基于hyper库实现 2. blocking/ 同步HTTP客户端 内部使用std::thread封装异步调用 提供阻塞式API 3. dns/ DNS解析功能 支持系统DNS和自定义解析器 包含GaiResolver等实现 4. proxy/ 代理支持 处理HTTP/HTTPS/SOCKS代理 代理自动发现和认证 5. tls 安全传输层实现 支持native-tls和rustls 证书和身份管理 6. redirect/ 重定向处理 支持自定义重定向策略 处理3xx状态码 7. wasm/ WebAssembly平台特定实现 使用浏览器Fetch API 针对Web环境优化 辅助模块 cookie/ - Cookie管理 multipart/ - 多部分表单数据处理 retry/ - 请求重试机制 util/ - 工具函数和辅助类型 特性开关 通过Cargo features控制功能：\ndefault-tls - 默认TLS实现 native-tls - 使用系统原生TLS rustls - 使用rustls纯Rust实现 blocking - 启用同步API cookies - Cookie支持 json - JSON序列化支持 //lib.rs #[cfg(feature = &#34;blocking&#34;)] pub mod blocking; #[cfg(feature = &#34;cookies&#34;)] pub mod cookie; 在 Cargo.toml 中通过 features 控制哪些实现被编译。\n">
     </head>
     <body class="
     article-page
@@ -146,12 +146,16 @@
                 Rust
             </a>
         
+            <a href="/categories/request/" >
+                Request
+            </a>
+        
     </header>
     
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/">Rust知识问答</a>
+            <a href="/rust/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">Reqwest模块架构解析</a>
         </h2>
     
         
@@ -173,7 +177,7 @@
   <path d="M3 11h16" />
   <path d="M18 16.496v1.504l1 1" />
 </svg>
-                <time class="article-time--published">Sep 01, 2025</time>
+                <time class="article-time--published">Sep 02, 2025</time>
             </div>
         
 
@@ -203,46 +207,73 @@
     <section class="article-content">
     
     
-    <h5 id="为什么fnonce只能调用一次">为什么FnOnce只能调用一次
-</h5><h6 id="源码分析">源码分析
-</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">trait</span> FnOnce<span style="color:#f92672">&lt;</span>Args<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Output</span>;
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">extern</span> <span style="color:#e6db74">&#34;rust-call&#34;</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">call_once</span>(self, args: <span style="color:#a6e22e">Args</span>) -&gt; <span style="color:#a6e22e">Self</span>::Output;
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><ol>
-<li><code>self</code>的含义
-<ul>
-<li>接收实现了<code>FnOnce</code>的具体类型的值</li>
-<li>这个值会被移动(move)进方法</li>
+    <p>从顶层结构来理解reqwest的模块组织：</p>
+<h4 id="核心模块">核心模块
+</h4><h5 id="1-async_impl">1. async_impl/
+</h5><ul>
+<li>异步HTTP客户端实现</li>
+<li>包含<code>Client</code>、<code>Reqwest</code>、<code>Response</code>等核心类型</li>
+<li>基于<code>hyper</code>库实现</li>
 </ul>
-</li>
-</ol>
-<h6 id="具体例子">具体例子
-</h6><p>假设我们有一个闭包:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> s <span style="color:#f92672">=</span> String::from(<span style="color:#e6db74">&#34;hello&#34;</span>);
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> f <span style="color:#f92672">=</span> <span style="color:#f92672">||</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">println!</span>(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span>, s);  <span style="color:#75715e">// 获取 s 的所有权
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    s.len()
-</span></span><span style="display:flex;"><span>};
-</span></span></code></pre></div><p>当这个闭包实现<code>FnOnce</code>时</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// 编译器生成的代码类似这样：
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Closure</span> {
-</span></span><span style="display:flex;"><span>    s: String,  <span style="color:#75715e">// 捕获的环境变量
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">impl</span> FnOnce<span style="color:#f92672">&lt;</span>()<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">for</span> Closure {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Output</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">usize</span>;
-</span></span><span style="display:flex;"><span>    
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">call_once</span>(self, _args: ()) -&gt; <span style="color:#66d9ef">usize</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">println!</span>(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span>, self.s);
-</span></span><span style="display:flex;"><span>        self.s.len()
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><h6 id="调用示例">调用示例
-</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> result <span style="color:#f92672">=</span> f();  <span style="color:#75715e">// 等价于 FnOnce::call_once(f, ())
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 这里不能再调用 f()，因为 f 已经被移动
-</span></span></span></code></pre></div><p>最终f所有权被转移进<code>call_once</code>，并随着call_once的结束而<code>drop</code>了，f被释放了，内部捕获的所有权自然也被释放。</p>
-<p><code>FnOnce</code>、<code>FnMut</code>、<code>Fn</code>这些是根据如何捕获环境而区分的，并不影响函数签名，<code>FnMut</code>也可以接收<strong>所有权参数</strong></p>
+<h5 id="2-blocking">2. blocking/
+</h5><ul>
+<li>同步HTTP客户端</li>
+<li>内部使用<code>std::thread</code>封装异步调用</li>
+<li>提供阻塞式API</li>
+</ul>
+<h5 id="3-dns">3. dns/
+</h5><ul>
+<li>DNS解析功能</li>
+<li>支持系统DNS和自定义解析器</li>
+<li>包含<code>GaiResolver</code>等实现</li>
+</ul>
+<h5 id="4-proxy">4. proxy/
+</h5><ul>
+<li>代理支持</li>
+<li>处理HTTP/HTTPS/SOCKS代理</li>
+<li>代理自动发现和认证</li>
+</ul>
+<h5 id="5-tls">5. tls
+</h5><ul>
+<li>安全传输层实现</li>
+<li>支持native-tls和rustls</li>
+<li>证书和身份管理</li>
+</ul>
+<h5 id="6-redirect">6. redirect/
+</h5><ul>
+<li>重定向处理</li>
+<li>支持自定义重定向策略</li>
+<li>处理3xx状态码</li>
+</ul>
+<h5 id="7-wasm">7. wasm/
+</h5><ul>
+<li>WebAssembly平台特定实现</li>
+<li>使用浏览器Fetch API</li>
+<li>针对Web环境优化</li>
+</ul>
+<h4 id="辅助模块">辅助模块
+</h4><ul>
+<li><strong>cookie/</strong> - Cookie管理</li>
+<li><strong>multipart/</strong> - 多部分表单数据处理</li>
+<li><strong>retry/</strong> - 请求重试机制</li>
+<li><strong>util/</strong> - 工具函数和辅助类型</li>
+</ul>
+<h4 id="特性开关">特性开关
+</h4><p>通过Cargo features控制功能：</p>
+<ul>
+<li><code>default-tls</code> - 默认TLS实现</li>
+<li><code>native-tls</code> - 使用系统原生TLS</li>
+<li><code>rustls</code> - 使用rustls纯Rust实现</li>
+<li><code>blocking</code> -  启用同步API</li>
+<li><code>cookies</code> - Cookie支持</li>
+<li><code>json</code> -  JSON序列化支持</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">//lib.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#75715e">#[cfg(feature = </span><span style="color:#e6db74">&#34;blocking&#34;</span><span style="color:#75715e">)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">mod</span> blocking;
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#[cfg(feature = </span><span style="color:#e6db74">&#34;cookies&#34;</span><span style="color:#75715e">)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">mod</span> cookie;
+</span></span></code></pre></div><p>在 <code>Cargo.toml</code> 中通过 features 控制哪些实现被编译。</p>
 
 </section>
 

@@ -1,7 +1,7 @@
 +++
 date = '2025-09-02T21:41:39+08:00'
 draft = false
-title = 'Android事件分发价值详解'
+title = 'Android事件分发机制详解'
 categories = ['android-develop']
 
 +++

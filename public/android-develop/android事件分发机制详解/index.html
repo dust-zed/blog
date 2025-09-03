@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="1. 事件分发的基本流程 1.1 事件传递顺序 事件从Activity开始，按照一下顺序传递：\nActivity -&gt; Window -&gt; DecorView -&gt; ViewGroup -&gt; View 1.2 核心方法 dispatchTouchEvent 负责事件的分发 返回true表示事件被消费，false表示未消费 onInterceptTouchEvent 只有ViewGroup才有的方法 用于拦截事件，返回true表示拦截事件 onTouchEvent 处理点击事件 返回true表示事件被消费 2. 源码分析 2.1 Activity的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent ev) { if (ev.getAction() == MotionEvent.ACTION_DOWN) { onUserInteraction(); // 空方法，可以重写 } if (getWindow().superDispatchTouchEvent(ev)) { return true; // 事件被消费 } return onTouchEvent(ev); // 如果所有View都没有处理，则调用Activity的onTouchEvent } 2.2 ViewGroup的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent ev) { // 1. 检查是否拦截 final boolean intercepted; if (actionMasked == MotionEvent.ACTION_DOWN || mFirstTouchTarget != null) { final boolean disallowIntercept = (mGroupFlags &amp; FLAG_DISALLOW_INTERCEPT) != 0; if (!disallowIntercept) { intercepted = onInterceptTouchEvent(ev); ev.setAction(action); // 恢复action，防止被修改 } else { intercepted = false; } } else { // 没有目标处理该事件，也不拦截 intercepted = true; } // 2. 如果不拦截，则寻找可以处理事件的子View if (!canceled &amp;&amp; !intercepted) { // 遍历子View，寻找可以处理事件的View for (int i = childrenCount - 1; i &gt;= 0; i--) { final View child = children[i]; if (child.dispatchTouchEvent(ev)) { // 找到可以处理事件的子View mFirstTouchTarget = addTouchTarget(child, idBitsToAssign); break; } } } // 3. 分发事件 if (mFirstTouchTarget == null) { // 没有子View处理事件，调用父类的dispatchTouchEvent handled = super.dispatchTouchEvent(ev); } else { // 将事件分发给目标View TouchTarget target = mFirstTouchTarget; while (target != null) { final View child = target.child; if (child.dispatchTouchEvent(ev)) { handled = true; } target = target.next; } } return handled; } 实际执行流程 DOWN事件: mFirstTouchTarget == null，进入寻找目标View的循环 调用child.dispatchTouchEvent(ev)（第一次） 如果某个子View返回true，设置mFirstTouchTarget MOVE/UP事件: mFirstTouchTarget != null，直接进入分发流程 调用target.child.dispatchTouchEvent(ev)（第二次） 不会再次进入寻找目标View的循环 TouchTarget TouchTarget是链表结构主要目的是为了支持多点触控 从 mFirstTouchTarget 开始遍历链表 检查每个 TouchTarget 的 pointerIdBits 是否与当前事件的 desiredPointerIdBits 匹配 如果找到匹配的 TouchTarget，则将事件分发给对应的子View 如果没有找到匹配的 TouchTarget，则返回false 为什么这样设计 性能优化：避免每次事件都遍历所有子View 事件一致性：确保同一事件序列由同一View处理 正确性：防止事件序列被拆分到不同View处理 2.3 View的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent event) { // 1. 首先检查OnTouchListener ListenerInfo li = mListenerInfo; if (li != null &amp;&amp; li.mOnTouchListener != null &amp;&amp; (mViewFlags &amp; ENABLED_MASK) == ENABLED &amp;&amp; li.mOnTouchListener.onTouch(this, event)) { return true; } // 2. 然后调用onTouchEvent if (onTouchEvent(event)) { return true; } return false; } 3. 事件分发的关键点 事件序列：从ACTION_DOWN开始，到ACTION_UP或ACTION_CANCEL结束的一些列事件 事件拦截：ViewGroup可以通过onIterceptTouchEvent拦截事件 事件消费：View可以通过onTouchEvent或OnTouchListener消费事件 事件传递：默认情况下，事件会从上到下传递，直到被消费 4. 常见面试题 4.1 事件分发的流程是怎样的 从Activity的dispatchTouchEvent开始 经过Window、DecorView、ViewGroup 最终到达具体的View 如果没有任何View消费事件，事件会回传到Activity的onTouchEvent 4.2 onTouch和onTouchEvent的区别 onTouch是View.OnTouchListener接口中的方法 onTouchEvent是View的方法 onTouch的优先级高于onTouchEvent 如果onTouch返回true，则onTouch不会被调用 4.3 如何解决滑动冲突 外部拦截法：重写父容器的onInterceptTouchEvent方法 内部拦截法： 重写子元素的dispatchTouchEvent方法，结合requestDisallowInterceptTouchEvent方法 5. 实际应用示例 // 自定义ViewGroup，处理左右滑动冲突 public class CustomViewPager extends ViewGroup { private float mLastX; private float mLastY; @Override public boolean onInterceptTouchEvent(MotionEvent ev) { boolean intercepted = false; float x = ev.getX(); float y = ev.getY(); switch (ev.getAction()) { case MotionEvent.ACTION_DOWN: mLastX = x; mLastY = y; intercepted = false; break; case MotionEvent.ACTION_MOVE: float deltaX = Math.abs(x - mLastX); float deltaY = Math.abs(y - mLastY); // 横向滑动距离大于纵向滑动距离时拦截事件 if (deltaX &gt; deltaY) { intercepted = true; } else { intercepted = false; } break; case MotionEvent.ACTION_UP: intercepted = false; break; } mLastX = x; mLastY = y; return intercepted; } } ">
+<title>Android事件分发机制详解</title>
+
+<link rel='canonical' href='http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Android事件分发机制详解">
+<meta property='og:description' content="1. 事件分发的基本流程 1.1 事件传递顺序 事件从Activity开始，按照一下顺序传递：\nActivity -&gt; Window -&gt; DecorView -&gt; ViewGroup -&gt; View 1.2 核心方法 dispatchTouchEvent 负责事件的分发 返回true表示事件被消费，false表示未消费 onInterceptTouchEvent 只有ViewGroup才有的方法 用于拦截事件，返回true表示拦截事件 onTouchEvent 处理点击事件 返回true表示事件被消费 2. 源码分析 2.1 Activity的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent ev) { if (ev.getAction() == MotionEvent.ACTION_DOWN) { onUserInteraction(); // 空方法，可以重写 } if (getWindow().superDispatchTouchEvent(ev)) { return true; // 事件被消费 } return onTouchEvent(ev); // 如果所有View都没有处理，则调用Activity的onTouchEvent } 2.2 ViewGroup的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent ev) { // 1. 检查是否拦截 final boolean intercepted; if (actionMasked == MotionEvent.ACTION_DOWN || mFirstTouchTarget != null) { final boolean disallowIntercept = (mGroupFlags &amp; FLAG_DISALLOW_INTERCEPT) != 0; if (!disallowIntercept) { intercepted = onInterceptTouchEvent(ev); ev.setAction(action); // 恢复action，防止被修改 } else { intercepted = false; } } else { // 没有目标处理该事件，也不拦截 intercepted = true; } // 2. 如果不拦截，则寻找可以处理事件的子View if (!canceled &amp;&amp; !intercepted) { // 遍历子View，寻找可以处理事件的View for (int i = childrenCount - 1; i &gt;= 0; i--) { final View child = children[i]; if (child.dispatchTouchEvent(ev)) { // 找到可以处理事件的子View mFirstTouchTarget = addTouchTarget(child, idBitsToAssign); break; } } } // 3. 分发事件 if (mFirstTouchTarget == null) { // 没有子View处理事件，调用父类的dispatchTouchEvent handled = super.dispatchTouchEvent(ev); } else { // 将事件分发给目标View TouchTarget target = mFirstTouchTarget; while (target != null) { final View child = target.child; if (child.dispatchTouchEvent(ev)) { handled = true; } target = target.next; } } return handled; } 实际执行流程 DOWN事件: mFirstTouchTarget == null，进入寻找目标View的循环 调用child.dispatchTouchEvent(ev)（第一次） 如果某个子View返回true，设置mFirstTouchTarget MOVE/UP事件: mFirstTouchTarget != null，直接进入分发流程 调用target.child.dispatchTouchEvent(ev)（第二次） 不会再次进入寻找目标View的循环 TouchTarget TouchTarget是链表结构主要目的是为了支持多点触控 从 mFirstTouchTarget 开始遍历链表 检查每个 TouchTarget 的 pointerIdBits 是否与当前事件的 desiredPointerIdBits 匹配 如果找到匹配的 TouchTarget，则将事件分发给对应的子View 如果没有找到匹配的 TouchTarget，则返回false 为什么这样设计 性能优化：避免每次事件都遍历所有子View 事件一致性：确保同一事件序列由同一View处理 正确性：防止事件序列被拆分到不同View处理 2.3 View的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent event) { // 1. 首先检查OnTouchListener ListenerInfo li = mListenerInfo; if (li != null &amp;&amp; li.mOnTouchListener != null &amp;&amp; (mViewFlags &amp; ENABLED_MASK) == ENABLED &amp;&amp; li.mOnTouchListener.onTouch(this, event)) { return true; } // 2. 然后调用onTouchEvent if (onTouchEvent(event)) { return true; } return false; } 3. 事件分发的关键点 事件序列：从ACTION_DOWN开始，到ACTION_UP或ACTION_CANCEL结束的一些列事件 事件拦截：ViewGroup可以通过onIterceptTouchEvent拦截事件 事件消费：View可以通过onTouchEvent或OnTouchListener消费事件 事件传递：默认情况下，事件会从上到下传递，直到被消费 4. 常见面试题 4.1 事件分发的流程是怎样的 从Activity的dispatchTouchEvent开始 经过Window、DecorView、ViewGroup 最终到达具体的View 如果没有任何View消费事件，事件会回传到Activity的onTouchEvent 4.2 onTouch和onTouchEvent的区别 onTouch是View.OnTouchListener接口中的方法 onTouchEvent是View的方法 onTouch的优先级高于onTouchEvent 如果onTouch返回true，则onTouch不会被调用 4.3 如何解决滑动冲突 外部拦截法：重写父容器的onInterceptTouchEvent方法 内部拦截法： 重写子元素的dispatchTouchEvent方法，结合requestDisallowInterceptTouchEvent方法 5. 实际应用示例 // 自定义ViewGroup，处理左右滑动冲突 public class CustomViewPager extends ViewGroup { private float mLastX; private float mLastY; @Override public boolean onInterceptTouchEvent(MotionEvent ev) { boolean intercepted = false; float x = ev.getX(); float y = ev.getY(); switch (ev.getAction()) { case MotionEvent.ACTION_DOWN: mLastX = x; mLastY = y; intercepted = false; break; case MotionEvent.ACTION_MOVE: float deltaX = Math.abs(x - mLastX); float deltaY = Math.abs(y - mLastY); // 横向滑动距离大于纵向滑动距离时拦截事件 if (deltaX &gt; deltaY) { intercepted = true; } else { intercepted = false; } break; case MotionEvent.ACTION_UP: intercepted = false; break; } mLastX = x; mLastY = y; return intercepted; } } ">
+<meta property='og:url' content='http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-09-02T21:41:39&#43;08:00'/><meta property='article:modified_time' content='2025-09-02T21:41:39&#43;08:00'/>
+<meta name="twitter:title" content="Android事件分发机制详解">
+<meta name="twitter:description" content="1. 事件分发的基本流程 1.1 事件传递顺序 事件从Activity开始，按照一下顺序传递：\nActivity -&gt; Window -&gt; DecorView -&gt; ViewGroup -&gt; View 1.2 核心方法 dispatchTouchEvent 负责事件的分发 返回true表示事件被消费，false表示未消费 onInterceptTouchEvent 只有ViewGroup才有的方法 用于拦截事件，返回true表示拦截事件 onTouchEvent 处理点击事件 返回true表示事件被消费 2. 源码分析 2.1 Activity的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent ev) { if (ev.getAction() == MotionEvent.ACTION_DOWN) { onUserInteraction(); // 空方法，可以重写 } if (getWindow().superDispatchTouchEvent(ev)) { return true; // 事件被消费 } return onTouchEvent(ev); // 如果所有View都没有处理，则调用Activity的onTouchEvent } 2.2 ViewGroup的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent ev) { // 1. 检查是否拦截 final boolean intercepted; if (actionMasked == MotionEvent.ACTION_DOWN || mFirstTouchTarget != null) { final boolean disallowIntercept = (mGroupFlags &amp; FLAG_DISALLOW_INTERCEPT) != 0; if (!disallowIntercept) { intercepted = onInterceptTouchEvent(ev); ev.setAction(action); // 恢复action，防止被修改 } else { intercepted = false; } } else { // 没有目标处理该事件，也不拦截 intercepted = true; } // 2. 如果不拦截，则寻找可以处理事件的子View if (!canceled &amp;&amp; !intercepted) { // 遍历子View，寻找可以处理事件的View for (int i = childrenCount - 1; i &gt;= 0; i--) { final View child = children[i]; if (child.dispatchTouchEvent(ev)) { // 找到可以处理事件的子View mFirstTouchTarget = addTouchTarget(child, idBitsToAssign); break; } } } // 3. 分发事件 if (mFirstTouchTarget == null) { // 没有子View处理事件，调用父类的dispatchTouchEvent handled = super.dispatchTouchEvent(ev); } else { // 将事件分发给目标View TouchTarget target = mFirstTouchTarget; while (target != null) { final View child = target.child; if (child.dispatchTouchEvent(ev)) { handled = true; } target = target.next; } } return handled; } 实际执行流程 DOWN事件: mFirstTouchTarget == null，进入寻找目标View的循环 调用child.dispatchTouchEvent(ev)（第一次） 如果某个子View返回true，设置mFirstTouchTarget MOVE/UP事件: mFirstTouchTarget != null，直接进入分发流程 调用target.child.dispatchTouchEvent(ev)（第二次） 不会再次进入寻找目标View的循环 TouchTarget TouchTarget是链表结构主要目的是为了支持多点触控 从 mFirstTouchTarget 开始遍历链表 检查每个 TouchTarget 的 pointerIdBits 是否与当前事件的 desiredPointerIdBits 匹配 如果找到匹配的 TouchTarget，则将事件分发给对应的子View 如果没有找到匹配的 TouchTarget，则返回false 为什么这样设计 性能优化：避免每次事件都遍历所有子View 事件一致性：确保同一事件序列由同一View处理 正确性：防止事件序列被拆分到不同View处理 2.3 View的dispatchTouchEvent public boolean dispatchTouchEvent(MotionEvent event) { // 1. 首先检查OnTouchListener ListenerInfo li = mListenerInfo; if (li != null &amp;&amp; li.mOnTouchListener != null &amp;&amp; (mViewFlags &amp; ENABLED_MASK) == ENABLED &amp;&amp; li.mOnTouchListener.onTouch(this, event)) { return true; } // 2. 然后调用onTouchEvent if (onTouchEvent(event)) { return true; } return false; } 3. 事件分发的关键点 事件序列：从ACTION_DOWN开始，到ACTION_UP或ACTION_CANCEL结束的一些列事件 事件拦截：ViewGroup可以通过onIterceptTouchEvent拦截事件 事件消费：View可以通过onTouchEvent或OnTouchListener消费事件 事件传递：默认情况下，事件会从上到下传递，直到被消费 4. 常见面试题 4.1 事件分发的流程是怎样的 从Activity的dispatchTouchEvent开始 经过Window、DecorView、ViewGroup 最终到达具体的View 如果没有任何View消费事件，事件会回传到Activity的onTouchEvent 4.2 onTouch和onTouchEvent的区别 onTouch是View.OnTouchListener接口中的方法 onTouchEvent是View的方法 onTouch的优先级高于onTouchEvent 如果onTouch返回true，则onTouch不会被调用 4.3 如何解决滑动冲突 外部拦截法：重写父容器的onInterceptTouchEvent方法 内部拦截法： 重写子元素的dispatchTouchEvent方法，结合requestDisallowInterceptTouchEvent方法 5. 实际应用示例 // 自定义ViewGroup，处理左右滑动冲突 public class CustomViewPager extends ViewGroup { private float mLastX; private float mLastY; @Override public boolean onInterceptTouchEvent(MotionEvent ev) { boolean intercepted = false; float x = ev.getX(); float y = ev.getY(); switch (ev.getAction()) { case MotionEvent.ACTION_DOWN: mLastX = x; mLastY = y; intercepted = false; break; case MotionEvent.ACTION_MOVE: float deltaX = Math.abs(x - mLastX); float deltaY = Math.abs(y - mLastY); // 横向滑动距离大于纵向滑动距离时拦截事件 if (deltaX &gt; deltaY) { intercepted = true; } else { intercepted = false; } break; case MotionEvent.ACTION_UP: intercepted = false; break; } mLastX = x; mLastY = y; return intercepted; } } ">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li  class='current' >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/">Android事件分发机制详解</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Sep 02, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 2 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h4 id="1-事件分发的基本流程">1. 事件分发的基本流程
+</h4><h5 id="11-事件传递顺序">1.1 事件传递顺序
+</h5><p>事件从Activity开始，按照一下顺序传递：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>Activity -&gt; <span style="color:#a6e22e">Window</span> -&gt; <span style="color:#a6e22e">DecorView</span> -&gt; <span style="color:#a6e22e">ViewGroup</span> -&gt; <span style="color:#a6e22e">View</span>
+</span></span></code></pre></div><h5 id="12-核心方法">1.2 核心方法
+</h5><ol>
+<li><strong>dispatchTouchEvent</strong>
+<ul>
+<li>负责事件的分发</li>
+<li>返回true表示事件被消费，false表示未消费</li>
+</ul>
+</li>
+<li><strong>onInterceptTouchEvent</strong>
+<ul>
+<li>只有ViewGroup才有的方法</li>
+<li>用于拦截事件，返回true表示拦截事件</li>
+</ul>
+</li>
+<li><strong>onTouchEvent</strong>
+<ul>
+<li>处理点击事件</li>
+<li>返回true表示事件被消费</li>
+</ul>
+</li>
+</ol>
+<h4 id="2-源码分析">2. 源码分析
+</h4><h5 id="21-activity的dispatchtouchevent">2.1 Activity的dispatchTouchEvent
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">dispatchTouchEvent</span>(MotionEvent ev) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (ev.<span style="color:#a6e22e">getAction</span>() <span style="color:#f92672">==</span> MotionEvent.<span style="color:#a6e22e">ACTION_DOWN</span>) {
+</span></span><span style="display:flex;"><span>        onUserInteraction(); <span style="color:#75715e">// 空方法，可以重写</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (getWindow().<span style="color:#a6e22e">superDispatchTouchEvent</span>(ev)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>; <span style="color:#75715e">// 事件被消费</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> onTouchEvent(ev); <span style="color:#75715e">// 如果所有View都没有处理，则调用Activity的onTouchEvent</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="22-viewgroup的dispatchtouchevent">2.2 ViewGroup的dispatchTouchEvent
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">dispatchTouchEvent</span>(MotionEvent ev) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 检查是否拦截</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">boolean</span> intercepted;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (actionMasked <span style="color:#f92672">==</span> MotionEvent.<span style="color:#a6e22e">ACTION_DOWN</span> <span style="color:#f92672">||</span> mFirstTouchTarget <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">boolean</span> disallowIntercept <span style="color:#f92672">=</span> (mGroupFlags <span style="color:#f92672">&amp;</span> FLAG_DISALLOW_INTERCEPT) <span style="color:#f92672">!=</span> 0;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>disallowIntercept) {
+</span></span><span style="display:flex;"><span>            intercepted <span style="color:#f92672">=</span> onInterceptTouchEvent(ev);
+</span></span><span style="display:flex;"><span>            ev.<span style="color:#a6e22e">setAction</span>(action); <span style="color:#75715e">// 恢复action，防止被修改</span>
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 没有目标处理该事件，也不拦截</span>
+</span></span><span style="display:flex;"><span>        intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 如果不拦截，则寻找可以处理事件的子View</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>canceled <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>intercepted) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 遍历子View，寻找可以处理事件的View</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> childrenCount <span style="color:#f92672">-</span> 1; i <span style="color:#f92672">&gt;=</span> 0; i<span style="color:#f92672">--</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> View child <span style="color:#f92672">=</span> children<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (child.<span style="color:#a6e22e">dispatchTouchEvent</span>(ev)) {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 找到可以处理事件的子View</span>
+</span></span><span style="display:flex;"><span>                mFirstTouchTarget <span style="color:#f92672">=</span> addTouchTarget(child, idBitsToAssign);
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 分发事件</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (mFirstTouchTarget <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 没有子View处理事件，调用父类的dispatchTouchEvent</span>
+</span></span><span style="display:flex;"><span>        handled <span style="color:#f92672">=</span> <span style="color:#66d9ef">super</span>.<span style="color:#a6e22e">dispatchTouchEvent</span>(ev);
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 将事件分发给目标View</span>
+</span></span><span style="display:flex;"><span>        TouchTarget target <span style="color:#f92672">=</span> mFirstTouchTarget;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> (target <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> View child <span style="color:#f92672">=</span> target.<span style="color:#a6e22e">child</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (child.<span style="color:#a6e22e">dispatchTouchEvent</span>(ev)) {
+</span></span><span style="display:flex;"><span>                handled <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            target <span style="color:#f92672">=</span> target.<span style="color:#a6e22e">next</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> handled;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="实际执行流程">实际执行流程
+</h6><ol>
+<li><strong>DOWN事件</strong>:
+<ul>
+<li><code>mFirstTouchTarget == null</code>，进入寻找目标View的循环</li>
+<li>调用<code>child.dispatchTouchEvent(ev)</code>（第一次）</li>
+<li>如果某个子View返回true，设置<code>mFirstTouchTarget</code></li>
+</ul>
+</li>
+<li><strong>MOVE/UP事件</strong>:
+<ul>
+<li><code>mFirstTouchTarget != null</code>，直接进入分发流程</li>
+<li>调用<code>target.child.dispatchTouchEvent(ev)</code>（第二次）</li>
+<li>不会再次进入寻找目标View的循环</li>
+</ul>
+</li>
+<li><strong>TouchTarget</strong>
+<ul>
+<li>TouchTarget是链表结构主要目的是为了支持多点触控</li>
+<li>从 <code>mFirstTouchTarget</code> 开始遍历链表</li>
+<li>检查每个 <code>TouchTarget</code> 的 <code>pointerIdBits</code> 是否与当前事件的 <code>desiredPointerIdBits</code> 匹配</li>
+<li>如果找到匹配的 <code>TouchTarget</code>，则将事件分发给对应的子View</li>
+<li>如果没有找到匹配的 <code>TouchTarget</code>，则返回false</li>
+</ul>
+</li>
+</ol>
+<h6 id="为什么这样设计">为什么这样设计
+</h6><ol>
+<li><strong>性能优化</strong>：避免每次事件都遍历所有子View</li>
+<li><strong>事件一致性</strong>：确保同一事件序列由同一View处理</li>
+<li><strong>正确性</strong>：防止事件序列被拆分到不同View处理</li>
+</ol>
+<h5 id="23-view的dispatchtouchevent">2.3 View的dispatchTouchEvent
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">dispatchTouchEvent</span>(MotionEvent event) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 首先检查OnTouchListener</span>
+</span></span><span style="display:flex;"><span>    ListenerInfo li <span style="color:#f92672">=</span> mListenerInfo;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (li <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> li.<span style="color:#a6e22e">mOnTouchListener</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> 
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&amp;&amp;</span> (mViewFlags <span style="color:#f92672">&amp;</span> ENABLED_MASK) <span style="color:#f92672">==</span> ENABLED 
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&amp;&amp;</span> li.<span style="color:#a6e22e">mOnTouchListener</span>.<span style="color:#a6e22e">onTouch</span>(<span style="color:#66d9ef">this</span>, event)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 然后调用onTouchEvent</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (onTouchEvent(event)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="3-事件分发的关键点">3. 事件分发的关键点
+</h4><ol>
+<li><strong>事件序列</strong>：从ACTION_DOWN开始，到ACTION_UP或ACTION_CANCEL结束的一些列事件</li>
+<li><strong>事件拦截</strong>：ViewGroup可以通过onIterceptTouchEvent拦截事件</li>
+<li><strong>事件消费</strong>：View可以通过onTouchEvent或OnTouchListener消费事件</li>
+<li><strong>事件传递</strong>：默认情况下，事件会从上到下传递，直到被消费</li>
+</ol>
+<h4 id="4-常见面试题">4. 常见面试题
+</h4><h5 id="41-事件分发的流程是怎样的">4.1 事件分发的流程是怎样的
+</h5><ul>
+<li>从Activity的dispatchTouchEvent开始</li>
+<li>经过Window、DecorView、ViewGroup</li>
+<li>最终到达具体的View</li>
+<li>如果没有任何View消费事件，事件会回传到Activity的onTouchEvent</li>
+</ul>
+<h5 id="42-ontouch和ontouchevent的区别">4.2 onTouch和onTouchEvent的区别
+</h5><ul>
+<li>onTouch是View.OnTouchListener接口中的方法</li>
+<li>onTouchEvent是View的方法</li>
+<li>onTouch的优先级高于onTouchEvent</li>
+<li>如果onTouch返回true，则onTouch不会被调用</li>
+</ul>
+<h5 id="43-如何解决滑动冲突">4.3 如何解决滑动冲突
+</h5><ol>
+<li>外部拦截法：重写父容器的onInterceptTouchEvent方法</li>
+<li>内部拦截法： 重写子元素的dispatchTouchEvent方法，结合requestDisallowInterceptTouchEvent方法</li>
+</ol>
+<h4 id="5-实际应用示例">5. 实际应用示例
+</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// 自定义ViewGroup，处理左右滑动冲突</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CustomViewPager</span> <span style="color:#66d9ef">extends</span> ViewGroup {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">float</span> mLastX;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">float</span> mLastY;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">onInterceptTouchEvent</span>(MotionEvent ev) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">boolean</span> intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">float</span> x <span style="color:#f92672">=</span> ev.<span style="color:#a6e22e">getX</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">float</span> y <span style="color:#f92672">=</span> ev.<span style="color:#a6e22e">getY</span>();
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">switch</span> (ev.<span style="color:#a6e22e">getAction</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> MotionEvent.<span style="color:#a6e22e">ACTION_DOWN</span>:
+</span></span><span style="display:flex;"><span>                mLastX <span style="color:#f92672">=</span> x;
+</span></span><span style="display:flex;"><span>                mLastY <span style="color:#f92672">=</span> y;
+</span></span><span style="display:flex;"><span>                intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> MotionEvent.<span style="color:#a6e22e">ACTION_MOVE</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">float</span> deltaX <span style="color:#f92672">=</span> Math.<span style="color:#a6e22e">abs</span>(x <span style="color:#f92672">-</span> mLastX);
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">float</span> deltaY <span style="color:#f92672">=</span> Math.<span style="color:#a6e22e">abs</span>(y <span style="color:#f92672">-</span> mLastY);
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 横向滑动距离大于纵向滑动距离时拦截事件</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> (deltaX <span style="color:#f92672">&gt;</span> deltaY) {
+</span></span><span style="display:flex;"><span>                    intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>                } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                    intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> MotionEvent.<span style="color:#a6e22e">ACTION_UP</span>:
+</span></span><span style="display:flex;"><span>                intercepted <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        mLastX <span style="color:#f92672">=</span> x;
+</span></span><span style="display:flex;"><span>        mLastY <span style="color:#f92672">=</span> y;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> intercepted;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
