@@ -121,3 +121,104 @@ async fn process(socket: TcpStream) -> io::Result<()> {
 4. 合理设置工作线程
 
 Tokio 的设计体现了 Rust 语言的核心理念：零成本抽象、内存安全和并发安全。它的架构设计使其成为构建高性能、可靠网络应用的理想选择。
+
+------------
+
+#### 异步概念
+
+##### Future Trait基础
+
+`Future`是Rust异步编程的核心trait，定义在标准库`std::future`中：
+
+```rust
+pub trait Future {
+  type Output;
+  fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output>;
+}
+```
+
+###### 关键点
+
+* `Output`：Future完成时产生的值类型
+* `poll`：检查Future是否完成
+  * 返回`Poll::Ready(Output)`：完成并返回结果
+  * 返回`Poll::Pending`：未完成，稍后需要再次轮询
+
+##### Async/Await语法糖
+
+`async/await`是Rust提供的语法糖，让异步代码看起来像同步代码：
+
+###### 1. 基本用法
+
+```rust
+async fn fetch_data() -> Result<String, io::Error> {
+  //异步操作
+  let data = read_from_network().await?;
+  Ok(data)
+}
+```
+
+###### 2. 展开形式
+
+```rust
+struct FetchDataFuture {
+    state: State,
+}
+
+enum State {
+    Start,
+    AwaitingRead(ReadFuture),
+    Done,
+}
+
+impl Future for FetchDataFuture {
+    type Output = Result<String, io::Error>;
+    
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        loop {
+            match self.state {
+                State::Start => {
+                    let read_fut = read_from_network();
+                    self.state = State::AwaitingRead(read_fut);
+                }
+                State::AwaitingRead(ref mut fut) => {
+                    match Pin::new(fut).poll(cx) {
+                        Poll::Ready(Ok(data)) => {
+                            return Poll::Ready(Ok(data));
+                        }
+                        Poll::Ready(Err(e)) => {
+                            return Poll::Ready(Err(e));
+                        }
+                        Poll::Pending => {
+                            return Poll::Pending;
+                        }
+                    }
+                }
+                State::Done => panic!("poll called after completion"),
+            }
+        }
+    }
+}
+```
+
+#### 关键概念
+
+###### 1. 零成本抽象
+
+* 异步代码在编译时转换为状态机
+* 没有运行时开销，与手写的回调代码性能相当
+
+###### 2. 执行器(Executor)
+
+* 负责调度和执行Future
+* Tokio提供了高性能的执行器实现
+
+###### 3. Waker机制
+
+* 当Future返回`Poll::Pending`时，会注册一个Waker
+* 当Future可以继续执行时，通过Waker通知执行器
+
+###### 4. Task与Future
+
+* `Task`是执行单元，是Tokio调度的基本单位，负责执行一个顶层的Future到完成
+* `Future`是计算单元，代表一个异步计算，一个Task可以包含多个嵌套的Future，这些嵌套的Future共享同一个Task的执行上下文。
