@@ -27,7 +27,7 @@ categories = ['rust']
 ##### 1. 变量级别
 
 * 局部变量被移动到Future状态机中
-* 生命周期与Future示例绑定
+* 生命周期与Future实例绑定
 
 ##### 2. Future级别
 
