@@ -1,6 +1,6 @@
 +++
 date = '2025-09-05T18:49:07+08:00'
-draft = true
+draft = false
 title = '普通对象和trait对象'
 categories = ['rust']
 
