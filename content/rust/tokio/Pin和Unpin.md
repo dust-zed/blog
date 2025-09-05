@@ -2,7 +2,7 @@
 date = '2025-09-04T15:03:11+08:00'
 draft = true
 title = 'Pin和Unpin'
-categories = ['rust']
+categories = ['rust', 'tokio']
 
 +++
 
