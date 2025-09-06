@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Request on zed的博客</title>
-        <link>http://localhost:1313/categories/request/</link>
+        <link>https://www.dust-zed.site/categories/request/</link>
         <description>Recent content in Request on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Tue, 02 Sep 2025 16:42:46 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/request/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 02 Sep 2025 16:42:46 +0800</lastBuildDate><atom:link href="https://www.dust-zed.site/categories/request/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Reqwest模块架构解析</title>
-        <link>http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</link>
+        <link>https://www.dust-zed.site/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</link>
         <pubDate>Tue, 02 Sep 2025 16:42:46 +0800</pubDate>
         
-        <guid>http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</guid>
+        <guid>https://www.dust-zed.site/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</guid>
         <description>&lt;p&gt;从顶层结构来理解reqwest的模块组织：&lt;/p&gt;
 &lt;h4 id=&#34;核心模块&#34;&gt;核心模块
 &lt;/h4&gt;&lt;h5 id=&#34;1-async_impl&#34;&gt;1. async_impl/

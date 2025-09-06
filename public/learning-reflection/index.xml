@@ -2,104 +2,10 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Learning-Reflections on zed的博客</title>
-        <link>http://localhost:1313/learning-reflection/</link>
+        <link>https://www.dust-zed.site/learning-reflection/</link>
         <description>Recent content in Learning-Reflections on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Sat, 06 Sep 2025 15:39:56 +0800</lastBuildDate><atom:link href="http://localhost:1313/learning-reflection/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>Weekly Learning Log - 2025-09-07</title>
-        <link>http://localhost:1313/learning-reflection/2025-09-07-weekly/</link>
-        <pubDate>Sat, 06 Sep 2025 15:39:56 +0800</pubDate>
-        
-        <guid>http://localhost:1313/learning-reflection/2025-09-07-weekly/</guid>
-        <description>&lt;h3 id=&#34;what-i-learned&#34;&gt;What I Learned
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;Ripgrep项目Walk部分学习&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;参数解析分层&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;复杂问题分离-组合处理，多用组合&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;文件内容遍历搜索：分解为文件发现和单个文件内容搜索&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;面向&lt;code&gt;trait&lt;/code&gt;编程&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;任务窃取初步初见&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;并发编程经典模型&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Worker &amp;mdash;- Work &amp;mdash;&amp;mdash; Visitor 经典抽象&lt;/li&gt;
-&lt;li&gt;生产者-消费者模型&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;rust标准库学习&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;Iterator&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;acc&lt;/code&gt;是&lt;code&gt;accumulator&lt;/code&gt;的缩写，标识累积计算过程中的中间结果&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;fold&lt;/code&gt;函数，用于将集合中的所有元素通过操作&amp;quot;折叠&amp;quot;成单个值&lt;/li&gt;
-&lt;li&gt;消费self构建新的迭代器，Map之于map等&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;Result、Option&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;ref与&amp;amp;的区别&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;tokio项目学习&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Pin和Upin的理解，为什么需要Pin&lt;/li&gt;
-&lt;li&gt;Waker和Context的机制&lt;/li&gt;
-&lt;li&gt;CPU的执行速度与I/O的速度差异，需要异步任务让出线程，而非&lt;strong&gt;为了让出而让出&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;future的简单实现&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;Tcp 和 Udp网络编程&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;tcp和udp的区别&lt;/li&gt;
-&lt;li&gt;对&lt;strong&gt;有连接&lt;/strong&gt;的理解：tcp双方对共同状态信息的维护，udp发送的都是独立的数据包，故无连接&lt;/li&gt;
-&lt;li&gt;trait对象和普通对象的内存结构&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;challenges--solutions&#34;&gt;Challenges &amp;amp; Solutions
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;this-weeks-win&#34;&gt;This Week&amp;rsquo;s Win
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;架构设计理解加深，对组合和面向trait编程有了进一步理解&lt;/li&gt;
-&lt;li&gt;真正理解了Tcp的&lt;strong&gt;有连接&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;Iterator中map等方法通过构建中间结构体（如Map）来实现&lt;/li&gt;
-&lt;li&gt;FnOnce、FnMut、Fn的深入学习&lt;/li&gt;
-&lt;li&gt;并行编程的模型&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;next-week-focus&#34;&gt;Next Week Focus
-&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;继续学习tokio&lt;/li&gt;
-&lt;li&gt;学习andriod语音项目&lt;/li&gt;
-&lt;/ul&gt;
-&lt;hr&gt;
-&lt;p&gt;&lt;strong&gt;学习时长:&lt;/strong&gt;
-&lt;strong&gt;完成任务:&lt;/strong&gt;&lt;/p&gt;
-</description>
-        </item>
-        
+        <lastBuildDate></lastBuildDate><atom:link href="https://www.dust-zed.site/learning-reflection/index.xml" rel="self" type="application/rss+xml" />
     </channel>
 </rss>

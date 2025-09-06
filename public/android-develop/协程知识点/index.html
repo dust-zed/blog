@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+    <head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="将回调转换为协程 背景：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成挂起函数(suspend fun)，使其可以在协程中像顺序代码一样使用。\n核心函数：\nsuspendCoroutine(简单转换，无内置取消支持) suspend fun &lt;T&gt; convertCallbackToSuspendingFunc(): T = suspendCoroutine { continuation -&gt; //1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { //2. 成功时恢复协程，传递结果 continuation.resume(result) } override fun onFailure(error: Throwable) { //3. 失败时恢复协程，传递异常 continuation.resumeWithException(error) } } someAsyncOperation(callback) } continuation: 表示当前被挂起的协程。它提供了恢复协程的方法：resume(value)和resumeWithException(exception)。 缺点：如果调用这个suspend fun 的协程被取消。someAsyncOperation不会自动终止。这可能导致资源浪费或意外结果。只适用于异步操作本身非常快或你不关心取消的情况。 suspendCancellableCoroutine(支持取消) suspend fun &lt;T&gt; convertCallbackToSuspendingFuncSafely(): T = suspendCancellableCoroutine { cancellableContinuation -&gt; // 1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { cancellableContinuation.resume(result) } override fun onFailure(error: Throwable) { cancellableContinuation.resumeWithException(error) } } someAsyncOperation(callback) // 2. ⭐ 关键步骤：注册取消监听器 ⭐ cancellableContinuation.invokeOnCancellation { // 当协程被取消时，尝试取消底层的异步操作 // 通常调用库提供的取消方法，例如：cancelOperation(callback) cancelOperation(callback) } } 当调用这个suspend fun的协程被取消时： 协程的取消状态会传播到这个 CancellableContinuation。 触发 invokeOnCancellation {} 块。 在块内，你调用库的取消方法去清理资源并停止操作。 这是将回调 API 集成到协程世界的最佳实践。 协程作用域 1、什么是协程作用域（CoroutineScope） CoroutineScope不是协程本身，而是一个定义新协程运行环境的接口 它为在其内部启动的所有子协程提供了一个统一的CoroutineContext基础 它将所有在其内部启动的协程组织在一个结构中，以便进行生命周期管理 核心构成：\n">
 <title>协程知识点</title>
 
-<link rel='canonical' href='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/'>
+<link rel='canonical' href='https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="协程知识点">
 <meta property='og:description' content="将回调转换为协程 背景：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成挂起函数(suspend fun)，使其可以在协程中像顺序代码一样使用。\n核心函数：\nsuspendCoroutine(简单转换，无内置取消支持) suspend fun &lt;T&gt; convertCallbackToSuspendingFunc(): T = suspendCoroutine { continuation -&gt; //1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { //2. 成功时恢复协程，传递结果 continuation.resume(result) } override fun onFailure(error: Throwable) { //3. 失败时恢复协程，传递异常 continuation.resumeWithException(error) } } someAsyncOperation(callback) } continuation: 表示当前被挂起的协程。它提供了恢复协程的方法：resume(value)和resumeWithException(exception)。 缺点：如果调用这个suspend fun 的协程被取消。someAsyncOperation不会自动终止。这可能导致资源浪费或意外结果。只适用于异步操作本身非常快或你不关心取消的情况。 suspendCancellableCoroutine(支持取消) suspend fun &lt;T&gt; convertCallbackToSuspendingFuncSafely(): T = suspendCancellableCoroutine { cancellableContinuation -&gt; // 1. 启动异步操作 val callback = object : Callback&lt;T&gt; { override fun onSuccess(result: T) { cancellableContinuation.resume(result) } override fun onFailure(error: Throwable) { cancellableContinuation.resumeWithException(error) } } someAsyncOperation(callback) // 2. ⭐ 关键步骤：注册取消监听器 ⭐ cancellableContinuation.invokeOnCancellation { // 当协程被取消时，尝试取消底层的异步操作 // 通常调用库提供的取消方法，例如：cancelOperation(callback) cancelOperation(callback) } } 当调用这个suspend fun的协程被取消时： 协程的取消状态会传播到这个 CancellableContinuation。 触发 invokeOnCancellation {} 块。 在块内，你调用库的取消方法去清理资源并停止操作。 这是将回调 API 集成到协程世界的最佳实践。 协程作用域 1、什么是协程作用域（CoroutineScope） CoroutineScope不是协程本身，而是一个定义新协程运行环境的接口 它为在其内部启动的所有子协程提供了一个统一的CoroutineContext基础 它将所有在其内部启动的协程组织在一个结构中，以便进行生命周期管理 核心构成：\n">
-<meta property='og:url' content='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/'>
+<meta property='og:url' content='https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-30T19:02:22&#43;08:00'/><meta property='article:modified_time' content='2025-06-30T19:02:22&#43;08:00'/>
 <meta name="twitter:title" content="协程知识点">
@@ -478,7 +478,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

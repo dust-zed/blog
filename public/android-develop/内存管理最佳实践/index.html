@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+    <head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="一、内存管理原则 理解Android内存模型 基于JVM垃圾回收机制，采用分代回收策略 内存不足是触发onTrimMemory()，开发者需响应此回调释放资源 避免内存泄漏根源 静态引用：禁止用static持有Activity/Context（用Application Context代替） 非静态内部类：改用静态内部类+弱引用 资源未释放：关闭Cursor、File、Bitmap等资源。gc只释放java对象本身，在jvm堆中，系统资源需要显示释放 集合对象：及时清理无用的集合元素 优化关键组件 Activity/Fragment 在onDestroy中解除BroadcastReceiver、Handler注册，移除回调 避免在异步任务中直接引用View Handler 使用静态内部类 + WeakReference。 单例模式 传递Application Context，而非Activity Context 大对象优化 Bitmap 使用inSampleSize压缩图片，采用Glide等库管理内存 数据缓存 优先使用LruCache和DiskLruCache 二、内存泄漏排查工具 Android Profiler LeakCanary MAT StrictMode 二、内存泄漏排查工具 Android Profiler（Android Studio）\n内存监控：实时查看堆内存使用情况。 Heap Dump：捕获堆快照，分析对象引用链。 Allocation Tracker：跟踪短时间内的内存分配。 LeakCanary（自动化检测）\n集成步骤：\ndebugImplementation &#39;com.squareup.leakcanary:leakcanary-android:2.9.1&#39; 自动检测泄漏并生成报告，定位泄漏引用链。\nMAT（Memory Analyzer Tool）\n分析Heap Dump步骤：\n用Android Profiler导出.hprof文件。\n通过hprof-conv转换格式（Android SDK工具）：\nhprof-conv input.hprof output.hprof 在MAT中打开，通过Dominator Tree和Path to GC Roots分析泄漏对象。\nStrictMode\n检测主线程磁盘/网络操作，间接避免内存问题：\n">
 <title>内存管理最佳实践</title>
 
-<link rel='canonical' href='http://localhost:1313/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/'>
+<link rel='canonical' href='https://www.dust-zed.site/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="内存管理最佳实践">
 <meta property='og:description' content="一、内存管理原则 理解Android内存模型 基于JVM垃圾回收机制，采用分代回收策略 内存不足是触发onTrimMemory()，开发者需响应此回调释放资源 避免内存泄漏根源 静态引用：禁止用static持有Activity/Context（用Application Context代替） 非静态内部类：改用静态内部类+弱引用 资源未释放：关闭Cursor、File、Bitmap等资源。gc只释放java对象本身，在jvm堆中，系统资源需要显示释放 集合对象：及时清理无用的集合元素 优化关键组件 Activity/Fragment 在onDestroy中解除BroadcastReceiver、Handler注册，移除回调 避免在异步任务中直接引用View Handler 使用静态内部类 + WeakReference。 单例模式 传递Application Context，而非Activity Context 大对象优化 Bitmap 使用inSampleSize压缩图片，采用Glide等库管理内存 数据缓存 优先使用LruCache和DiskLruCache 二、内存泄漏排查工具 Android Profiler LeakCanary MAT StrictMode 二、内存泄漏排查工具 Android Profiler（Android Studio）\n内存监控：实时查看堆内存使用情况。 Heap Dump：捕获堆快照，分析对象引用链。 Allocation Tracker：跟踪短时间内的内存分配。 LeakCanary（自动化检测）\n集成步骤：\ndebugImplementation &#39;com.squareup.leakcanary:leakcanary-android:2.9.1&#39; 自动检测泄漏并生成报告，定位泄漏引用链。\nMAT（Memory Analyzer Tool）\n分析Heap Dump步骤：\n用Android Profiler导出.hprof文件。\n通过hprof-conv转换格式（Android SDK工具）：\nhprof-conv input.hprof output.hprof 在MAT中打开，通过Dominator Tree和Path to GC Roots分析泄漏对象。\nStrictMode\n检测主线程磁盘/网络操作，间接避免内存问题：\n">
-<meta property='og:url' content='http://localhost:1313/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/'>
+<meta property='og:url' content='https://www.dust-zed.site/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-15T13:05:49&#43;08:00'/><meta property='article:modified_time' content='2025-06-15T13:05:49&#43;08:00'/>
 <meta name="twitter:title" content="内存管理最佳实践">
@@ -447,7 +447,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

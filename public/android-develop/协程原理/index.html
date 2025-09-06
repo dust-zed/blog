@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+    <head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation&lt;T&gt;，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation&lt;String&gt;, var label: Int = 0 ) : Continuation&lt;Unit&gt; { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result&lt;Any?&gt;) { when(label) { 0 -&gt; { label = 1 fetchPart1(this) } 1 -&gt; { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -&gt; { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n">
 <title>协程原理</title>
 
-<link rel='canonical' href='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'>
+<link rel='canonical' href='https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="协程原理">
 <meta property='og:description' content="Kotlin协程的本质是通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象。其核心原理和状态推进机制如下：\n核心原理 1. 挂起函数 用suspend修饰的函数 编译器会将其编译为状态机代码(而非阻塞线程)，支持在任意位置挂起/恢复 2. 续体 类似回调的接口Continuation&lt;T&gt;，其关键方法是resumeWith(result) 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文 3. 状态机转换 编译器将挂起函数拆解成一个状态机（通过label标记状态） 每个挂起点对应一个状态迁移 状态推进流程 以下代码展示状态机的运作：\nsuspend fun fetchData(): String { val data1 = fetchPart1() //挂起点1 val data2 = fetchPart2() //挂起点2 return data1 + data2 } 编译器转换后（伪代码）\nclass FetchDataStateMachine( val completion: Continuation&lt;String&gt;, var label: Int = 0 ) : Continuation&lt;Unit&gt; { var data1: String? = null var data2: String? = null override fun resumeWith(result: Result&lt;Any?&gt;) { when(label) { 0 -&gt; { label = 1 fetchPart1(this) } 1 -&gt; { data1 = result.getOrThrow() as String label = 2 fetchPart2(this) } 2 -&gt; { data2 = result.getOrThrow() as String completion.resumeWith(data1 + data2)\t//返回最终结果 } } } } 关键机制 1. 挂起不阻塞线程： 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费 异步操作完成后，任务被派发到合适的线程继续执行（通过Dispatcher） 2.续体传递风格 挂起函数被编译为接受额外Continuation参数的函数 例如suspend fun foo() → fun foo(continuation: Continuation) 3. 协程上下文（CoroutineContext） 通过CoroutineContext传递调度器、异常处理器等。 状态机中通过Continuation.context获取当前上下文 4. 结构化并发 协程树通过父-子关系管理生命周期 父协程取消时，自动取消所有子协程 状态推进 在FetchDataStateMachine的resumeWith中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过递归链式调用与间接跳转实现的。\n">
-<meta property='og:url' content='http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'>
+<meta property='og:url' content='https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-30T15:13:25&#43;08:00'/><meta property='article:modified_time' content='2025-06-30T15:13:25&#43;08:00'/>
 <meta name="twitter:title" content="协程原理">
@@ -442,7 +442,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

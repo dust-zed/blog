@@ -2,307 +2,237 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/learning-reflection/</loc>
+    <loc>https://www.dust-zed.site/learning-reflection/</loc>
     <lastmod>2025-09-06T15:39:56+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/summary/</loc>
+    <loc>https://www.dust-zed.site/</loc>
     <lastmod>2025-09-06T15:39:56+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/learning-reflection/2025-09-07-weekly/</loc>
-    <lastmod>2025-09-06T15:39:56+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/</loc>
-    <lastmod>2025-09-06T15:39:56+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/categories/rust/</loc>
+    <loc>https://www.dust-zed.site/categories/rust/</loc>
     <lastmod>2025-09-05T18:51:54+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/</loc>
+    <loc>https://www.dust-zed.site/rust/</loc>
     <lastmod>2025-09-05T18:51:54+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/tokio/</loc>
+    <loc>https://www.dust-zed.site/rust/tokio/</loc>
     <lastmod>2025-09-05T18:51:54+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/tokio/</loc>
+    <loc>https://www.dust-zed.site/categories/tokio/</loc>
     <lastmod>2025-09-05T18:51:54+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/tokio/waker%E5%92%8Ccontext%E6%9C%BA%E5%88%B6/</loc>
+    <loc>https://www.dust-zed.site/rust/tokio/waker%E5%92%8Ccontext%E6%9C%BA%E5%88%B6/</loc>
     <lastmod>2025-09-05T18:51:54+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</loc>
+    <loc>https://www.dust-zed.site/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</loc>
     <lastmod>2025-09-05T18:49:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</loc>
+    <loc>https://www.dust-zed.site/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</loc>
     <lastmod>2025-09-05T02:04:09+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/tokio/pin%E5%92%8Cunpin/</loc>
+    <loc>https://www.dust-zed.site/rust/tokio/pin%E5%92%8Cunpin/</loc>
     <lastmod>2025-09-04T15:03:11+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</loc>
+    <loc>https://www.dust-zed.site/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</loc>
     <lastmod>2025-09-03T22:56:23+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/tokio/tokio%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/</loc>
+    <loc>https://www.dust-zed.site/rust/tokio/tokio%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84/</loc>
     <lastmod>2025-09-03T12:28:49+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/android-develop/</loc>
+    <loc>https://www.dust-zed.site/categories/android-develop/</loc>
     <lastmod>2025-09-02T21:41:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/</loc>
+    <loc>https://www.dust-zed.site/android-develop/</loc>
     <lastmod>2025-09-02T21:41:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</loc>
+    <loc>https://www.dust-zed.site/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</loc>
     <lastmod>2025-09-02T21:41:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/request/</loc>
+    <loc>https://www.dust-zed.site/categories/request/</loc>
     <lastmod>2025-09-02T16:42:46+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/reqwest/</loc>
+    <loc>https://www.dust-zed.site/rust/reqwest/</loc>
     <lastmod>2025-09-02T16:42:46+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</loc>
+    <loc>https://www.dust-zed.site/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/</loc>
     <lastmod>2025-09-02T16:42:46+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/std/iterator/</loc>
+    <loc>https://www.dust-zed.site/rust/std/</loc>
     <lastmod>2025-09-02T10:12:13+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/std/</loc>
-    <lastmod>2025-09-02T10:12:13+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/categories/std/</loc>
-    <lastmod>2025-09-02T10:12:13+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/std/std_todolist/</loc>
-    <lastmod>2025-09-02T08:29:31+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</loc>
+    <loc>https://www.dust-zed.site/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</loc>
     <lastmod>2025-09-01T17:16:28+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</loc>
-    <lastmod>2025-09-01T17:12:26+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</loc>
+    <loc>https://www.dust-zed.site/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</loc>
     <lastmod>2025-09-01T17:05:55+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</loc>
+    <loc>https://www.dust-zed.site/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</loc>
     <lastmod>2025-09-01T16:22:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/std/option/</loc>
+    <loc>https://www.dust-zed.site/rust/std/option/</loc>
     <lastmod>2025-09-01T10:59:09+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/std/result/</loc>
+    <loc>https://www.dust-zed.site/categories/std/</loc>
+    <lastmod>2025-09-01T10:59:09+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>https://www.dust-zed.site/rust/std/result/</loc>
     <lastmod>2025-09-01T10:21:06+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/</loc>
+    <loc>https://www.dust-zed.site/rust/ripgrep/</loc>
     <lastmod>2025-08-27T10:28:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/ripgrep/</loc>
-    <lastmod>2025-08-27T10:28:07+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84%E5%AE%8C%E6%95%B4%E6%9E%B6%E6%9E%84/</loc>
-    <lastmod>2025-08-27T10:28:07+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/walk%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/</loc>
+    <loc>https://www.dust-zed.site/categories/ripgrep/</loc>
     <lastmod>2025-08-27T09:07:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/walk%E5%AD%A6%E4%B9%A0/</loc>
-    <lastmod>2025-08-26T15:01:45+08:00</lastmod>
+    <loc>https://www.dust-zed.site/rust/ripgrep/walk%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84/</loc>
+    <lastmod>2025-08-27T09:07:07+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/haystack/</loc>
+    <loc>https://www.dust-zed.site/rust/ripgrep/haystack/</loc>
     <lastmod>2025-08-26T09:21:41+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/</loc>
+    <loc>https://www.dust-zed.site/rust/ripgrep/hiargs%E5%92%8Clowargs/</loc>
     <lastmod>2025-08-24T20:57:16+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/flags%E7%9B%B8%E5%85%B3/</loc>
-    <lastmod>2025-08-23T12:06:35+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84main%E5%87%BD%E6%95%B0/</loc>
-    <lastmod>2025-08-22T22:03:01+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</loc>
-    <lastmod>2025-08-22T06:01:17+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</loc>
-    <lastmod>2025-08-22T03:33:16+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</loc>
+    <loc>https://www.dust-zed.site/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</loc>
     <lastmod>2025-08-19T15:02:39+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84%E5%91%BD%E4%BB%A4%E6%96%87%E6%A1%A3/</loc>
-    <lastmod>2025-08-15T12:50:54+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</loc>
+    <loc>https://www.dust-zed.site/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</loc>
     <lastmod>2025-08-08T11:37:40+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/mmkv%E4%B8%8Esharedpreferences/</loc>
-    <lastmod>2025-07-01T15:49:53+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</loc>
+    <loc>https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</loc>
     <lastmod>2025-06-30T19:02:22+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/</loc>
+    <loc>https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/</loc>
     <lastmod>2025-06-30T15:13:25+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</loc>
+    <loc>https://www.dust-zed.site/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</loc>
     <lastmod>2025-06-29T15:26:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</loc>
+    <loc>https://www.dust-zed.site/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</loc>
     <lastmod>2025-06-28T12:15:42+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/</loc>
+    <loc>https://www.dust-zed.site/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/</loc>
     <lastmod>2025-06-16T06:49:21+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/</loc>
+    <loc>https://www.dust-zed.site/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/</loc>
     <lastmod>2025-06-15T23:19:59+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</loc>
+    <loc>https://www.dust-zed.site/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</loc>
     <lastmod>2025-06-15T13:05:49+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
+    <loc>https://www.dust-zed.site/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
     <lastmod>2025-06-13T23:55:35+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/</loc>
+    <loc>https://www.dust-zed.site/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/</loc>
     <lastmod>2025-06-13T22:50:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/</loc>
+    <loc>https://www.dust-zed.site/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/</loc>
     <lastmod>2025-06-13T09:30:56+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/</loc>
-    <lastmod>2025-06-11T15:38:21+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</loc>
+    <loc>https://www.dust-zed.site/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</loc>
     <lastmod>2025-06-11T15:26:57+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/</loc>
+    <loc>https://www.dust-zed.site/tutorials/hugo-vercel%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE/</loc>
     <lastmod>2025-06-11T12:20:50+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/categories/tutorials/</loc>
+    <loc>https://www.dust-zed.site/categories/tutorials/</loc>
     <lastmod>2025-06-11T12:20:50+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/tutorials/</loc>
+    <loc>https://www.dust-zed.site/tutorials/</loc>
     <lastmod>2025-06-11T12:20:50+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/tags/</loc>
+    <loc>https://www.dust-zed.site/tags/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

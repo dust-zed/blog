@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Android-Develops on zed的博客</title>
-        <link>http://localhost:1313/android-develop/</link>
+        <link>https://www.dust-zed.site/android-develop/</link>
         <description>Recent content in Android-Develops on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Tue, 02 Sep 2025 21:41:39 +0800</lastBuildDate><atom:link href="http://localhost:1313/android-develop/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 02 Sep 2025 21:41:39 +0800</lastBuildDate><atom:link href="https://www.dust-zed.site/android-develop/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Android事件分发机制详解</title>
-        <link>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</link>
+        <link>https://www.dust-zed.site/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</link>
         <pubDate>Tue, 02 Sep 2025 21:41:39 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</guid>
+        <guid>https://www.dust-zed.site/android-develop/android%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</guid>
         <description>&lt;h4 id=&#34;1-事件分发的基本流程&#34;&gt;1. 事件分发的基本流程
 &lt;/h4&gt;&lt;h5 id=&#34;11-事件传递顺序&#34;&gt;1.1 事件传递顺序
 &lt;/h5&gt;&lt;p&gt;事件从Activity开始，按照一下顺序传递：&lt;/p&gt;
@@ -212,88 +212,11 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
         </item>
         <item>
-        <title>MMKV与SharedPreferences</title>
-        <link>http://localhost:1313/android-develop/mmkv%E4%B8%8Esharedpreferences/</link>
-        <pubDate>Tue, 01 Jul 2025 15:49:53 +0800</pubDate>
-        
-        <guid>http://localhost:1313/android-develop/mmkv%E4%B8%8Esharedpreferences/</guid>
-        <description>&lt;p&gt;Android中的MMKV和SharedPreferences都是用于存储键值对数据的轻量级解决方案，但他们在设计、性能和适用场景上存在显著差异。&lt;/p&gt;
-&lt;hr&gt;
-&lt;h4 id=&#34;sharedpreferences&#34;&gt;SharedPreferences
-&lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;定位&lt;/strong&gt;：Android官方提供的轻量级键值对存储API。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;实现&lt;/strong&gt;：
-&lt;ul&gt;
-&lt;li&gt;基于&lt;code&gt;XML&lt;/code&gt;文件存储。&lt;/li&gt;
-&lt;li&gt;数据保存在&lt;code&gt;/data/data/&amp;lt;package_name&amp;gt;/shared_prefs/&lt;/code&gt;目录下&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;特点：
-&lt;ul&gt;
-&lt;li&gt;简单易用：API直观，原生支持&lt;/li&gt;
-&lt;li&gt;线程安全(读写锁)：内部使用锁机制保证多线程安全，但也可能成为性能瓶颈&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;异步写入(&lt;code&gt;apply()&lt;/code&gt;)&lt;/strong&gt;:主要推荐方式，异步写入磁盘，避免阻塞UI线程(但提交操作本身在主线程)。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;同步写入(&lt;code&gt;commit()&lt;/code&gt;)&lt;/strong&gt;:阻塞调用线程直到写入完成，可能导致ANR，一般避免在主线程使用。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;主要缺点：
-&lt;ul&gt;
-&lt;li&gt;性能较差：
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;全量写入&lt;/strong&gt;：即使只修改一个值，&lt;code&gt;apply()/commit()&lt;/code&gt;也会触发整个XML文件的序列化和写入操作。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;XML解析开销&lt;/strong&gt;：每次读取都需要解析XML&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;潜在ANR风险：
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;commit(&lt;/code&gt;)在主线程同步写入大文件可能导致ANR。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;apply()&lt;/code&gt;的潜在ANR：apply虽然异步，但它把写入任务放进一个&lt;code&gt;QueueWork队列&lt;/code&gt;。在Activity生命周期（如&lt;code&gt;onPause&lt;/code&gt;，&lt;code&gt;onStop&lt;/code&gt;）触发&lt;code&gt;QueueWork.waitToFinish()&lt;/code&gt;时，会等待所有未完成的apply()写入任务完成。如果后台任务积压或写入缓慢，会阻塞主线程，可能导致ANR(尤其在低端设备、频繁更新或大文件时)。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;可靠性问题(&lt;code&gt;MODE_MULTI_PROCESS&lt;/code&gt;):
-&lt;ul&gt;
-&lt;li&gt;官方&lt;code&gt;MODE_MULTI_PROCESS&lt;/code&gt;已被弃用且声明不可靠。不支持真正的多进程同步。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;数据膨胀：修改频繁会导致XML文件变大（需手动&lt;code&gt;clear + commit&lt;/code&gt;才能减小）。&lt;/li&gt;
-&lt;li&gt;不支持复杂类型：仅支持基本类型，存储对象需自行序列化&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;hr&gt;
-&lt;h4 id=&#34;2-mmkv&#34;&gt;2. MMKV
-&lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;定位&lt;/strong&gt;：由腾讯微信团队开源的高性能&lt;strong&gt;跨平台&lt;/strong&gt;键值存储组件&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;实现原理&lt;/strong&gt;：
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;内存映射(&lt;code&gt;mmap&lt;/code&gt;)&lt;/strong&gt;:核心机制！将文件直接映射到内存空间。读写操作直接在内存中进行，由操作系统负责异步刷盘。省去了传统I/O的数据拷贝过程，比XML更小更快&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;Protobuf&lt;/code&gt;编码：使用高效的protobuf格式进行序列化，比XML更小更快。&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;增量写入&lt;/strong&gt;：修改数据时，通常是&lt;strong&gt;追加写&lt;/strong&gt;到文件末尾 (append-only)，避免全量重写。通过特殊的空间复用和垃圾回收机制处理过期数据。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;特点&lt;/strong&gt;：
-&lt;ul&gt;
-&lt;li&gt;极致性能：读写速度远超SharedPreferences，通常达到数倍或百倍的提升。写入即生效，读取立即可见。&lt;/li&gt;
-&lt;li&gt;真正的多进程支持：完美解决跨进程同步问题（&lt;code&gt;mmap&lt;/code&gt; + &lt;code&gt;文件锁/进程间锁机制&lt;/code&gt;）&lt;/li&gt;
-&lt;li&gt;更小的存储空间：protobuf编码比XML更紧凑。&lt;/li&gt;
-&lt;li&gt;无ANR担忧：
-&lt;ul&gt;
-&lt;li&gt;写入操作几乎完全被&lt;code&gt;mmap&lt;/code&gt;和&lt;code&gt;OS&lt;/code&gt;接管，是真正非阻塞的。&lt;/li&gt;
-&lt;li&gt;完全避免了&lt;code&gt;SharedPreferences.apply&lt;/code&gt;潜在的&lt;code&gt;QueueWork.waitToFinish()&lt;/code&gt;ANR问题&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;支持数据类型丰富：原生支持基本类型、&lt;code&gt;String&lt;/code&gt;, &lt;code&gt;byte[]&lt;/code&gt;, 并且能方便地支持实现了 &lt;code&gt;Parcelable&lt;/code&gt; 或 &lt;code&gt;Serializable&lt;/code&gt; 的&lt;strong&gt;任意 Java 对象&lt;/strong&gt;。&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-        </item>
-        <item>
         <title>协程知识点</title>
-        <link>http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</link>
+        <link>https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</link>
         <pubDate>Mon, 30 Jun 2025 19:02:22 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</guid>
+        <guid>https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</guid>
         <description>&lt;h4 id=&#34;将回调转换为协程&#34;&gt;将回调转换为协程
 &lt;/h4&gt;&lt;p&gt;&lt;strong&gt;背景&lt;/strong&gt;：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成&lt;code&gt;挂起函数(suspend fun)&lt;/code&gt;，使其可以在协程中像&lt;strong&gt;顺序代码&lt;/strong&gt;一样使用。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;核心函数：&lt;/strong&gt;&lt;/p&gt;
@@ -443,10 +366,10 @@
         </item>
         <item>
         <title>协程原理</title>
-        <link>http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/</link>
+        <link>https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/</link>
         <pubDate>Mon, 30 Jun 2025 15:13:25 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/</guid>
+        <guid>https://www.dust-zed.site/android-develop/%E5%8D%8F%E7%A8%8B%E5%8E%9F%E7%90%86/</guid>
         <description>&lt;p&gt;Kotlin协程的本质是&lt;strong&gt;通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象&lt;/strong&gt;。其核心原理和状态推进机制如下：&lt;/p&gt;
 &lt;h4 id=&#34;核心原理&#34;&gt;核心原理
 &lt;/h4&gt;&lt;h5 id=&#34;1-挂起函数&#34;&gt;1. 挂起函数
@@ -560,10 +483,10 @@
         </item>
         <item>
         <title>gradle相关知识</title>
-        <link>http://localhost:1313/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</link>
+        <link>https://www.dust-zed.site/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</link>
         <pubDate>Sun, 29 Jun 2025 15:26:57 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</guid>
+        <guid>https://www.dust-zed.site/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/</guid>
         <description>&lt;h3 id=&#34;一插件plugins-vs-库libraries&#34;&gt;一、插件(Plugins) vs 库(Libraries)
 &lt;/h3&gt;&lt;table&gt;
   &lt;thead&gt;
@@ -679,10 +602,10 @@
         </item>
         <item>
         <title>Android打包apk流程</title>
-        <link>http://localhost:1313/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</link>
+        <link>https://www.dust-zed.site/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</link>
         <pubDate>Sat, 28 Jun 2025 12:15:42 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</guid>
+        <guid>https://www.dust-zed.site/android-develop/android%E6%89%93%E5%8C%85apk%E6%B5%81%E7%A8%8B/</guid>
         <description>&lt;p&gt;android应用的打包流程是将代码、资源文件、清单文件等编译和压缩成可在设备上安装的APK/AAB文件的过程。以下是详细步骤：&lt;/p&gt;
 &lt;h4 id=&#34;一主要流程&#34;&gt;一、主要流程
 &lt;/h4&gt;&lt;h5 id=&#34;1-编写代码与资源管理&#34;&gt;1. 编写代码与资源管理
@@ -754,10 +677,10 @@
         </item>
         <item>
         <title>Choreographer类解析</title>
-        <link>http://localhost:1313/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/</link>
+        <link>https://www.dust-zed.site/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/</link>
         <pubDate>Mon, 16 Jun 2025 06:49:21 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/</guid>
+        <guid>https://www.dust-zed.site/android-develop/choreographer%E7%B1%BB%E8%A7%A3%E6%9E%90/</guid>
         <description>&lt;h4 id=&#34;一核心作用&#34;&gt;一、核心作用
 &lt;/h4&gt;&lt;p&gt;Choreographer是Android系统&lt;strong&gt;协调动画、输入和绘制操作的核心调度器&lt;/strong&gt;。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。&lt;/p&gt;
 &lt;h4 id=&#34;二关键概念&#34;&gt;二、关键概念
@@ -1089,10 +1012,10 @@
         </item>
         <item>
         <title>包体积优化</title>
-        <link>http://localhost:1313/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/</link>
+        <link>https://www.dust-zed.site/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/</link>
         <pubDate>Sun, 15 Jun 2025 23:19:59 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/</guid>
+        <guid>https://www.dust-zed.site/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/</guid>
         <description>&lt;h4 id=&#34;包体积优化&#34;&gt;包体积优化
 &lt;/h4&gt;&lt;h4 id=&#34;一apk结构分析工具&#34;&gt;一、APK结构分析工具
 &lt;/h4&gt;&lt;ol&gt;
@@ -1165,10 +1088,10 @@
         </item>
         <item>
         <title>内存管理最佳实践</title>
-        <link>http://localhost:1313/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</link>
+        <link>https://www.dust-zed.site/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</link>
         <pubDate>Sun, 15 Jun 2025 13:05:49 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</guid>
+        <guid>https://www.dust-zed.site/android-develop/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</guid>
         <description>&lt;h4 id=&#34;一内存管理原则&#34;&gt;一、内存管理原则
 &lt;/h4&gt;&lt;ol&gt;
 &lt;li&gt;理解Android内存模型
@@ -1287,10 +1210,10 @@
         </item>
         <item>
         <title>View性能优化</title>
-        <link>http://localhost:1313/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
+        <link>https://www.dust-zed.site/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
         <pubDate>Fri, 13 Jun 2025 23:55:35 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</guid>
+        <guid>https://www.dust-zed.site/android-develop/view%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</guid>
         <description>&lt;h3 id=&#34;android-view-性能优化体系&#34;&gt;Android View 性能优化体系
 &lt;/h3&gt;&lt;hr&gt;
 &lt;h3 id=&#34;一规避过度绘制gpu优化&#34;&gt;一、规避过度绘制（GPU优化）
@@ -1499,10 +1422,10 @@ GPU在单个像素点重复绘制超过2.5次（1x绘制+1.5x半透明混合）�
         </item>
         <item>
         <title>关于硬件加速</title>
-        <link>http://localhost:1313/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/</link>
+        <link>https://www.dust-zed.site/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/</link>
         <pubDate>Fri, 13 Jun 2025 22:50:57 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/</guid>
+        <guid>https://www.dust-zed.site/android-develop/%E5%85%B3%E4%BA%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F/</guid>
         <description>&lt;h4 id=&#34;一硬件加速核心概念&#34;&gt;一、硬件加速核心概念
 &lt;/h4&gt;&lt;p&gt;硬件加速是将图形渲染中的光栅化从CPU转移到GPU执行的技术。CPU只需要生成&lt;strong&gt;绘制指令集(DisplayList)&lt;/strong&gt;，由GPU进行高效的并行光栅化计算，最终写入图形缓冲区提供屏幕显示。&lt;/p&gt;
 &lt;p&gt;本质：CPU负责逻辑指令，GPU负责繁重像素计算，分工协作提升效率&lt;/p&gt;
@@ -1567,10 +1490,10 @@ GPU在单个像素点重复绘制超过2.5次（1x绘制+1.5x半透明混合）�
         </item>
         <item>
         <title>面试问题收集</title>
-        <link>http://localhost:1313/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/</link>
+        <link>https://www.dust-zed.site/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/</link>
         <pubDate>Fri, 13 Jun 2025 09:30:56 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/</guid>
+        <guid>https://www.dust-zed.site/android-develop/%E9%9D%A2%E8%AF%95%E9%97%AE%E9%A2%98%E6%94%B6%E9%9B%86/</guid>
         <description>&lt;h4 id=&#34;一bitmap内存优化&#34;&gt;一、Bitmap内存优化
 &lt;/h4&gt;&lt;p&gt;Bitmap是内存消耗大户，通过以下方法减少占用：&lt;/p&gt;
 &lt;ol&gt;
@@ -1870,10 +1793,10 @@ ViewModel对象存储在&lt;code&gt;ViewModelStore&lt;/code&gt;中。当配置�
         </item>
         <item>
         <title>RecyclerView缓存机制</title>
-        <link>http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</link>
+        <link>https://www.dust-zed.site/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</link>
         <pubDate>Wed, 11 Jun 2025 15:26:57 +0800</pubDate>
         
-        <guid>http://localhost:1313/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</guid>
+        <guid>https://www.dust-zed.site/android-develop/recyclerview%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</guid>
         <description>&lt;p&gt;RecyclerView缓存机制&lt;/p&gt;
 &lt;h4 id=&#34;多级缓存体系架构图&#34;&gt;&lt;strong&gt;多级缓存体系架构图&lt;/strong&gt;
 &lt;/h4&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;TEXT

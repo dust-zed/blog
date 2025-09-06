@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+    <head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="包体积优化 一、APK结构分析工具 Android Studio内置工具 使用 Build &gt; Analyze APK 查看各模块占比(代码/资源/原生库/Assets) 命令行工具 ./gradlew :app:assembleRelease --scan 二、代码优化 启用代码混淆与优化 移除未使用代码 使用android studio的lint分析未使用代码 添加R8配置文件删除无引用代码 方法数优化 启用Multidex前优化 使用D8编译器的dex优化 三、资源优化 资源压缩与清理 移除未使用资源 # 检测未使用资源 ./gradlew lintRelease # 自动移除 ./gradlew removeUnusedResources 矢量图代替位图 Webp格式转换 四、库优化 仅保留必要ABI 轻量库代替 五、高级优化技术 资源混淆 资源分包加载 按需加载功能模块 六 、 Assets优化 压缩assets资源：存储时压缩，使用时解压 七、知识补充 D8、R8和代码混淆的关系 D8负责字节码到Dex的精确转换 R8 = D8 + 裁剪 + 优化 + 混淆 混淆是R8的战术武器：仅负责名称混淆（对体积影响小，对安全性关键） 开启R8 ≈ D8编译 + 三重优化(裁剪/优化/混淆) ">
 <title>包体积优化</title>
 
-<link rel='canonical' href='http://localhost:1313/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/'>
+<link rel='canonical' href='https://www.dust-zed.site/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="包体积优化">
 <meta property='og:description' content="包体积优化 一、APK结构分析工具 Android Studio内置工具 使用 Build &gt; Analyze APK 查看各模块占比(代码/资源/原生库/Assets) 命令行工具 ./gradlew :app:assembleRelease --scan 二、代码优化 启用代码混淆与优化 移除未使用代码 使用android studio的lint分析未使用代码 添加R8配置文件删除无引用代码 方法数优化 启用Multidex前优化 使用D8编译器的dex优化 三、资源优化 资源压缩与清理 移除未使用资源 # 检测未使用资源 ./gradlew lintRelease # 自动移除 ./gradlew removeUnusedResources 矢量图代替位图 Webp格式转换 四、库优化 仅保留必要ABI 轻量库代替 五、高级优化技术 资源混淆 资源分包加载 按需加载功能模块 六 、 Assets优化 压缩assets资源：存储时压缩，使用时解压 七、知识补充 D8、R8和代码混淆的关系 D8负责字节码到Dex的精确转换 R8 = D8 + 裁剪 + 优化 + 混淆 混淆是R8的战术武器：仅负责名称混淆（对体积影响小，对安全性关键） 开启R8 ≈ D8编译 + 三重优化(裁剪/优化/混淆) ">
-<meta property='og:url' content='http://localhost:1313/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/'>
+<meta property='og:url' content='https://www.dust-zed.site/android-develop/%E5%8C%85%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-15T23:19:59&#43;08:00'/><meta property='article:modified_time' content='2025-06-15T23:19:59&#43;08:00'/>
 <meta name="twitter:title" content="包体积优化">
@@ -401,7 +401,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');
