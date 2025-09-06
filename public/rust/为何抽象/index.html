@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="抽象的核心目的 抽象的主要目的是管理变化，具体来说：\n识别变化点：确定哪些部分可能会变化 隔离变化：将变化限制在局部 统一接口：为不同的实现提供一致的交互方式 抽象的核心价值 在变化中寻求平衡稳定\n稳定层：抽象定义“做什么”（接口/契约） 变化层：实现处理“怎么做”（具体细节） SOLID原则 1. 单一职责原则 一个类应该只有一个引起它变化的原因\n每个类应该只负责一项职责 将不同的功能分离到不同的类中 2. 开闭原则 软件实体（类、模块、函数等）应该对扩展开放，对修改关闭\n通过添加新代码开扩展功能，而不是修改现有代码 使用抽象来定义契约 3. 里氏替换原则 子类型必须能够替换其父类型而不影响程序的正确性。\n子类应该扩展父类的行为，而不是改变它 子类不应该加强前置条件或削弱后置条件 子类不应该抛出父类不会抛出的异常 4. 接口隔离原则 客户端不应该被迫依赖他们不使用的接口\n将大接口拆分为更小、更具体的接口 类不应该实现他们不需要的方法 5. 依赖倒置 高层模块 → 依赖 → 抽象接口 ← 实现 ← 低层模块 ">
 <title>为何抽象</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/'>
+<link rel='canonical' href='http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="为何抽象">
 <meta property='og:description' content="抽象的核心目的 抽象的主要目的是管理变化，具体来说：\n识别变化点：确定哪些部分可能会变化 隔离变化：将变化限制在局部 统一接口：为不同的实现提供一致的交互方式 抽象的核心价值 在变化中寻求平衡稳定\n稳定层：抽象定义“做什么”（接口/契约） 变化层：实现处理“怎么做”（具体细节） SOLID原则 1. 单一职责原则 一个类应该只有一个引起它变化的原因\n每个类应该只负责一项职责 将不同的功能分离到不同的类中 2. 开闭原则 软件实体（类、模块、函数等）应该对扩展开放，对修改关闭\n通过添加新代码开扩展功能，而不是修改现有代码 使用抽象来定义契约 3. 里氏替换原则 子类型必须能够替换其父类型而不影响程序的正确性。\n子类应该扩展父类的行为，而不是改变它 子类不应该加强前置条件或削弱后置条件 子类不应该抛出父类不会抛出的异常 4. 接口隔离原则 客户端不应该被迫依赖他们不使用的接口\n将大接口拆分为更小、更具体的接口 类不应该实现他们不需要的方法 5. 依赖倒置 高层模块 → 依赖 → 抽象接口 ← 实现 ← 低层模块 ">
-<meta property='og:url' content='https://www.dust-zed.site/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/'>
+<meta property='og:url' content='http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-03T22:56:23&#43;08:00'/><meta property='article:modified_time' content='2025-09-03T22:56:23&#43;08:00'/>
 <meta name="twitter:title" content="为何抽象">
@@ -375,7 +375,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="haystack.rs是连接文件发现和搜索执行的核心抽象：\n//在main.rs中 let haystack_builder = args.haystack_builder(); let haystack = haystack_builder.build_from_result(result); searcher.search(&amp;haystack); Haystack是对ignore::DirEntry的包装，添加了应用层逻辑,对DirEntry增加了几种判断，而HaystackBuilder则是根据DirEntry的类型返回不同的结果。\npub(crate) struct Haystack { dent: ignore::DirEntry, strip_dot_prefix: bool } impl Haystack { pub(crate) fn is_stdin(&amp;self) -&gt; bool { } pub(crate) fn is_dir(&amp;self) -&gt; bool { } pub(crate) fn is_explicit(&amp;self) -&gt; bool { } pub(crate) fn is_file(&amp;self) -&gt; bool { } } Haystack中的方法指明了文件类型的层次关系：\n普通文件(is_file() == true) 目录(is_dir() == true) 符号链接 (既不是文件也不是目录) 特殊文件(设备、管道、socket) HaystackBuilder根据几个is_*方法返回Option&lt;Haystack&gt;。\nHaystack对DirEntry包装 Haystack包装了DirEntry,而不是在DirEntry中扩展，体现了几个重要的设计原则：\n1. 关注点分离 // ignore::DirEntry - 通用文件系统抽象 // 职责：文件遍历、基础元数据、忽略规则 // Haystack - ripgrep 特定的搜索抽象 // 职责：搜索逻辑、用户意图理解、应用层策略 2. 不同的语义层次 DirEntry的视角：文件系统条目\n">
 <title>Haystack</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/rust/ripgrep/haystack/'>
+<link rel='canonical' href='http://localhost:1313/rust/ripgrep/haystack/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Haystack">
 <meta property='og:description' content="haystack.rs是连接文件发现和搜索执行的核心抽象：\n//在main.rs中 let haystack_builder = args.haystack_builder(); let haystack = haystack_builder.build_from_result(result); searcher.search(&amp;haystack); Haystack是对ignore::DirEntry的包装，添加了应用层逻辑,对DirEntry增加了几种判断，而HaystackBuilder则是根据DirEntry的类型返回不同的结果。\npub(crate) struct Haystack { dent: ignore::DirEntry, strip_dot_prefix: bool } impl Haystack { pub(crate) fn is_stdin(&amp;self) -&gt; bool { } pub(crate) fn is_dir(&amp;self) -&gt; bool { } pub(crate) fn is_explicit(&amp;self) -&gt; bool { } pub(crate) fn is_file(&amp;self) -&gt; bool { } } Haystack中的方法指明了文件类型的层次关系：\n普通文件(is_file() == true) 目录(is_dir() == true) 符号链接 (既不是文件也不是目录) 特殊文件(设备、管道、socket) HaystackBuilder根据几个is_*方法返回Option&lt;Haystack&gt;。\nHaystack对DirEntry包装 Haystack包装了DirEntry,而不是在DirEntry中扩展，体现了几个重要的设计原则：\n1. 关注点分离 // ignore::DirEntry - 通用文件系统抽象 // 职责：文件遍历、基础元数据、忽略规则 // Haystack - ripgrep 特定的搜索抽象 // 职责：搜索逻辑、用户意图理解、应用层策略 2. 不同的语义层次 DirEntry的视角：文件系统条目\n">
-<meta property='og:url' content='https://www.dust-zed.site/rust/ripgrep/haystack/'>
+<meta property='og:url' content='http://localhost:1313/rust/ripgrep/haystack/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-08-26T09:21:41&#43;08:00'/><meta property='article:modified_time' content='2025-08-26T09:21:41&#43;08:00'/>
 <meta name="twitter:title" content="Haystack">
@@ -423,7 +423,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="从顶层结构来理解reqwest的模块组织：\n核心模块 1. async_impl/ 异步HTTP客户端实现 包含Client、Reqwest、Response等核心类型 基于hyper库实现 2. blocking/ 同步HTTP客户端 内部使用std::thread封装异步调用 提供阻塞式API 3. dns/ DNS解析功能 支持系统DNS和自定义解析器 包含GaiResolver等实现 4. proxy/ 代理支持 处理HTTP/HTTPS/SOCKS代理 代理自动发现和认证 5. tls 安全传输层实现 支持native-tls和rustls 证书和身份管理 6. redirect/ 重定向处理 支持自定义重定向策略 处理3xx状态码 7. wasm/ WebAssembly平台特定实现 使用浏览器Fetch API 针对Web环境优化 辅助模块 cookie/ - Cookie管理 multipart/ - 多部分表单数据处理 retry/ - 请求重试机制 util/ - 工具函数和辅助类型 特性开关 通过Cargo features控制功能：\ndefault-tls - 默认TLS实现 native-tls - 使用系统原生TLS rustls - 使用rustls纯Rust实现 blocking - 启用同步API cookies - Cookie支持 json - JSON序列化支持 //lib.rs #[cfg(feature = &#34;blocking&#34;)] pub mod blocking; #[cfg(feature = &#34;cookies&#34;)] pub mod cookie; 在 Cargo.toml 中通过 features 控制哪些实现被编译。\n">
 <title>Reqwest模块架构解析</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/'>
+<link rel='canonical' href='http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Reqwest模块架构解析">
 <meta property='og:description' content="从顶层结构来理解reqwest的模块组织：\n核心模块 1. async_impl/ 异步HTTP客户端实现 包含Client、Reqwest、Response等核心类型 基于hyper库实现 2. blocking/ 同步HTTP客户端 内部使用std::thread封装异步调用 提供阻塞式API 3. dns/ DNS解析功能 支持系统DNS和自定义解析器 包含GaiResolver等实现 4. proxy/ 代理支持 处理HTTP/HTTPS/SOCKS代理 代理自动发现和认证 5. tls 安全传输层实现 支持native-tls和rustls 证书和身份管理 6. redirect/ 重定向处理 支持自定义重定向策略 处理3xx状态码 7. wasm/ WebAssembly平台特定实现 使用浏览器Fetch API 针对Web环境优化 辅助模块 cookie/ - Cookie管理 multipart/ - 多部分表单数据处理 retry/ - 请求重试机制 util/ - 工具函数和辅助类型 特性开关 通过Cargo features控制功能：\ndefault-tls - 默认TLS实现 native-tls - 使用系统原生TLS rustls - 使用rustls纯Rust实现 blocking - 启用同步API cookies - Cookie支持 json - JSON序列化支持 //lib.rs #[cfg(feature = &#34;blocking&#34;)] pub mod blocking; #[cfg(feature = &#34;cookies&#34;)] pub mod cookie; 在 Cargo.toml 中通过 features 控制哪些实现被编译。\n">
-<meta property='og:url' content='https://www.dust-zed.site/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/'>
+<meta property='og:url' content='http://localhost:1313/rust/reqwest/reqwest%E6%A8%A1%E5%9D%97%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-02T16:42:46&#43;08:00'/><meta property='article:modified_time' content='2025-09-02T16:42:46&#43;08:00'/>
 <meta name="twitter:title" content="Reqwest模块架构解析">
@@ -404,7 +404,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

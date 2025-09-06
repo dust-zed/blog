@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp; &amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的 trait My Trait: 'static或Box&lt;dyn MyTrait + 'static 实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8] Path，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别 &amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 结构体 Rust不允许将struct中某个字段标记为可变 闭包 根据闭包捕获环境方式可分为三种 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 ">
 <title>语法速查</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/'>
+<link rel='canonical' href='http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="语法速查">
 <meta property='og:description' content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp; &amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的 trait My Trait: 'static或Box&lt;dyn MyTrait + 'static 实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8] Path，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别 &amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 结构体 Rust不允许将struct中某个字段标记为可变 闭包 根据闭包捕获环境方式可分为三种 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 ">
-<meta property='og:url' content='https://www.dust-zed.site/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/'>
+<meta property='og:url' content='http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-01T16:22:39&#43;08:00'/><meta property='article:modified_time' content='2025-09-01T16:22:39&#43;08:00'/>
 <meta name="twitter:title" content="语法速查">
@@ -412,7 +412,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

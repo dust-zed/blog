@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Rust on zed的博客</title>
-        <link>https://www.dust-zed.site/rust/</link>
+        <link>http://localhost:1313/rust/</link>
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 05 Sep 2025 18:49:07 +0800</lastBuildDate><atom:link href="https://www.dust-zed.site/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 05 Sep 2025 18:49:07 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>普通对象和trait对象</title>
-        <link>https://www.dust-zed.site/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</link>
+        <link>http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</link>
         <pubDate>Fri, 05 Sep 2025 18:49:07 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</guid>
+        <guid>http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</guid>
         <description>&lt;h4 id=&#34;普通对象的内存结构&#34;&gt;普通对象的内存结构
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;只包含数据成员&lt;/li&gt;
@@ -90,10 +90,10 @@
         </item>
         <item>
         <title>Rust中基础网络编程</title>
-        <link>https://www.dust-zed.site/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</link>
+        <link>http://localhost:1313/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</link>
         <pubDate>Fri, 05 Sep 2025 02:04:09 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</guid>
+        <guid>http://localhost:1313/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</guid>
         <description>&lt;h3 id=&#34;rust-网络编程基础tcp-与-udp&#34;&gt;Rust 网络编程基础：TCP 与 UDP
 &lt;/h3&gt;&lt;h4 id=&#34;tcp-与-udp-基础概念&#34;&gt;TCP 与 UDP 基础概念
 &lt;/h4&gt;&lt;h5 id=&#34;tcp-传输控制协议&#34;&gt;TCP (传输控制协议)
@@ -266,10 +266,10 @@
         </item>
         <item>
         <title>为何抽象</title>
-        <link>https://www.dust-zed.site/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</link>
+        <link>http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</link>
         <pubDate>Wed, 03 Sep 2025 22:56:23 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</guid>
+        <guid>http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</guid>
         <description>&lt;h4 id=&#34;抽象的核心目的&#34;&gt;抽象的核心目的
 &lt;/h4&gt;&lt;p&gt;抽象的主要目的是&lt;strong&gt;管理变化&lt;/strong&gt;，具体来说：&lt;/p&gt;
 &lt;ol&gt;
@@ -316,10 +316,10 @@
         </item>
         <item>
         <title>Rust知识问答</title>
-        <link>https://www.dust-zed.site/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</link>
+        <link>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</link>
         <pubDate>Mon, 01 Sep 2025 17:16:28 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</guid>
+        <guid>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</guid>
         <description>&lt;h5 id=&#34;为什么fnonce只能调用一次&#34;&gt;为什么FnOnce只能调用一次
 &lt;/h5&gt;&lt;h6 id=&#34;源码分析&#34;&gt;源码分析
 &lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; FnOnce&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Args&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
@@ -372,11 +372,31 @@
 </description>
         </item>
         <item>
+        <title>文件系统</title>
+        <link>http://localhost:1313/rust/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</link>
+        <pubDate>Mon, 01 Sep 2025 17:12:26 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</guid>
+        <description>&lt;h4 id=&#34;文件系统&#34;&gt;文件系统
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;metadata&lt;/code&gt;:本质上就是描述文件信息的数据&lt;/li&gt;
+&lt;li&gt;环境变量和配置文件
+&lt;ul&gt;
+&lt;li&gt;配置文件：存储&lt;strong&gt;默认配置&lt;/strong&gt;或&lt;strong&gt;静态配置&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;环境变量：提供&lt;strong&gt;动态覆盖&lt;/strong&gt;或&lt;strong&gt;环境特定配置&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;挂载（Mount）&lt;/strong&gt;： 将&lt;strong&gt;存储设备&lt;/strong&gt;或&lt;strong&gt;文件系统&lt;/strong&gt;连接到操作系统目录树中特定位置的过程。这个连接点称为&lt;strong&gt;挂载点（Mount Point）&lt;/strong&gt;。类比门和仓库的关系。&lt;/li&gt;
+&lt;li&gt;文件设备号&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>架构设计</title>
-        <link>https://www.dust-zed.site/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</link>
+        <link>http://localhost:1313/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</link>
         <pubDate>Mon, 01 Sep 2025 17:05:55 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</guid>
+        <guid>http://localhost:1313/rust/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</guid>
         <description>&lt;h4 id=&#34;如何做好职责分离&#34;&gt;如何做好职责分离
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;从“怎么实现”到“怎么组合”
@@ -404,10 +424,10 @@
         </item>
         <item>
         <title>语法速查</title>
-        <link>https://www.dust-zed.site/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</link>
+        <link>http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</link>
         <pubDate>Mon, 01 Sep 2025 16:22:39 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</guid>
+        <guid>http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/</guid>
         <description>&lt;h4 id=&#34;集合或迭代器&#34;&gt;集合或迭代器
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;&lt;code&gt;drain()&lt;/code&gt;方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式&lt;/li&gt;
@@ -490,11 +510,134 @@
 </description>
         </item>
         <item>
+        <title>Rust中的IO操作</title>
+        <link>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</link>
+        <pubDate>Fri, 22 Aug 2025 06:01:17 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E4%B8%AD%E7%9A%84io%E6%93%8D%E4%BD%9C/</guid>
+        <description>&lt;p&gt;在Rust中，I/O操作主要通过&lt;code&gt;Read&lt;/code&gt;和&lt;code&gt;Write&lt;/code&gt;两个核心trait实现，而&lt;code&gt;Cursor&lt;/code&gt;、&lt;code&gt;BufWriter&lt;/code&gt;和&lt;code&gt;ReadBuf&lt;/code&gt;是围绕这些trait的实用工具。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;1-read和write-trait&#34;&gt;1. &lt;code&gt;Read&lt;/code&gt;和&lt;code&gt;Write&lt;/code&gt; trait
+&lt;/h4&gt;&lt;h5 id=&#34;stdioread&#34;&gt;&lt;code&gt;std::io::Read&lt;/code&gt;
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：从数据源（文件、网络等）读取字节流。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;read&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, buf: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; [&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;]) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;尝试读取数据到缓冲区&lt;code&gt;buf&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;返回实际读取的字节数(&lt;code&gt;Ok(n)&lt;/code&gt;)，或错误（&lt;code&gt;Err(e)&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;当读取到EOF时返回&lt;code&gt;Ok(0)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;常用方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;read_to_end(&amp;amp;mut vec)&lt;/code&gt;:读取所有字节到&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;read_to_string(&amp;amp;mut string)&lt;/code&gt;:读取UTF-8字节到&lt;code&gt;String&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;read_exact(&amp;amp;mut buf)&lt;/code&gt;:精确读取&lt;code&gt;buf.len()&lt;/code&gt;字节，否则报错&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;stdiowrite&#34;&gt;&lt;code&gt;std::io::Write&lt;/code&gt;
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：将字节流写入目标&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心方法&lt;/strong&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;write&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, buf: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;[&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;]) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;flush&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;write&lt;/code&gt;尝试写入缓冲区&lt;code&gt;buf&lt;/code&gt;，返回实际写入的字节数&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;flush&lt;/code&gt;确保所有缓冲数据写入目标（如磁盘）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;2-cursort&#34;&gt;2. &lt;code&gt;Cursor&amp;lt;T&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：将内存类型包装成可&lt;code&gt;随机访问&lt;/code&gt;的&lt;code&gt;Read&lt;/code&gt;/&lt;code&gt;Write&lt;/code&gt;对象。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;特点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在内存中模拟文件指针（维护&lt;code&gt;position&lt;/code&gt;）。&lt;/li&gt;
+&lt;li&gt;实现Read和Write（需&lt;code&gt;T: AsMut&amp;lt;[u8]&amp;gt;&lt;/code&gt;)，支持&lt;code&gt;Seek&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;零成本抽象，高性能内存操作。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;使用场景&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;读取数据，或写入到&lt;code&gt;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;测试时代替真实文件I/O。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-bufwriterw&#34;&gt;3. &lt;code&gt;BufWriter&amp;lt;W&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：包装一个&lt;code&gt;Write&lt;/code&gt;对象，提供&lt;strong&gt;写入缓冲&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;减少系统调用（如磁盘、网络写入）。&lt;/li&gt;
+&lt;li&gt;批量写入提高性能（默认缓冲区大小&lt;strong&gt;8KB&lt;/strong&gt;）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;行为&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;先写入内存缓冲区，满时自动刷新到内部&lt;code&gt;W&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;手动调用&lt;code&gt;flush()&lt;/code&gt;或&lt;code&gt;Drop&lt;/code&gt;时强制刷新缓冲区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;4-bufreaderr&#34;&gt;4. &lt;code&gt;BufReader&amp;lt;R&amp;gt;&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;作用&lt;/strong&gt;：包装&lt;code&gt;Read&lt;/code&gt;对象，提供&lt;strong&gt;读取缓冲&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;优点&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;减少频繁系统调用（如读取文件时多次小数据读取）&lt;/li&gt;
+&lt;li&gt;支持按行读取（&lt;code&gt;read_line&lt;/code&gt;和&lt;code&gt;lines&lt;/code&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;完整知识图谱&#34;&gt;完整知识图谱
+&lt;/h4&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;I/O 核心 Trait
+│
+├── Read (字节源)
+│   ├── 实现类型：File, TcpStream, Vec&amp;lt;u8&amp;gt;, etc.
+│   ├── 工具：BufReader (缓冲读取), Take (限制读取长度)
+│   └── 扩展：BufRead (提供 read_line, lines 等方法)
+│
+├── Write (字节目标)
+│   ├── 实现类型：File, TcpStream, Vec&amp;lt;u8&amp;gt;, etc.
+│   └── 工具：BufWriter (缓冲写入), LineWriter (行缓冲)
+│
+├── Seek (随机访问)
+│   └── 实现类型：File, Cursor&amp;lt;T&amp;gt;
+│
+└── 内存适配器
+    └── Cursor&amp;lt;T&amp;gt; (内存模拟 I/O)
+        ├── 支持：Read/Write/Seek
+        └── 适用：Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8], String, &amp;amp;str
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
+&lt;h5 id=&#34;关键原则&#34;&gt;关键原则
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;1. 缓冲使用&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;BufReader/BufWriter总是推荐用于文件/网络 I/O。&lt;/li&gt;
+&lt;li&gt;Cursor用于内存数据（如解析二进制格式）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;2. 错误处理&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;所有I/O操作返回&lt;code&gt;Result&lt;/code&gt;，必须处理&lt;code&gt;Err&lt;/code&gt;情况。&lt;/li&gt;
+&lt;li&gt;特别注意&lt;code&gt;flush()&lt;/code&gt;的错误（如磁盘满）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;3. 性能&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;小数据写入用&lt;code&gt;BufWriter&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;避免频繁小数据读取（缓冲或批量化）&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>大端序和小端序</title>
+        <link>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</link>
+        <pubDate>Fri, 22 Aug 2025 03:33:16 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E5%A4%A7%E7%AB%AF%E5%BA%8F%E5%92%8C%E5%B0%8F%E7%AB%AF%E5%BA%8F/</guid>
+        <description>&lt;p&gt;大端序和小端序是两种不同的&lt;strong&gt;字节存储顺序&lt;/strong&gt;，用于描述多字节数据（如整数、浮点数）在计算机内存中的存储方式。它们的区别在于字节的排列顺序：&lt;/p&gt;
+&lt;h4 id=&#34;大端序&#34;&gt;大端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;高位字节存储在低地址&lt;/strong&gt;，低位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;小端序&#34;&gt;小端序
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;低位字节存储在低地址&lt;/strong&gt;，高位字节存储在高地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;小端序更符合计算机的处理逻辑&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>需要多熟悉的rust语法</title>
-        <link>https://www.dust-zed.site/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link>
+        <link>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</link>
         <pubDate>Tue, 19 Aug 2025 15:02:39 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</guid>
+        <guid>http://localhost:1313/rust/%E9%9C%80%E8%A6%81%E5%A4%9A%E7%86%9F%E6%82%89%E7%9A%84rust%E8%AF%AD%E6%B3%95/</guid>
         <description>&lt;h4 id=&#34;绑定运算符&#34;&gt;@(绑定运算符)
 &lt;/h4&gt;&lt;p&gt;在Rust中，&lt;code&gt;@&lt;/code&gt;被称为绑定运算符，用于在模式匹配的值绑定到一个变量，同时允许进一步解构内部结构。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;具体解析&lt;/strong&gt;&lt;/p&gt;
@@ -622,10 +765,10 @@
         </item>
         <item>
         <title>Rust学习计划</title>
-        <link>https://www.dust-zed.site/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</link>
+        <link>http://localhost:1313/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</link>
         <pubDate>Fri, 08 Aug 2025 11:37:40 +0800</pubDate>
         
-        <guid>https://www.dust-zed.site/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</guid>
+        <guid>http://localhost:1313/rust/rust%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92/</guid>
         <description>&lt;h2 id=&#34;1-基础能力建设&#34;&gt;1. 基础能力建设
 &lt;/h2&gt;&lt;ul&gt;
 &lt;li&gt;

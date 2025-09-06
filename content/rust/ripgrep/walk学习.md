@@ -1,6 +1,6 @@
 +++
 date = '2025-08-26T15:01:45+08:00'
-draft = true
+draft = false
 title = 'Walk学习'
 categories = ['rust', 'ripgrep']
 

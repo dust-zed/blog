@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="一、插件(Plugins) vs 库(Libraries) 特征 插件 (Plugins) 库 (Libraries) 本质 构建逻辑扩展工具 运行时依赖的代码组件 作用 添加任务/配置/目录结构 提供可调用的具体代码实现 声明位置 plugins {} 块 dependencies {} 块 影响范围 构建过程 运行时或编译时 典型示例 java，android gson, junit 1. 插件详解 核心作用：\n添加新任务（如 compileJava, assemble） 定义默认目录结构（如 src/main/java） 引入预置配置（如 implementation 依赖配置） 使用场景：\nplugins { id &#39;com.android.application&#39; // Android APP插件 id &#39;org.jetbrains.kotlin.android&#39; // Kotlin支持 } 2. 库详解 关键特征：\n通过坐标声明：group:name:version（如 com.google.guava:guava:32.0-jre） 传递依赖：库可能自带其他依赖（如 Retrofit 自动引入 OkHttp） 使用场景：\ndependencies { implementation &#39;androidx.core:core-ktx:1.12.0&#39; // 主代码依赖 testImplementation &#39;junit:junit:4.13.2&#39; // 测试代码专用 } 二、依赖配置详解 1. implementation（最常用） 特点:\n">
 <title>gradle相关知识</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/'>
+<link rel='canonical' href='http://localhost:1313/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="gradle相关知识">
 <meta property='og:description' content="一、插件(Plugins) vs 库(Libraries) 特征 插件 (Plugins) 库 (Libraries) 本质 构建逻辑扩展工具 运行时依赖的代码组件 作用 添加任务/配置/目录结构 提供可调用的具体代码实现 声明位置 plugins {} 块 dependencies {} 块 影响范围 构建过程 运行时或编译时 典型示例 java，android gson, junit 1. 插件详解 核心作用：\n添加新任务（如 compileJava, assemble） 定义默认目录结构（如 src/main/java） 引入预置配置（如 implementation 依赖配置） 使用场景：\nplugins { id &#39;com.android.application&#39; // Android APP插件 id &#39;org.jetbrains.kotlin.android&#39; // Kotlin支持 } 2. 库详解 关键特征：\n通过坐标声明：group:name:version（如 com.google.guava:guava:32.0-jre） 传递依赖：库可能自带其他依赖（如 Retrofit 自动引入 OkHttp） 使用场景：\ndependencies { implementation &#39;androidx.core:core-ktx:1.12.0&#39; // 主代码依赖 testImplementation &#39;junit:junit:4.13.2&#39; // 测试代码专用 } 二、依赖配置详解 1. implementation（最常用） 特点:\n">
-<meta property='og:url' content='https://www.dust-zed.site/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/'>
+<meta property='og:url' content='http://localhost:1313/android-develop/gradle%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-06-29T15:26:57&#43;08:00'/><meta property='article:modified_time' content='2025-06-29T15:26:57&#43;08:00'/>
 <meta name="twitter:title" content="gradle相关知识">
@@ -444,7 +444,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

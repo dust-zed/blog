@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="普通对象的内存结构 只包含数据成员 方法不占用内存空间 方法调用是静态分发的，方法存储在代码段中，调用时直接跳转到固定地址 struct Point { x: i32, y: i32, } ///内存结构 +------+------+ | x: 4 | y: 4 | // 8 字节 (i32 是 4 字节) +------+------+ trait对象内存结构 由两个指针组成 数据指针：指向实际数据的指针 虚表指针：指向虚表的指针 虚表包含 析构函数指针 类型大小和对齐信息 trait中所有方法的函数指针 trait Shape { fn area(&amp;self) -&gt; f64; fn scale(&amp;mut self, factor: f64); } struct Circle { radius: f64, } impl Shape for Circle { fn area(&amp;self) -&gt; f64 { std::f64::consts::PI * self.radius * self.radius } fn scale(&amp;mut self, factor: f64) { self.radius *= factor; } } let circle: Box&lt;dyn Shape&gt; = Box::new(Circle { radius: 1.0 }); 内存布局 +------------------+ +------------------+ | 数据指针 | --&gt; | radius: f64 | +------------------+ +------------------+ | 虚表指针 | --&gt; +------------------+ +------------------+ | 指向 Circle 的虚表 | +------------------+ | drop_in_place | // 析构函数 | size | // 类型大小 | align | // 对齐方式 | area() 函数指针 | // 第一个 trait 方法 | scale() 函数指针 | // 第二个 trait 方法 +------------------+ 方法调用过程 普通对象方法: 普通对象方法存储在代码段中，不占用对象内存，调用时直接跳转到固定地址。 trait对象方法： 获取虚表指针 从虚表中获取函数指针 调用函数 ">
 <title>普通对象和trait对象</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/'>
+<link rel='canonical' href='http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="普通对象和trait对象">
 <meta property='og:description' content="普通对象的内存结构 只包含数据成员 方法不占用内存空间 方法调用是静态分发的，方法存储在代码段中，调用时直接跳转到固定地址 struct Point { x: i32, y: i32, } ///内存结构 +------+------+ | x: 4 | y: 4 | // 8 字节 (i32 是 4 字节) +------+------+ trait对象内存结构 由两个指针组成 数据指针：指向实际数据的指针 虚表指针：指向虚表的指针 虚表包含 析构函数指针 类型大小和对齐信息 trait中所有方法的函数指针 trait Shape { fn area(&amp;self) -&gt; f64; fn scale(&amp;mut self, factor: f64); } struct Circle { radius: f64, } impl Shape for Circle { fn area(&amp;self) -&gt; f64 { std::f64::consts::PI * self.radius * self.radius } fn scale(&amp;mut self, factor: f64) { self.radius *= factor; } } let circle: Box&lt;dyn Shape&gt; = Box::new(Circle { radius: 1.0 }); 内存布局 +------------------+ +------------------+ | 数据指针 | --&gt; | radius: f64 | +------------------+ +------------------+ | 虚表指针 | --&gt; +------------------+ +------------------+ | 指向 Circle 的虚表 | +------------------+ | drop_in_place | // 析构函数 | size | // 类型大小 | align | // 对齐方式 | area() 函数指针 | // 第一个 trait 方法 | scale() 函数指针 | // 第二个 trait 方法 +------------------+ 方法调用过程 普通对象方法: 普通对象方法存储在代码段中，不占用对象内存，调用时直接跳转到固定地址。 trait对象方法： 获取虚表指针 从虚表中获取函数指针 调用函数 ">
-<meta property='og:url' content='https://www.dust-zed.site/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/'>
+<meta property='og:url' content='http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-05T18:49:07&#43;08:00'/><meta property='article:modified_time' content='2025-09-05T18:49:07&#43;08:00'/>
 <meta name="twitter:title" content="普通对象和trait对象">
@@ -407,7 +407,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

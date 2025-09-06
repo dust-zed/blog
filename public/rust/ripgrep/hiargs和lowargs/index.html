@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head><meta charset='utf-8'>
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n">
 <title>HiArgs和lowArgs</title>
 
-<link rel='canonical' href='https://www.dust-zed.site/rust/ripgrep/hiargs%E5%92%8Clowargs/'>
+<link rel='canonical' href='http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="HiArgs和lowArgs">
 <meta property='og:description' content="核心设计模式 1. 两层参数结构 LowArgs (原始参数) → HiArgs (处理后的配置) 设计理念\nLowArgs：接近CLI原始输入，最小验证 HiArgs：业务就绪的配置，包含复杂对象和计算结果 最小验证：最小验证的核心是将不受信任数据快速转变为可信数据 2. 字段组织策略 简单配置字段：\nbyte_offset: bool, column: bool, heading: bool, quiet: bool, // ... 直接从LowArgs 复制或简单计算 复杂构建对象\nglobs: ignore::overrides::Override, pre_globs: ignore::overrides::Overrode, types: ignore::types::Types, patterns: Patterns, paths: Paths, 环境感知字段\nis_terminal_stdout: bool, // 检测输出终端 mmap_choice: grep::searcher::MmapChoice, // 内存映射策略 hyperlink_config: grep::printer::HyperLinkConfig, // 超链接配置 关键设计原则 1. 延迟构建模式 复杂对象在 from_low_args 中统一构建：\nlet globs = globs(&amp;state, &amp;low)?; // 需要所有 glob 模式 let types = types(&amp;low)?; // 需要所有类型规则 let patterns = Patterns::from_low_args(...)?; // 需要所有模式 2. 状态依赖管理 通过 State 结构体管理环境状态\nlet mut state = State::new()?; // state 包含：终端检测、stdin_cosumed、工作目录等 3. 配置计算模式 根据环境和标志动态计算最终配置：\n">
-<meta property='og:url' content='https://www.dust-zed.site/rust/ripgrep/hiargs%E5%92%8Clowargs/'>
+<meta property='og:url' content='http://localhost:1313/rust/ripgrep/hiargs%E5%92%8Clowargs/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-08-24T20:57:16&#43;08:00'/><meta property='article:modified_time' content='2025-08-24T20:57:16&#43;08:00'/>
 <meta name="twitter:title" content="HiArgs和lowArgs">
@@ -746,7 +746,7 @@
                 src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
                 
                 >
-            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
 <script>
     (function () {
         const customFont = document.createElement('link');

@@ -1,6 +1,6 @@
 +++
 date = '2025-08-27T10:28:07+08:00'
-draft = true
+draft = false
 title = 'ripgrep的完整架构'
 categories = ['rust', 'ripgrep']
 

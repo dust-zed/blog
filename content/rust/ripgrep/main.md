@@ -1,6 +1,6 @@
 +++
 date = '2025-08-22T22:03:01+08:00'
-draft = true
+draft = false
 title = 'ripgrep的main函数'
 categories = ['rust', 'ripgrep']
 
