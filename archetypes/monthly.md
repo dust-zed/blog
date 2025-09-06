@@ -1,8 +1,9 @@
 +++
-title: "Monthly Learning Retrospective - {{ dateFormat "2006-01-02" .Date }}"
-date: {{ .Date }}
+title =  "Monthly Learning Retrospective - {{ dateFormat "2006-01-02" .Date }}"
+date =  {{ .Date }}
 draft = true
-categories: ["summary"]
+categories =  ["summary"]
+
 +++
 
 ### Major Accomplishments

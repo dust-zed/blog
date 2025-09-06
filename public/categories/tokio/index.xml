@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Tokio on zed的博客</title>
+        <link>http://localhost:1313/categories/tokio/</link>
+        <description>Recent content in Tokio on zed的博客</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <lastBuildDate>Fri, 05 Sep 2025 18:51:54 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/tokio/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Waker和Context机制</title>
+        <link>http://localhost:1313/rust/tokio/waker%E5%92%8Ccontext%E6%9C%BA%E5%88%B6/</link>
+        <pubDate>Fri, 05 Sep 2025 18:51:54 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/waker%E5%92%8Ccontext%E6%9C%BA%E5%88%B6/</guid>
+        <description>&lt;h4 id=&#34;基本概念&#34;&gt;基本概念
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Context&lt;/strong&gt;：提供异步任务执行的上下文信息，最重要的是包含Waker&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Waker&lt;/strong&gt;：用于唤醒被挂起的异步任务的机制&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Poll&lt;/strong&gt;：Future的轮询状态, &lt;code&gt;Ready&lt;/code&gt;或&lt;code&gt;Pending&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;context的定义&#34;&gt;Context的定义
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Context&lt;/code&gt; 是Rust标准库中&lt;code&gt;std::task&lt;/code&gt;模块提供的结构体，它主要包含：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;对&lt;code&gt;Waker&lt;/code&gt;的引用&lt;/li&gt;
+&lt;li&gt;可选的任务本地存储&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在Tokio中，&lt;code&gt;Context&lt;/code&gt;主要用于：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Future &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; MyFuture {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Output&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; ();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;poll&lt;/span&gt;(self: &lt;span style=&#34;color:#a6e22e&#34;&gt;Pin&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; Self&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, cx: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; Context&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&amp;#39;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Poll&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Self::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 使用 cx.waker() 获取 Waker
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 当 I/O 未就绪时，保存 Waker 以便后续唤醒
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;waker的核心实现&#34;&gt;Waker的核心实现
+&lt;/h4&gt;&lt;p&gt;在Tokio中，&lt;code&gt;Waker&lt;/code&gt;是异步任务通知机制的核心。先看看Tokio中的关键实现&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WakerRef&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt;, S: &amp;#39;static&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  waker: &lt;span style=&#34;color:#a6e22e&#34;&gt;ManuallyDrop&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Waker&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt; Header, S)&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;waker的创建&#34;&gt;Waker的创建
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;raw_waker&lt;/span&gt;(header: &lt;span style=&#34;color:#a6e22e&#34;&gt;NonNull&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;RawWaker&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ptr &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; header.as_ptr() &lt;span style=&#34;color:#66d9ef&#34;&gt;as&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt;();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  RawWaker::new(ptr, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;WAKER_VTABLE&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;waker的vtable&#34;&gt;Waker的VTable
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;WAKER_VTABLE&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;RawWakerVTable&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; RawWakerVTable::new(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    clone_waker,    &lt;span style=&#34;color:#75715e&#34;&gt;// 克隆 Waker
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    wake_by_val,    &lt;span style=&#34;color:#75715e&#34;&gt;// 消费 Waker 并唤醒任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    wake_by_ref,    &lt;span style=&#34;color:#75715e&#34;&gt;// 不消费 Waker 的情况下唤醒任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    drop_waker,     &lt;span style=&#34;color:#75715e&#34;&gt;// 释放 Waker 资源
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;waker的生命周期&#34;&gt;waker的生命周期
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;创建： 当任务被创建时，会创建一个对应的Waker&lt;/li&gt;
+&lt;li&gt;唤醒：当I/O事件就绪或定时器触发&lt;/li&gt;
+&lt;li&gt;消费：任务被唤醒后，Waker会被消费掉&lt;/li&gt;
+&lt;li&gt;重建：如果需要再次唤醒任务，需要重新创建Waker&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;工作流程示例&#34;&gt;工作流程示例
+&lt;/h4&gt;&lt;p&gt;简易的任务唤醒流程：&lt;/p&gt;
+&lt;h5 id=&#34;1-任务创建&#34;&gt;1. 任务创建
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; task &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//异步代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tokio::spawn(task);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-waker创建&#34;&gt;2. Waker创建
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;Tokio运行时为任务创建Waker&lt;/li&gt;
+&lt;li&gt;Waker包含指向任务状态的指针&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-io注册&#34;&gt;3. I/O注册
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 当调用类似 TcpStream::read 时
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ready &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ready!&lt;/span&gt;(self.io.poll_read_ready(cx)&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;4-任务挂起&#34;&gt;4. 任务挂起
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;如果I/O未就绪，保存Waker&lt;/li&gt;
+&lt;li&gt;返回&lt;code&gt;Poll::Pending&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;5-事件就绪&#34;&gt;5. 事件就绪
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;I/O事件就绪，保存Waker&lt;/li&gt;
+&lt;li&gt;事件循环调用保存的Waker的&lt;code&gt;wake()&lt;/code&gt;方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;6-任务恢复&#34;&gt;6. 任务恢复
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;Waker将任务放回就绪队列&lt;/li&gt;
+&lt;li&gt;调度器再次轮询该任务&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Pin和Unpin</title>
+        <link>http://localhost:1313/rust/tokio/pin%E5%92%8Cunpin/</link>
+        <pubDate>Thu, 04 Sep 2025 15:03:11 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/pin%E5%92%8Cunpin/</guid>
+        <description>&lt;h4 id=&#34;pin和unpin的基本概念&#34;&gt;Pin和Unpin的基本概念
+&lt;/h4&gt;&lt;h5 id=&#34;pin的作用&#34;&gt;Pin的作用
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;Pin&amp;lt;P&amp;gt;&lt;/code&gt;是一个包装器，用于固定(pin)内存中的值，防止它被移动。这对于自引用结构体和异步编程中的Future特别重要。&lt;/p&gt;
+&lt;h5 id=&#34;unpin的特质&#34;&gt;Unpin的特质
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;Unpin&lt;/code&gt;是一个自动派生的标记trait，表示类型可以安全地移出&lt;code&gt;Pin&lt;/code&gt;。大多数类型都自动实现了&lt;code&gt;Unpin&lt;/code&gt;。实现了&lt;code&gt;Unpin&lt;/code&gt;的类型可以安全地从&lt;code&gt;Pin&lt;/code&gt;中移出。&lt;/p&gt;
+&lt;h4 id=&#34;asyncawait为何需要pin&#34;&gt;async/await为何需要Pin
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;async&lt;/code&gt;块可能包含自引用，&lt;code&gt;async&lt;/code&gt;转变为&lt;code&gt;Future&lt;/code&gt;结构体,它是一个状态机&lt;/li&gt;
+&lt;li&gt;当&lt;code&gt;.await&lt;/code&gt;暂停执行时，局部变量会保存在生成的Future中&lt;/li&gt;
+&lt;li&gt;如果这些变量相互引用，移动Future会导致悬垂指针&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;生命周期管理层次&#34;&gt;生命周期管理层次
+&lt;/h4&gt;&lt;h5 id=&#34;1-变量级别&#34;&gt;1. 变量级别
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;局部变量被移动到Future状态机中&lt;/li&gt;
+&lt;li&gt;生命周期与Future实例绑定&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-future级别&#34;&gt;2. Future级别
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;由执行器拥有和管理&lt;/li&gt;
+&lt;li&gt;执行器决定何时poll，何时drop&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-执行器级别&#34;&gt;3. 执行器级别
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;管理所有Future的生命周期&lt;/li&gt;
+&lt;li&gt;负责调度和管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-栈帧与状态机&#34;&gt;4. 栈帧与状态机
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;同步：变量生命周期由栈帧管理&lt;/li&gt;
+&lt;li&gt;异步：变量生命周期由状态机管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;任务队列与future&#34;&gt;任务队列与Future
+&lt;/h4&gt;&lt;h5 id=&#34;一次性移动&#34;&gt;一次性移动
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;Future被移动到执行器后，由Pin保证不会再次移动&lt;/li&gt;
+&lt;li&gt;执行器内部使用指针来引用Future&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;任务队列的实现&#34;&gt;任务队列的实现
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 伪代码：任务队列中的 Future
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Task&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    future: &lt;span style=&#34;color:#a6e22e&#34;&gt;Pin&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; Future&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Output &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; ()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; Send&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 任务队列存储的是 Box&amp;lt;Task&amp;gt;，而不是直接存储 Future
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; task_queue: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Task&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;.;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;工作窃取调度&#34;&gt;工作窃取调度
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;当任务在线程间转移时，转移的是&lt;code&gt;Box&amp;lt;Task&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Box&lt;/code&gt;的移动不会影响内部Future的内存地址&lt;/li&gt;
+&lt;li&gt;Pin 保证的是 &lt;code&gt;Box&lt;/code&gt; 内部的 Future 不会被移出&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

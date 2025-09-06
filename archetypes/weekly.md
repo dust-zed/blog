@@ -1,8 +1,8 @@
 +++
-title: "Weekly Learning Log - {{ dateFormat "2006-01-02" .Date }}"
-date: {{ .Date }}
+title = "Weekly Learning Log - {{ dateFormat "2006-01-02" .Date }}"
+date = {{ .Date }}
 draft = true
-categories: ["summary"]
+categories = ["summary"]
 
 +++
 

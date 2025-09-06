@@ -6,7 +6,315 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Mon, 01 Sep 2025 17:16:28 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 05 Sep 2025 18:49:07 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>普通对象和trait对象</title>
+        <link>http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</link>
+        <pubDate>Fri, 05 Sep 2025 18:49:07 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E6%99%AE%E9%80%9A%E5%AF%B9%E8%B1%A1%E5%92%8Ctrait%E5%AF%B9%E8%B1%A1/</guid>
+        <description>&lt;h4 id=&#34;普通对象的内存结构&#34;&gt;普通对象的内存结构
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;只包含数据成员&lt;/li&gt;
+&lt;li&gt;方法不占用内存空间&lt;/li&gt;
+&lt;li&gt;方法调用是静态分发的，方法存储在代码段中，调用时直接跳转到固定地址&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Point&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  x: &lt;span style=&#34;color:#66d9ef&#34;&gt;i32&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  y: &lt;span style=&#34;color:#66d9ef&#34;&gt;i32&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;///内存结构
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------+------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; x: &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; y: &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 8 字节 (i32 是 4 字节)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------+------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;trait对象内存结构&#34;&gt;trait对象内存结构
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;由两个指针组成
+&lt;ul&gt;
+&lt;li&gt;数据指针：指向实际数据的指针&lt;/li&gt;
+&lt;li&gt;虚表指针：指向虚表的指针&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;虚表包含
+&lt;ul&gt;
+&lt;li&gt;析构函数指针&lt;/li&gt;
+&lt;li&gt;类型大小和对齐信息&lt;/li&gt;
+&lt;li&gt;trait中所有方法的函数指针&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; Shape {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;area&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;scale&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, factor: &lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Circle&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    radius: &lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Shape &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Circle {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;area&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        std::&lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt;::consts::&lt;span style=&#34;color:#66d9ef&#34;&gt;PI&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; self.radius &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; self.radius
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;scale&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, factor: &lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        self.radius &lt;span style=&#34;color:#f92672&#34;&gt;*=&lt;/span&gt; factor;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; circle: Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; Shape&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Box::new(Circle { radius: &lt;span style=&#34;color:#ae81ff&#34;&gt;1.0&lt;/span&gt; });
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;内存布局&#34;&gt;内存布局
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;     &lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;数据指针&lt;/span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;-&amp;gt; &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; radius: &lt;span style=&#34;color:#66d9ef&#34;&gt;f64&lt;/span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;     &lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;虚表指针&lt;/span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;-&amp;gt; &lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;指向&lt;/span&gt; Circle &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;的虚表&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; drop_in_place    &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 析构函数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; size             &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 类型大小
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; align            &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 对齐方式
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; area() &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;函数指针&lt;/span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 第一个 trait 方法
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; scale() &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;函数指针&lt;/span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 第二个 trait 方法
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;                        &lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;方法调用过程&#34;&gt;方法调用过程
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;普通对象方法&lt;/strong&gt;: 普通对象方法存储在代码段中，不占用对象内存，调用时直接跳转到固定地址。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;trait对象方法&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;获取虚表指针&lt;/li&gt;
+&lt;li&gt;从虚表中获取函数指针&lt;/li&gt;
+&lt;li&gt;调用函数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Rust中基础网络编程</title>
+        <link>http://localhost:1313/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</link>
+        <pubDate>Fri, 05 Sep 2025 02:04:09 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E4%B8%AD%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</guid>
+        <description>&lt;h3 id=&#34;rust-网络编程基础tcp-与-udp&#34;&gt;Rust 网络编程基础：TCP 与 UDP
+&lt;/h3&gt;&lt;h4 id=&#34;tcp-与-udp-基础概念&#34;&gt;TCP 与 UDP 基础概念
+&lt;/h4&gt;&lt;h5 id=&#34;tcp-传输控制协议&#34;&gt;TCP (传输控制协议)
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;面向连接&lt;/strong&gt;：通信前需要建立连接，使用 &lt;code&gt;TcpStream&lt;/code&gt; 表示连接&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;可靠性&lt;/strong&gt;：保证数据按序到达，自动处理丢包重传&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;流式协议&lt;/strong&gt;：数据没有明确边界，需要应用层处理消息分帧&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;流量控制&lt;/strong&gt;：内置流量控制和拥塞控制机制&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;适用场景&lt;/strong&gt;：文件传输、网页浏览、电子邮件等需要可靠传输的场景&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;udp-用户数据报协议&#34;&gt;UDP (用户数据报协议)
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;无连接&lt;/strong&gt;：每个数据包独立发送，使用 &lt;code&gt;UdpSocket&lt;/code&gt; 进行通信&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;不可靠&lt;/strong&gt;：不保证数据包顺序和可达性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;数据报&lt;/strong&gt;：每个数据包有明确边界&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;低延迟&lt;/strong&gt;：没有连接建立和确认开销&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;适用场景&lt;/strong&gt;：实时音视频、在线游戏、DNS 查询等对延迟敏感的应用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;rust-中的-tcp-编程&#34;&gt;Rust 中的 TCP 编程
+&lt;/h3&gt;&lt;h4 id=&#34;服务端&#34;&gt;服务端
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; tokio::net::{TcpListener, TcpStream};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;server&lt;/span&gt;(addr: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(), Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; std::error::Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; listener &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; TcpListener::bind(addr).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Server listening on &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, addr);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;loop&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; stream, addr) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; listener.accept().&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Client connected from: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, addr);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 为每个连接创建新任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        tokio::spawn(&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;move&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#75715e&#34;&gt;// 处理连接
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;            handle_connection(stream).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        });
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;客户端&#34;&gt;客户端
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; tokio::net::TcpStream;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;client&lt;/span&gt;(addr: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(), Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; std::error::Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; stream &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; TcpStream::connect(addr).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Connected to server at &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, addr);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 发送和接收数据...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    Ok(())
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;rust-中的-udp-编程&#34;&gt;Rust 中的 UDP 编程
+&lt;/h3&gt;&lt;h4 id=&#34;服务端-1&#34;&gt;服务端
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; tokio::net::UdpSocket;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;server&lt;/span&gt;(addr: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(), Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; std::error::Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; socket &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; UdpSocket::bind(addr).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;UDP server listening on &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, addr);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; buf &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;; &lt;span style=&#34;color:#ae81ff&#34;&gt;1024&lt;/span&gt;];
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;loop&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (len, addr) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; socket.recv_from(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; buf).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Received &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt; bytes from &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, len, addr);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 处理数据并回复
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        socket.send_to(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;buf[&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;len], &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;addr).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;客户端-1&#34;&gt;客户端
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; tokio::net::UdpSocket;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::net::SocketAddr;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;client&lt;/span&gt;(server_addr: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;) -&amp;gt; Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(), Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; std::error::Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 绑定到任意可用端口
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; bind_addr &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; server_addr.contains(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;:&amp;#39;&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;[::]:0&amp;#34;&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// IPv6
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    } &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;0.0.0.0:0&amp;#34;&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// IPv4
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; socket &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; UdpSocket::bind(bind_addr).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; server_addr: &lt;span style=&#34;color:#a6e22e&#34;&gt;SocketAddr&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; server_addr.parse()&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 可选：连接到服务器地址，之后可以使用 send/recv 而非 send_to/recv_from
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    socket.connect(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;server_addr).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 发送数据
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    socket.send(&lt;span style=&#34;color:#e6db74&#34;&gt;b&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Hello, UDP!&amp;#34;&lt;/span&gt;).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 接收响应
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; buf &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; [&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;; &lt;span style=&#34;color:#ae81ff&#34;&gt;1024&lt;/span&gt;];
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; len &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; socket.recv(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; buf).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Received: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, String::from_utf8_lossy(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;buf[&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;len]));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(())
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;关键区别总结&#34;&gt;关键区别总结
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;连接处理&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;TCP 需要显式接受连接 (&lt;code&gt;accept&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;UDP 直接发送/接收数据报&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;数据边界&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;TCP 是流式协议，需要应用层处理消息边界&lt;/li&gt;
+&lt;li&gt;UDP 保持消息边界，每个 &lt;code&gt;recv_from&lt;/code&gt; 对应一个完整的消息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;可靠性&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;TCP 保证可靠传输&lt;/li&gt;
+&lt;li&gt;UDP 不保证，需要应用层处理丢包和乱序&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;性能&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;TCP 有连接建立和确认开销&lt;/li&gt;
+&lt;li&gt;UDP 延迟更低，适合实时应用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;端口和连接&#34;&gt;端口和连接
+&lt;/h4&gt;&lt;h5 id=&#34;1-监听端口&#34;&gt;1. 监听端口
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;一个端口只能被一个进程监听&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-连接与端口的关系&#34;&gt;2. 连接与端口的关系
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;一个端口可以承载多个连接&lt;/li&gt;
+&lt;li&gt;每个连接由四元组唯一标识
+&lt;ul&gt;
+&lt;li&gt;源IP&lt;/li&gt;
+&lt;li&gt;源端口&lt;/li&gt;
+&lt;li&gt;目标IP&lt;/li&gt;
+&lt;li&gt;目标端口&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;套接字与连接&#34;&gt;套接字与连接
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;每个Tcp连接对应一个唯一的套接字&lt;/li&gt;
+&lt;li&gt;监听套接字负责接受新连接&lt;/li&gt;
+&lt;li&gt;已连接套接字处理具体的传输&lt;/li&gt;
+&lt;li&gt;Tcp的“有连接”本质是指&lt;strong&gt;通信双方维护共同的状态信息&lt;/strong&gt;，而Udp的“无连接”是指&lt;strong&gt;每个数据包都是独立处理的&lt;/strong&gt;，不依赖之前的通信状态。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;选择建议&#34;&gt;选择建议
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;选择 TCP 当：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;需要可靠的数据传输&lt;/li&gt;
+&lt;li&gt;数据传输的完整性比实时性更重要&lt;/li&gt;
+&lt;li&gt;传输大量数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;选择 UDP 当：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;低延迟比可靠性更重要&lt;/li&gt;
+&lt;li&gt;可以容忍少量数据丢失&lt;/li&gt;
+&lt;li&gt;需要广播或多播功能&lt;/li&gt;
+&lt;li&gt;传输小数据包且频繁&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这两种协议各有优势，选择哪种取决于您的具体应用需求。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>为何抽象</title>
+        <link>http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</link>
+        <pubDate>Wed, 03 Sep 2025 22:56:23 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E4%B8%BA%E4%BD%95%E6%8A%BD%E8%B1%A1/</guid>
+        <description>&lt;h4 id=&#34;抽象的核心目的&#34;&gt;抽象的核心目的
+&lt;/h4&gt;&lt;p&gt;抽象的主要目的是&lt;strong&gt;管理变化&lt;/strong&gt;，具体来说：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;识别变化点&lt;/strong&gt;：确定哪些部分可能会变化&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;隔离变化&lt;/strong&gt;：将变化限制在局部&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;统一接口&lt;/strong&gt;：为不同的实现提供一致的交互方式&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;抽象的核心价值&#34;&gt;抽象的核心价值
+&lt;/h4&gt;&lt;p&gt;在变化中寻求平衡稳定&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;稳定层&lt;/strong&gt;：抽象定义“做什么”（接口/契约）&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;变化层&lt;/strong&gt;：实现处理“怎么做”（具体细节）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;solid原则&#34;&gt;SOLID原则
+&lt;/h4&gt;&lt;h5 id=&#34;1-单一职责原则&#34;&gt;1. 单一职责原则
+&lt;/h5&gt;&lt;p&gt;一个类应该只有一个引起它变化的原因&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;每个类应该只负责一项职责&lt;/li&gt;
+&lt;li&gt;将不同的功能分离到不同的类中&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-开闭原则&#34;&gt;2. 开闭原则
+&lt;/h5&gt;&lt;p&gt;软件实体（类、模块、函数等）应该对扩展开放，对修改关闭&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通过添加新代码开扩展功能，而不是修改现有代码&lt;/li&gt;
+&lt;li&gt;使用抽象来定义契约&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-里氏替换原则&#34;&gt;3. 里氏替换原则
+&lt;/h5&gt;&lt;p&gt;子类型必须能够替换其父类型而不影响程序的正确性。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;子类应该扩展父类的行为，而不是改变它&lt;/li&gt;
+&lt;li&gt;子类不应该加强前置条件或削弱后置条件&lt;/li&gt;
+&lt;li&gt;子类不应该抛出父类不会抛出的异常&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-接口隔离原则&#34;&gt;4. 接口隔离原则
+&lt;/h5&gt;&lt;p&gt;客户端不应该被迫依赖他们不使用的接口&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;将大接口拆分为更小、更具体的接口&lt;/li&gt;
+&lt;li&gt;类不应该实现他们不需要的方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;5-依赖倒置&#34;&gt;5. 依赖倒置
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;高层模块&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;→&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;依赖&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;→&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;抽象接口&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;←&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;实现&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;←&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;低层模块&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        </item>
+        <item>
         <title>Rust知识问答</title>
         <link>http://localhost:1313/rust/rust%E7%9F%A5%E8%AF%86%E9%97%AE%E7%AD%94/</link>
         <pubDate>Mon, 01 Sep 2025 17:16:28 +0800</pubDate>
@@ -52,6 +360,15 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 这里不能再调用 f()，因为 f 已经被移动
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;最终f所有权被转移进&lt;code&gt;call_once&lt;/code&gt;，并随着call_once的结束而&lt;code&gt;drop&lt;/code&gt;了，f被释放了，内部捕获的所有权自然也被释放。&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;FnOnce&lt;/code&gt;、&lt;code&gt;FnMut&lt;/code&gt;、&lt;code&gt;Fn&lt;/code&gt;这些是根据如何捕获环境而区分的，并不影响函数签名，&lt;code&gt;FnMut&lt;/code&gt;也可以接收&lt;strong&gt;所有权参数&lt;/strong&gt;&lt;/p&gt;
+&lt;h5 id=&#34;什么是零成本抽象&#34;&gt;什么是零成本抽象
+&lt;/h5&gt;&lt;p&gt;零成本抽象的核心就是：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;编译期完成工作&lt;/strong&gt;：类型检查、泛型单态化、内联优化等在编译时完成&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;零运行时开销&lt;/strong&gt;：不引入额外的运行时检查或间接调用&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;无额外内存分配&lt;/strong&gt;：避免不必要的堆分配，尽可能使用栈内存&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;透明优化&lt;/strong&gt;：高级抽象在编译后生成的机器码与手写底层代码相当&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这正是 Rust 能在提供高级语言特性的同时，仍能保持与 C/C++ 相媲美的性能的关键所在。&lt;/p&gt;
 </description>
         </item>
         <item>
@@ -148,11 +465,17 @@
 &lt;li&gt;&lt;strong&gt;实现类型&lt;/strong&gt;必须满足：&lt;code&gt;Self: &#39;static&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;和&lt;code&gt;(String, str)&lt;/code&gt;
+&lt;li&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;、&lt;code&gt;(String, str)&lt;/code&gt;和&lt;code&gt;(BytesMut/Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8]&lt;/code&gt;
 &lt;ul&gt;
-&lt;li&gt;Path和str都是DST类型&lt;/li&gt;
+&lt;li&gt;Path，str都是DST类型&lt;/li&gt;
 &lt;li&gt;PathBuf和String都是拥有所有权的&lt;/li&gt;
 &lt;li&gt;文件路径长度和字符串长度在编译时未知&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;和&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;的区别
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;获取整个数组的引用，类型是&lt;code&gt;&amp;amp;[u8; N]&lt;/code&gt;或&lt;code&gt;&amp;amp;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;（固定大小数组）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;获取数组的切片引用，类型是&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;（动态大小切片）&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;

@@ -95,6 +95,16 @@
         
         
         <li >
+            <a href='/learning-reflection/' >
+                
+                
+                
+                <span>Learning-Reflections</span>
+            </a>
+        </li>
+        
+        
+        <li >
             <a href='/tutorials/' >
                 
                 
@@ -243,6 +253,15 @@
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 这里不能再调用 f()，因为 f 已经被移动
 </span></span></span></code></pre></div><p>最终f所有权被转移进<code>call_once</code>，并随着call_once的结束而<code>drop</code>了，f被释放了，内部捕获的所有权自然也被释放。</p>
 <p><code>FnOnce</code>、<code>FnMut</code>、<code>Fn</code>这些是根据如何捕获环境而区分的，并不影响函数签名，<code>FnMut</code>也可以接收<strong>所有权参数</strong></p>
+<h5 id="什么是零成本抽象">什么是零成本抽象
+</h5><p>零成本抽象的核心就是：</p>
+<ol>
+<li><strong>编译期完成工作</strong>：类型检查、泛型单态化、内联优化等在编译时完成</li>
+<li><strong>零运行时开销</strong>：不引入额外的运行时检查或间接调用</li>
+<li><strong>无额外内存分配</strong>：避免不必要的堆分配，尽可能使用栈内存</li>
+<li><strong>透明优化</strong>：高级抽象在编译后生成的机器码与手写底层代码相当</li>
+</ol>
+<p>这正是 Rust 能在提供高级语言特性的同时，仍能保持与 C/C++ 相媲美的性能的关键所在。</p>
 
 </section>
 
