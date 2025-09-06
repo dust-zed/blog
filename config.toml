@@ -6,6 +6,8 @@ DefaultContentLanguage = "zh-cn"
 SectionPagesMenu = "main"
 googleAnalytics = ""
 enableRobotsTXT = true
+buildDrafts = false
+buildFuture = false
 
 [sitemap]
 changefreq = "monthly"

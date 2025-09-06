@@ -6,7 +6,150 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 05 Sep 2025 18:51:54 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sat, 06 Sep 2025 18:53:34 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Runtime的核心概念</title>
+        <link>http://localhost:1313/rust/tokio/runtime%E7%9A%84%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5/</link>
+        <pubDate>Sat, 06 Sep 2025 18:53:34 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/runtime%E7%9A%84%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5/</guid>
+        <description>&lt;h4 id=&#34;1-runtime基本架构&#34;&gt;1. Runtime基本架构
+&lt;/h4&gt;&lt;p&gt;Tokio的runtime是异步应用的核心，主要负责：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;任务调度&lt;/li&gt;
+&lt;li&gt;I/O事件循环&lt;/li&gt;
+&lt;li&gt;定时器管理&lt;/li&gt;
+&lt;li&gt;线程池管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;让我们看看runtime的主要组件：&lt;/p&gt;
+&lt;h5 id=&#34;11-runtime结构体&#34;&gt;1.1 Runtime结构体
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;Runtime&lt;/code&gt;结构体是整个异步运行时的入口点。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Runtime&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#e6db74&#34;&gt;/// Task scheduler
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;  scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;Scheduler&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#e6db74&#34;&gt;/// handles to runtime, also contains driver handles
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;  handle: &lt;span style=&#34;color:#a6e22e&#34;&gt;Handle&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#e6db74&#34;&gt;/// Blocking pool handle, used to signal shutdown
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;  blocking_pool: &lt;span style=&#34;color:#a6e22e&#34;&gt;BlockingPool&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;2-核心组件&#34;&gt;2. 核心组件
+&lt;/h4&gt;&lt;h5 id=&#34;21-scheduler&#34;&gt;2.1 scheduler
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;负责任务的调度和执行&lt;/li&gt;
+&lt;li&gt;管理任务队列和任务状态&lt;/li&gt;
+&lt;li&gt;决定任务的执行顺序&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;设计原因&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;将调度逻辑与运行时其他部分解耦&lt;/li&gt;
+&lt;li&gt;支持不同的调度策略（单线程/多线程）&lt;/li&gt;
+&lt;li&gt;使调度器可以独立测试和优化&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;22-handle&#34;&gt;2.2 handle
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;提供对运行时的轻量级引用&lt;/li&gt;
+&lt;li&gt;允许在运行时外部分发任务&lt;/li&gt;
+&lt;li&gt;包含对I/O驱动、定时器等组件的访问&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;设计原因&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;避免直接暴露&lt;code&gt;Runtime&lt;/code&gt;的所有权&lt;/li&gt;
+&lt;li&gt;允许多个地方持有对运行时的引用&lt;/li&gt;
+&lt;li&gt;支持跨线程发送任务&lt;/li&gt;
+&lt;li&gt;便于在异步代码中获取当前运行时&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;23-blockingpool&#34;&gt;2.3 BlockingPool
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;作用：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;管理阻塞操作的工作线程池&lt;/li&gt;
+&lt;li&gt;执行可能阻塞的操作，如文件I/O或CPU密集型计算&lt;/li&gt;
+&lt;li&gt;防止阻塞操作影响异步任务调度&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;设计原因&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;隔离阻塞操作，避免影响事件循环&lt;/li&gt;
+&lt;li&gt;提供明确的API来处理阻塞操作&lt;/li&gt;
+&lt;li&gt;允许控制阻塞操作的并发度&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-整体设计考量&#34;&gt;3. 整体设计考量
+&lt;/h4&gt;&lt;h5 id=&#34;1-关注点分离&#34;&gt;1. 关注点分离
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;scheduler&lt;/code&gt;处理任务调度&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;handle&lt;/code&gt;提供运行时访问&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;blocking_pool&lt;/code&gt;处理阻塞操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-所有权管理&#34;&gt;2. 所有权管理
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Runtime&lt;/code&gt;拥有所有资源的所有权&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Handle&lt;/code&gt;提供了共享访问的方式&lt;/li&gt;
+&lt;li&gt;资源在&lt;code&gt;Runtime&lt;/code&gt;被drop时正确清理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-性能优化&#34;&gt;3. 性能优化
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;轻量级的&lt;code&gt;Handle&lt;/code&gt;可以大量复制&lt;/li&gt;
+&lt;li&gt;阻塞操作不会阻塞事件循环&lt;/li&gt;
+&lt;li&gt;调度器可以根据需要选择单线程或多线程实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-灵活性&#34;&gt;4. 灵活性
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;支持不同的运行时配置&lt;/li&gt;
+&lt;li&gt;可以扩展新的调度策略&lt;/li&gt;
+&lt;li&gt;便于测试和模拟&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;handle为什么是runtime的轻量级引用&#34;&gt;Handle为什么是Runtime的轻量级引用
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;Runtime&lt;/code&gt;中的&lt;code&gt;scheduler&lt;/code&gt;字段&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这是主要的&lt;code&gt;Scheduler&lt;/code&gt;实例&lt;/li&gt;
+&lt;li&gt;它拥有任务队列和其他资源&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;Handle&lt;/code&gt;中的引用&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不是引用&lt;code&gt;Scheduler&lt;/code&gt;本身&lt;/li&gt;
+&lt;li&gt;而是引用&lt;code&gt;Scheduler&lt;/code&gt;内部的共享状态&lt;/li&gt;
+&lt;li&gt;这些状态通常是通过&lt;code&gt;Arc&lt;/code&gt;包装的独立结构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;具体实现&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;CurrentThread&lt;/code&gt;调度器可能使用&lt;code&gt;Rc&amp;lt;RefCell&amp;lt;...&amp;gt;&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MultiThread&lt;/code&gt;调度器使用&lt;code&gt;Arc&lt;/code&gt;进行线程间共享&lt;/li&gt;
+&lt;li&gt;这些内部结构在&lt;code&gt;Scheduler&lt;/code&gt;初始化创建&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;所有权关系&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;CurrentThread&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 内部使用 Rc 共享状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    shared: &lt;span style=&#34;color:#a6e22e&#34;&gt;Rc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Shared&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Handle&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 共享相同的 Rc&amp;lt;Shared&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    shared: &lt;span style=&#34;color:#a6e22e&#34;&gt;Rc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Shared&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;创建Handle时，会克隆&lt;code&gt;Arc/Rc&lt;/code&gt;增加引用计数&lt;/li&gt;
+&lt;li&gt;这样的设计体现了&lt;code&gt;Scheduler&lt;/code&gt;是&lt;code&gt;Runtime&lt;/code&gt;的核心&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;文件io为什么使用阻塞线程池&#34;&gt;文件I/O为什么使用阻塞线程池
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;网络I/O：现代操作系统提供了专门的非阻塞API（如Linux的epoll，macOS的kqueue）&lt;/li&gt;
+&lt;li&gt;文件I/O：大多数操作系统的文件系统API底层仍然是阻塞的&lt;/li&gt;
+&lt;li&gt;性能考量：文件操作通常比网络操作快得多；使用非阻塞API反而增加开销；磁盘I/O的延迟通常比网络I/O更可预测。&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Waker和Context机制</title>
         <link>http://localhost:1313/rust/tokio/waker%E5%92%8Ccontext%E6%9C%BA%E5%88%B6/</link>
         <pubDate>Fri, 05 Sep 2025 18:51:54 +0800</pubDate>
