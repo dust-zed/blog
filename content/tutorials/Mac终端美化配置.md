@@ -1,6 +1,6 @@
 +++
 date = '2025-09-08T12:19:22+08:00'
-draft = true
+draft = false
 title = 'Mac终端美化配置'
 categories = ['tutorials']
 
