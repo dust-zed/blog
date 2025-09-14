@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="park.rs是Tokio运行时中用于线程挂起和恢复的核心。\n核心结构 ParkThread 和 UnParkThread pub(crate) struct ParkThread { inner: Arc&lt;Inner&gt;, } pub(crate) struct UnParkThread { inner: Arc&lt;Inner&gt;, } 乍一看，这两根本就是相同的结构，但是它们是用在不同地方的，以及impl块有区别。\ntokio_thread_local! { static CURRENT_PARKER: ParkThread = ParkThread::new(); } 这是最重要的区别，ParkThread用在了线程局部变量上，而UnParkThread没有线程局部限制，另外UnParkThread只实现了unpark方法，目的是让其他线程只能唤醒。\nInner Inner结构体使用原子操作管理线程状态，这种状态管理是构建无锁并发原语的基础。\nconst EMPTY: usize = 0;\t//初始状态或unpark状态 const PARKED: usize = 1;\t//线程已挂起 const NOTIFIED: usize = 2;\t//线程已被通知唤醒 struct Inner { state: AtomicUsize, mutex: Mutex&lt;()&gt;, condvar: Condvar, } 为什么直接用Mutex&lt;Usize&gt;而是多用了一个AtomicUsize AtomicUsize是无锁的，比获取 Mutex快 内存顺序保证 状态更新使用原子操作，减少锁的持有时间 锁粒度控制，Mutex只保护条件变量的等待/通知时机 具体功能的实现 park() fn park(&amp;self) { if self .state .compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst) .is_ok() { return; // “虚假唤醒”保护，另一个线程unpark，此线程又park，避免了没必要的线程挂起和唤醒操作 } // 获取锁,并修改状态至parked let mut m: std::sync::MutexGuard&lt;&#39;_, ()&gt; = self.mutex.lock(); match self.state.compare_exchange(EMPTY, PARKED, SeqCst, SeqCst) { Ok(_) =&gt; {} Err(NOTIFIED) =&gt; { let old = self.state.swap(EMPTY, SeqCst); debug_assert_eq!(old, NOTIFIED, &#34;park state changed unexpectedly&#34;); return; } Err(actual) =&gt; panic!(&#34;inconsistent park state; actual = {actual}&#34;), } loop { m = self.condvar.wait(m).unwrap(); //释放锁并挂起线程等待notify if self .state .compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst) .is_ok() { return; //确保有效唤醒，NOTIFIED -&gt; EMPTY,忽略错误唤醒 } } } 双重检查模式 第一次检查避免不必要的锁获取 第二次检查处理竞态条件 虚假唤醒处理 loop { m = self.condvar.wait(m).unwrap(); if self.state.compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst).is_ok() { return; } } 这个循环确保只有收到真正的通知才会返回，处理了条件变量的虚假唤醒问题。\n">
+<title>Park 线程挂起的实现</title>
+
+<link rel='canonical' href='http://localhost:1313/rust/tokio/park-%E7%BA%BF%E7%A8%8B%E6%8C%82%E8%B5%B7%E7%9A%84%E5%AE%9E%E7%8E%B0/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Park 线程挂起的实现">
+<meta property='og:description' content="park.rs是Tokio运行时中用于线程挂起和恢复的核心。\n核心结构 ParkThread 和 UnParkThread pub(crate) struct ParkThread { inner: Arc&lt;Inner&gt;, } pub(crate) struct UnParkThread { inner: Arc&lt;Inner&gt;, } 乍一看，这两根本就是相同的结构，但是它们是用在不同地方的，以及impl块有区别。\ntokio_thread_local! { static CURRENT_PARKER: ParkThread = ParkThread::new(); } 这是最重要的区别，ParkThread用在了线程局部变量上，而UnParkThread没有线程局部限制，另外UnParkThread只实现了unpark方法，目的是让其他线程只能唤醒。\nInner Inner结构体使用原子操作管理线程状态，这种状态管理是构建无锁并发原语的基础。\nconst EMPTY: usize = 0;\t//初始状态或unpark状态 const PARKED: usize = 1;\t//线程已挂起 const NOTIFIED: usize = 2;\t//线程已被通知唤醒 struct Inner { state: AtomicUsize, mutex: Mutex&lt;()&gt;, condvar: Condvar, } 为什么直接用Mutex&lt;Usize&gt;而是多用了一个AtomicUsize AtomicUsize是无锁的，比获取 Mutex快 内存顺序保证 状态更新使用原子操作，减少锁的持有时间 锁粒度控制，Mutex只保护条件变量的等待/通知时机 具体功能的实现 park() fn park(&amp;self) { if self .state .compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst) .is_ok() { return; // “虚假唤醒”保护，另一个线程unpark，此线程又park，避免了没必要的线程挂起和唤醒操作 } // 获取锁,并修改状态至parked let mut m: std::sync::MutexGuard&lt;&#39;_, ()&gt; = self.mutex.lock(); match self.state.compare_exchange(EMPTY, PARKED, SeqCst, SeqCst) { Ok(_) =&gt; {} Err(NOTIFIED) =&gt; { let old = self.state.swap(EMPTY, SeqCst); debug_assert_eq!(old, NOTIFIED, &#34;park state changed unexpectedly&#34;); return; } Err(actual) =&gt; panic!(&#34;inconsistent park state; actual = {actual}&#34;), } loop { m = self.condvar.wait(m).unwrap(); //释放锁并挂起线程等待notify if self .state .compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst) .is_ok() { return; //确保有效唤醒，NOTIFIED -&gt; EMPTY,忽略错误唤醒 } } } 双重检查模式 第一次检查避免不必要的锁获取 第二次检查处理竞态条件 虚假唤醒处理 loop { m = self.condvar.wait(m).unwrap(); if self.state.compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst).is_ok() { return; } } 这个循环确保只有收到真正的通知才会返回，处理了条件变量的虚假唤醒问题。\n">
+<meta property='og:url' content='http://localhost:1313/rust/tokio/park-%E7%BA%BF%E7%A8%8B%E6%8C%82%E8%B5%B7%E7%9A%84%E5%AE%9E%E7%8E%B0/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-10T10:04:26&#43;08:00'/><meta property='article:modified_time' content='2025-09-10T10:04:26&#43;08:00'/>
+<meta name="twitter:title" content="Park 线程挂起的实现">
+<meta name="twitter:description" content="park.rs是Tokio运行时中用于线程挂起和恢复的核心。\n核心结构 ParkThread 和 UnParkThread pub(crate) struct ParkThread { inner: Arc&lt;Inner&gt;, } pub(crate) struct UnParkThread { inner: Arc&lt;Inner&gt;, } 乍一看，这两根本就是相同的结构，但是它们是用在不同地方的，以及impl块有区别。\ntokio_thread_local! { static CURRENT_PARKER: ParkThread = ParkThread::new(); } 这是最重要的区别，ParkThread用在了线程局部变量上，而UnParkThread没有线程局部限制，另外UnParkThread只实现了unpark方法，目的是让其他线程只能唤醒。\nInner Inner结构体使用原子操作管理线程状态，这种状态管理是构建无锁并发原语的基础。\nconst EMPTY: usize = 0;\t//初始状态或unpark状态 const PARKED: usize = 1;\t//线程已挂起 const NOTIFIED: usize = 2;\t//线程已被通知唤醒 struct Inner { state: AtomicUsize, mutex: Mutex&lt;()&gt;, condvar: Condvar, } 为什么直接用Mutex&lt;Usize&gt;而是多用了一个AtomicUsize AtomicUsize是无锁的，比获取 Mutex快 内存顺序保证 状态更新使用原子操作，减少锁的持有时间 锁粒度控制，Mutex只保护条件变量的等待/通知时机 具体功能的实现 park() fn park(&amp;self) { if self .state .compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst) .is_ok() { return; // “虚假唤醒”保护，另一个线程unpark，此线程又park，避免了没必要的线程挂起和唤醒操作 } // 获取锁,并修改状态至parked let mut m: std::sync::MutexGuard&lt;&#39;_, ()&gt; = self.mutex.lock(); match self.state.compare_exchange(EMPTY, PARKED, SeqCst, SeqCst) { Ok(_) =&gt; {} Err(NOTIFIED) =&gt; { let old = self.state.swap(EMPTY, SeqCst); debug_assert_eq!(old, NOTIFIED, &#34;park state changed unexpectedly&#34;); return; } Err(actual) =&gt; panic!(&#34;inconsistent park state; actual = {actual}&#34;), } loop { m = self.condvar.wait(m).unwrap(); //释放锁并挂起线程等待notify if self .state .compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst) .is_ok() { return; //确保有效唤醒，NOTIFIED -&gt; EMPTY,忽略错误唤醒 } } } 双重检查模式 第一次检查避免不必要的锁获取 第二次检查处理竞态条件 虚假唤醒处理 loop { m = self.condvar.wait(m).unwrap(); if self.state.compare_exchange(NOTIFIED, EMPTY, SeqCst, SeqCst).is_ok() { return; } } 这个循环确保只有收到真正的通知才会返回，处理了条件变量的虚假唤醒问题。\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/learning-reflection/' >
+                
+                
+                
+                <span>Learning-Reflections</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/rust/" >
+                Rust
+            </a>
+        
+            <a href="/categories/tokio/" >
+                Tokio
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/rust/tokio/park-%E7%BA%BF%E7%A8%8B%E6%8C%82%E8%B5%B7%E7%9A%84%E5%AE%9E%E7%8E%B0/">Park 线程挂起的实现</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Sep 10, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p><code>park.rs</code>是Tokio运行时中用于线程挂起和恢复的核心。</p>
+<h4 id="核心结构">核心结构
+</h4><h5 id="parkthread-和-unparkthread">ParkThread 和 UnParkThread
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">ParkThread</span> {
+</span></span><span style="display:flex;"><span>  inner: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>Inner<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">UnParkThread</span> {
+</span></span><span style="display:flex;"><span>  inner: <span style="color:#a6e22e">Arc</span><span style="color:#f92672">&lt;</span>Inner<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>乍一看，这两根本就是相同的结构，但是它们是用在不同地方的，以及impl块有区别。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#a6e22e">tokio_thread_local!</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">CURRENT_PARKER</span>: <span style="color:#a6e22e">ParkThread</span> <span style="color:#f92672">=</span> ParkThread::new();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这是最重要的区别，<code>ParkThread</code>用在了线程局部变量上，而<code>UnParkThread</code>没有线程局部限制，另外<code>UnParkThread</code>只实现了<code>unpark</code>方法，目的是让其他线程只能唤醒。</p>
+<h5 id="inner">Inner
+</h5><p><code>Inner</code>结构体使用原子操作管理线程状态，这种状态管理是构建无锁并发原语的基础。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">EMPTY</span>: <span style="color:#66d9ef">usize</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;			<span style="color:#75715e">//初始状态或unpark状态
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">PARKED</span>: <span style="color:#66d9ef">usize</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;		<span style="color:#75715e">//线程已挂起
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">NOTIFIED</span>: <span style="color:#66d9ef">usize</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;	<span style="color:#75715e">//线程已被通知唤醒
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Inner</span> {
+</span></span><span style="display:flex;"><span>  state: <span style="color:#a6e22e">AtomicUsize</span>,
+</span></span><span style="display:flex;"><span>  mutex: <span style="color:#a6e22e">Mutex</span><span style="color:#f92672">&lt;</span>()<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>  condvar: <span style="color:#a6e22e">Condvar</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>为什么直接用<code>Mutex&lt;Usize&gt;</code>而是多用了一个<code>AtomicUsize</code>
+<ul>
+<li><code>AtomicUsize</code>是无锁的，比获取 <code>Mutex</code>快</li>
+<li>内存顺序保证</li>
+<li>状态更新使用原子操作，减少锁的持有时间</li>
+<li>锁粒度控制，<code>Mutex</code>只保护条件变量的等待/通知时机</li>
+</ul>
+</li>
+</ul>
+<h4 id="具体功能的实现">具体功能的实现
+</h4><h5 id="park">park()
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">park</span>(<span style="color:#f92672">&amp;</span>self) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> self
+</span></span><span style="display:flex;"><span>  		.state
+</span></span><span style="display:flex;"><span>  		.compare_exchange(<span style="color:#66d9ef">NOTIFIED</span>, <span style="color:#66d9ef">EMPTY</span>, SeqCst, SeqCst)
+</span></span><span style="display:flex;"><span>  		.is_ok() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>; <span style="color:#75715e">// “虚假唤醒”保护，另一个线程unpark，此线程又park，避免了没必要的线程挂起和唤醒操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 获取锁,并修改状态至parked
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> m: <span style="color:#a6e22e">std</span>::sync::MutexGuard<span style="color:#f92672">&lt;</span>&#39;_, ()<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> self.mutex.lock();
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">match</span> self.state.compare_exchange(<span style="color:#66d9ef">EMPTY</span>, <span style="color:#66d9ef">PARKED</span>, SeqCst, SeqCst) {
+</span></span><span style="display:flex;"><span>    Ok(_) <span style="color:#f92672">=&gt;</span> {}
+</span></span><span style="display:flex;"><span>    Err(<span style="color:#66d9ef">NOTIFIED</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">let</span> old <span style="color:#f92672">=</span> self.state.swap(<span style="color:#66d9ef">EMPTY</span>, SeqCst);
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">debug_assert_eq!</span>(old, <span style="color:#66d9ef">NOTIFIED</span>, <span style="color:#e6db74">&#34;park state changed unexpectedly&#34;</span>);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    Err(actual) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">panic!</span>(<span style="color:#e6db74">&#34;inconsistent park state; actual = </span><span style="color:#e6db74">{actual}</span><span style="color:#e6db74">&#34;</span>),
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">loop</span> {
+</span></span><span style="display:flex;"><span>    m <span style="color:#f92672">=</span> self.condvar.wait(m).unwrap(); <span style="color:#75715e">//释放锁并挂起线程等待notify
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> self
+</span></span><span style="display:flex;"><span>    		.state
+</span></span><span style="display:flex;"><span>    		.compare_exchange(<span style="color:#66d9ef">NOTIFIED</span>, <span style="color:#66d9ef">EMPTY</span>, SeqCst, SeqCst)
+</span></span><span style="display:flex;"><span>    		.is_ok() 
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span>; <span style="color:#75715e">//确保有效唤醒，NOTIFIED -&gt; EMPTY,忽略错误唤醒
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="双重检查模式">双重检查模式
+</h6><ul>
+<li>第一次检查避免不必要的锁获取</li>
+<li>第二次检查处理竞态条件</li>
+</ul>
+<h6 id="虚假唤醒处理">虚假唤醒处理
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">loop</span> {
+</span></span><span style="display:flex;"><span>    m <span style="color:#f92672">=</span> self.condvar.wait(m).unwrap();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> self.state.compare_exchange(<span style="color:#66d9ef">NOTIFIED</span>, <span style="color:#66d9ef">EMPTY</span>, SeqCst, SeqCst).is_ok() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这个循环确保只有收到真正的通知才会返回，处理了条件变量的虚假唤醒问题。</p>
+<h5 id="unpark">unpark
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">unpark</span>(<span style="color:#f92672">&amp;</span>self) {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">//无论什么状态都置为NOTIFIED
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">match</span> self.state.swap(<span style="color:#66d9ef">NOTIFIED</span>, SeqCst) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">EMPTY</span> <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">NOTIFIED</span> <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">PARKED</span> <span style="color:#f92672">=&gt;</span> {}
+</span></span><span style="display:flex;"><span>    _ <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">panic!</span>(<span style="color:#e6db74">&#34;inconsistent state in unpark&#34;</span>),
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">//通过lock确保目标线程已经是PARKED了
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  drop(self.mutex.lock());
+</span></span><span style="display:flex;"><span>  self.condvar.notify_one();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>通过控制ParkThread和UnParkThread的方法，完成了功能分离，配合之前的<code>ThreadLocal</code>,完成了线程自己挂起，然后其他线程可以唤醒此线程的功能。同时UnParkThread也可以转为<code>Waker</code>。</p>
+<h5 id="shutdown">shutdown
+</h5><p>通知线程该醒了，具体的shutdown操作由调用者处理。</p>
+<h5 id="cachedparkthread">CachedParkThread
+</h5><ol>
+<li>缓存<code>Waker</code>避免重复分配</li>
+<li>提供<code>block_on</code>方法，这是运行时执行future的基础</li>
+<li>通过线程局部存储管理每个线程的parker</li>
+<li><code>_anchor: PhantomData&lt;Rc&lt;()&gt;&gt;</code>隐含了<code>!Send + !Sync</code>，CachedParkThread 不可跨线程。</li>
+</ol>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

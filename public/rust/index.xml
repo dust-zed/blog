@@ -6,13 +6,91 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Mon, 08 Sep 2025 11:16:22 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 12 Sep 2025 03:02:50 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>对Callback的理解</title>
+        <link>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</link>
+        <pubDate>Fri, 12 Sep 2025 03:02:50 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</guid>
+        <description>&lt;p&gt;个人理解：回调的本质就是将函数作为参数传递，而函数 近似 &lt;strong&gt;操作&lt;/strong&gt;。所以, 有别于普通参数传递的是&lt;strong&gt;数据&lt;/strong&gt;，&lt;code&gt;Callback&lt;/code&gt;传递的是&lt;strong&gt;操作&lt;/strong&gt;或&lt;strong&gt;逻辑&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id=&#34;优势&#34;&gt;优势
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;解耦&lt;/strong&gt;: 完成逻辑的分离,要&lt;strong&gt;做什么(调用者)&lt;strong&gt;与&lt;/strong&gt;何时做分离(被调用者)&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;内存高效&lt;/strong&gt;：避免一次性加载所有数据到内存，特别适合处理流式数据或大量数据(例如避免放到集合在遍历)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;灵活性&lt;/strong&gt;：允许调用者自定义处理逻辑，提高代码复用性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;实时处理&lt;/strong&gt;：数据可以立即处理，降低延迟&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;资源控制&lt;/strong&gt;：可以轻松实现提前终止、错误处理等控制流&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;组合性&lt;/strong&gt;：可以方便地组合多个回调函数，实现复杂的数据处理管道&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;事件驱动&lt;/strong&gt;：天然适合事件驱动的编程模式&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;接口一致性&lt;/strong&gt;：提供统一的接口处理不同类型的操作&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;控制反转&#34;&gt;控制反转
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;普通函数调用：调用者控制执行流程&lt;/li&gt;
+&lt;li&gt;回调：被调用者决定何时执行操作&lt;/li&gt;
+&lt;li&gt;控制权从调用者转移到被调用者&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>内存排序</title>
         <link>http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/</link>
         <pubDate>Mon, 08 Sep 2025 11:16:22 +0800</pubDate>
         
         <guid>http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/</guid>
-        <description></description>
+        <description>&lt;h4 id=&#34;1-为什么需要内存排序&#34;&gt;1. 为什么需要内存排序
+&lt;/h4&gt;&lt;p&gt;在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。&lt;/p&gt;
+&lt;h4 id=&#34;rust中的内存排序级别&#34;&gt;Rust中的内存排序级别
+&lt;/h4&gt;&lt;p&gt;Rust通过&lt;code&gt;std::sync::atomic::Ordering&lt;/code&gt;提供了几种内存排序级别：&lt;/p&gt;
+&lt;h5 id=&#34;21-relaxed&#34;&gt;2.1 Relaxed
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;最弱的内存排序&lt;/li&gt;
+&lt;li&gt;只保证当前操作的原子性&lt;/li&gt;
+&lt;li&gt;不保证操作之间的顺序&lt;/li&gt;
+&lt;li&gt;适用场景：简单的计数器、统计信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::sync::atomic::{AtomicUsize, Ordering};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; counter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; AtomicUsize::new(&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter.fetch_add(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, Ordering::Relaxed);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;22-release和acquire&#34;&gt;2.2 Release和Acquire
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Release&lt;/code&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;写屏障&lt;/strong&gt;，确保Release操作之前的所有内存操作（读/写）都完成&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;可见性保证&lt;/strong&gt;，确保这些修改对其他线程可见&lt;/li&gt;
+&lt;li&gt;发布数据到共享内存，标记数据准备就绪&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Acquire&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;读屏障&lt;/strong&gt;：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;可见性保证&lt;/strong&gt;：确保看到其他线程Release操作之前的所有修改&lt;/li&gt;
+&lt;li&gt;从共享内存读取数据，检查数据是否就绪&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;23-acqrel&#34;&gt;2.3 AcqRel
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;组合语义，同时具有&lt;code&gt;Release&lt;/code&gt;和&lt;code&gt;Acquire&lt;/code&gt;的语义&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;24-seqcst&#34;&gt;2.4 Seqcst
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;最强保证&lt;/strong&gt;：除了&lt;code&gt;Acquire/Release&lt;/code&gt;外，还保证全局一致性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;额外保证&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的
+&lt;ul&gt;
+&lt;li&gt;要么看到 (3) -&amp;gt; (1) -&amp;gt; (4) -&amp;gt; (2)&lt;/li&gt;
+&lt;li&gt;要么看到 (1) -&amp;gt; (3) -&amp;gt; (2) -&amp;gt; (4)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;建立全局操作顺序&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;小结&#34;&gt;小结
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Relaxed&lt;/code&gt;是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。&lt;/p&gt;
+</description>
         </item>
         <item>
         <title>普通对象和trait对象</title>
@@ -460,42 +538,56 @@
 &lt;hr&gt;
 &lt;h4 id=&#34;变量和类型&#34;&gt;变量和类型
 &lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ref&lt;/code&gt;和&lt;code&gt;&amp;amp;&lt;/code&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;ref&lt;/code&gt;和&lt;code&gt;&amp;amp;&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&amp;amp;用于创建引用&lt;/li&gt;
 &lt;li&gt;&amp;amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用）&lt;/li&gt;
 &lt;li&gt;ref用于模式匹配，获取引用而不是获取所有权&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;T: &#39;static&lt;/code&gt;:表示类型&lt;strong&gt;T内部字段&lt;/strong&gt;要么没有引用，要么引用都是&lt;code&gt;&#39;static&lt;/code&gt;的&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&lt;/code&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;T: &#39;static&lt;/code&gt;:表示类型&lt;strong&gt;T内部字段&lt;/strong&gt;要么没有引用，要么引用都是&lt;code&gt;&#39;static&lt;/code&gt;的&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;实现类型&lt;/strong&gt;必须满足：&lt;code&gt;Self: &#39;static&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;、&lt;code&gt;(String, str)&lt;/code&gt;和&lt;code&gt;(BytesMut/Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8]&lt;/code&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;、&lt;code&gt;(String, str)&lt;/code&gt;和&lt;code&gt;(BytesMut/Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8]&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Path，str都是DST类型&lt;/li&gt;
 &lt;li&gt;PathBuf和String都是拥有所有权的&lt;/li&gt;
 &lt;li&gt;文件路径长度和字符串长度在编译时未知&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;和&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;的区别
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;和&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;的区别&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;获取整个数组的引用，类型是&lt;code&gt;&amp;amp;[u8; N]&lt;/code&gt;或&lt;code&gt;&amp;amp;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;（固定大小数组）&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;获取数组的切片引用，类型是&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;（动态大小切片）&lt;/li&gt;
 &lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;格式化输出语法&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;参数索引&lt;/span&gt;]:[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;填充字符&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;对齐方式&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;宽度&lt;/span&gt;][.&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;精度&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;类型&lt;/span&gt;]}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;fmt::Formatter&lt;/code&gt;是一个功能强大的格式化缓冲区，可以输出到字符串、stdout、文件等&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;结构体&#34;&gt;结构体
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;Rust不允许将struct中某个字段标记为可变&lt;/li&gt;
+&lt;li&gt;Rust中源文件（&lt;code&gt;.rs&lt;/code&gt;）隐性的视为一个模块，区别于&lt;code&gt;mod&lt;/code&gt;的显式声明&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;闭包&#34;&gt;闭包
 &lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;根据闭包捕获环境方式可分为三种
+&lt;li&gt;根据闭包捕获环境方式可分为三种，注意区分闭包 &lt;strong&gt;捕获的环境变量&lt;/strong&gt;和&lt;strong&gt;闭包的参数&lt;/strong&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;FnOnce&lt;/code&gt;获取所有权&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;FnMut&lt;/code&gt;获取可变引用&lt;/li&gt;
@@ -512,6 +604,18 @@
 &lt;ul&gt;
 &lt;li&gt;相当于&lt;code&gt;thread::spwan&lt;/code&gt; + &lt;code&gt;thread::join&lt;/code&gt;，但是它们只能借用&lt;code&gt;&#39;static&lt;/code&gt;或者&lt;code&gt;move&lt;/code&gt;变量&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;scope&lt;/code&gt;没有以上限制，有编译器的支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Mutex&lt;/code&gt;和&lt;code&gt;MutexGuard&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Mutex&lt;/code&gt;是互斥锁本身&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MutexGuard&lt;/code&gt;指访问受互斥锁保护数据的“许可证”或“钥匙”&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;park()/unpark&lt;/code&gt;和&lt;code&gt;sleep()&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;park()/unpark()&lt;/code&gt;精准的控制线程的睡眠（park）与唤醒（unpark）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sleep()&lt;/code&gt;基于时间自动唤醒，无法提前唤醒&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;

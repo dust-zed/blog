@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="1. 为什么需要内存排序 在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。\nRust中的内存排序级别 Rust通过std::sync::atomic::Ordering提供了几种内存排序级别：\n2.1 Relaxed 最弱的内存排序 只保证当前操作的原子性 不保证操作之间的顺序 适用场景：简单的计数器、统计信息 use std::sync::atomic::{AtomicUsize, Ordering}; let counter = AtomicUsize::new(0); counter.fetch_add(1, Ordering::Relaxed); 2.2 Release和Acquire Release： 写屏障，确保Release操作之前的所有内存操作（读/写）都完成 可见性保证，确保这些修改对其他线程可见 发布数据到共享内存，标记数据准备就绪 Acquire 读屏障：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改 可见性保证：确保看到其他线程Release操作之前的所有修改 从共享内存读取数据，检查数据是否就绪 2.3 AcqRel 组合语义，同时具有Release和Acquire的语义 2.4 Seqcst 最强保证：除了Acquire/Release外，还保证全局一致性 额外保证： 所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的 要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2) 要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4) 建立全局操作顺序 小结 Relaxed是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。\n">
-<title>内存排序</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="时间轮(Time Wheel)是Tokio定时器实现的核心算法，它通过分层的方式高效管理大量定时器。\n1. 基本概念 1.1 Wheel结构与层级关系 1.1.1 时间轮结构 pub(crate) struct Wheel { ///当前时间轮已过去的时间 elapsed: u64, ///时间轮的分层 levels: Box&lt;[Level; NUM_LEVELS]&gt;, ///Entries queued for firing pending: EntryList, } 1.1.2 层级 struct Level { slot: [EntryList; LEVEL_MULT],\t//槽位数组 level: usize, occupied: u64,\t// bit field指示slot是否占用 } 1.1.3 槽位 struct Slot { head: Option&lt;NonNull&lt;TimerShared&gt;&gt;, } 1.2 分层设计 Tokio使用多级时间轮（通常为6级），每级包含固定数量的槽位，每级包含固定数量的槽位(slots)：\n第0级：64个槽位，每个64^0毫秒 第1级：64个槽位，每个64^1毫秒 第2级：32个槽位，每个64^2毫秒 第3级：32个槽位，每个64^3毫秒 第4级：32个槽位，每个64^4毫秒 第5级：32个槽位，每个64^5毫秒 时间轮的工作流程 添加一个500ms后触发的定时器： 第0级：500 &gt; 64ms → 不适用 第1级：500 / 64 = 7.8 → 放入第7个槽位 时间推进： 每毫秒检查第0级 每64ms检查第1级 依此类推 降级： 当高层级的时间轮转动时，将定时器重新分配到更精确的层级 这种多级设计使得tokio能够：\n">
+<title>时间轮算法</title>
 
-<link rel='canonical' href='http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/'>
+<link rel='canonical' href='http://localhost:1313/rust/tokio/%E6%97%B6%E9%97%B4%E8%BD%AE%E7%AE%97%E6%B3%95/'>
 
-<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="内存排序">
-<meta property='og:description' content="1. 为什么需要内存排序 在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。\nRust中的内存排序级别 Rust通过std::sync::atomic::Ordering提供了几种内存排序级别：\n2.1 Relaxed 最弱的内存排序 只保证当前操作的原子性 不保证操作之间的顺序 适用场景：简单的计数器、统计信息 use std::sync::atomic::{AtomicUsize, Ordering}; let counter = AtomicUsize::new(0); counter.fetch_add(1, Ordering::Relaxed); 2.2 Release和Acquire Release： 写屏障，确保Release操作之前的所有内存操作（读/写）都完成 可见性保证，确保这些修改对其他线程可见 发布数据到共享内存，标记数据准备就绪 Acquire 读屏障：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改 可见性保证：确保看到其他线程Release操作之前的所有修改 从共享内存读取数据，检查数据是否就绪 2.3 AcqRel 组合语义，同时具有Release和Acquire的语义 2.4 Seqcst 最强保证：除了Acquire/Release外，还保证全局一致性 额外保证： 所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的 要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2) 要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4) 建立全局操作顺序 小结 Relaxed是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。\n">
-<meta property='og:url' content='http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/'>
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="时间轮算法">
+<meta property='og:description' content="时间轮(Time Wheel)是Tokio定时器实现的核心算法，它通过分层的方式高效管理大量定时器。\n1. 基本概念 1.1 Wheel结构与层级关系 1.1.1 时间轮结构 pub(crate) struct Wheel { ///当前时间轮已过去的时间 elapsed: u64, ///时间轮的分层 levels: Box&lt;[Level; NUM_LEVELS]&gt;, ///Entries queued for firing pending: EntryList, } 1.1.2 层级 struct Level { slot: [EntryList; LEVEL_MULT],\t//槽位数组 level: usize, occupied: u64,\t// bit field指示slot是否占用 } 1.1.3 槽位 struct Slot { head: Option&lt;NonNull&lt;TimerShared&gt;&gt;, } 1.2 分层设计 Tokio使用多级时间轮（通常为6级），每级包含固定数量的槽位，每级包含固定数量的槽位(slots)：\n第0级：64个槽位，每个64^0毫秒 第1级：64个槽位，每个64^1毫秒 第2级：32个槽位，每个64^2毫秒 第3级：32个槽位，每个64^3毫秒 第4级：32个槽位，每个64^4毫秒 第5级：32个槽位，每个64^5毫秒 时间轮的工作流程 添加一个500ms后触发的定时器： 第0级：500 &gt; 64ms → 不适用 第1级：500 / 64 = 7.8 → 放入第7个槽位 时间推进： 每毫秒检查第0级 每64ms检查第1级 依此类推 降级： 当高层级的时间轮转动时，将定时器重新分配到更精确的层级 这种多级设计使得tokio能够：\n">
+<meta property='og:url' content='http://localhost:1313/rust/tokio/%E6%97%B6%E9%97%B4%E8%BD%AE%E7%AE%97%E6%B3%95/'>
 <meta property='og:site_name' content='zed的博客'>
-<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-08T11:16:22&#43;08:00'/><meta property='article:modified_time' content='2025-09-08T11:16:22&#43;08:00'/>
-<meta name="twitter:title" content="内存排序">
-<meta name="twitter:description" content="1. 为什么需要内存排序 在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。\nRust中的内存排序级别 Rust通过std::sync::atomic::Ordering提供了几种内存排序级别：\n2.1 Relaxed 最弱的内存排序 只保证当前操作的原子性 不保证操作之间的顺序 适用场景：简单的计数器、统计信息 use std::sync::atomic::{AtomicUsize, Ordering}; let counter = AtomicUsize::new(0); counter.fetch_add(1, Ordering::Relaxed); 2.2 Release和Acquire Release： 写屏障，确保Release操作之前的所有内存操作（读/写）都完成 可见性保证，确保这些修改对其他线程可见 发布数据到共享内存，标记数据准备就绪 Acquire 读屏障：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改 可见性保证：确保看到其他线程Release操作之前的所有修改 从共享内存读取数据，检查数据是否就绪 2.3 AcqRel 组合语义，同时具有Release和Acquire的语义 2.4 Seqcst 最强保证：除了Acquire/Release外，还保证全局一致性 额外保证： 所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的 要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2) 要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4) 建立全局操作顺序 小结 Relaxed是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。\n">
+<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-11T21:51:21&#43;08:00'/><meta property='article:modified_time' content='2025-09-11T21:51:21&#43;08:00'/>
+<meta name="twitter:title" content="时间轮算法">
+<meta name="twitter:description" content="时间轮(Time Wheel)是Tokio定时器实现的核心算法，它通过分层的方式高效管理大量定时器。\n1. 基本概念 1.1 Wheel结构与层级关系 1.1.1 时间轮结构 pub(crate) struct Wheel { ///当前时间轮已过去的时间 elapsed: u64, ///时间轮的分层 levels: Box&lt;[Level; NUM_LEVELS]&gt;, ///Entries queued for firing pending: EntryList, } 1.1.2 层级 struct Level { slot: [EntryList; LEVEL_MULT],\t//槽位数组 level: usize, occupied: u64,\t// bit field指示slot是否占用 } 1.1.3 槽位 struct Slot { head: Option&lt;NonNull&lt;TimerShared&gt;&gt;, } 1.2 分层设计 Tokio使用多级时间轮（通常为6级），每级包含固定数量的槽位，每级包含固定数量的槽位(slots)：\n第0级：64个槽位，每个64^0毫秒 第1级：64个槽位，每个64^1毫秒 第2级：32个槽位，每个64^2毫秒 第3级：32个槽位，每个64^3毫秒 第4级：32个槽位，每个64^4毫秒 第5级：32个槽位，每个64^5毫秒 时间轮的工作流程 添加一个500ms后触发的定时器： 第0级：500 &gt; 64ms → 不适用 第1级：500 / 64 = 7.8 → 放入第7个槽位 时间推进： 每毫秒检查第0级 每64ms检查第1级 依此类推 降级： 当高层级的时间轮转动时，将定时器重新分配到更精确的层级 这种多级设计使得tokio能够：\n">
     </head>
     <body class="
     article-page
@@ -156,12 +156,16 @@
                 Rust
             </a>
         
+            <a href="/categories/tokio/" >
+                Tokio
+            </a>
+        
     </header>
     
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/">内存排序</a>
+            <a href="/rust/tokio/%E6%97%B6%E9%97%B4%E8%BD%AE%E7%AE%97%E6%B3%95/">时间轮算法</a>
         </h2>
     
         
@@ -183,7 +187,7 @@
   <path d="M3 11h16" />
   <path d="M18 16.496v1.504l1 1" />
 </svg>
-                <time class="article-time--published">Sep 08, 2025</time>
+                <time class="article-time--published">Sep 11, 2025</time>
             </div>
         
 
@@ -213,58 +217,67 @@
     <section class="article-content">
     
     
-    <h4 id="1-为什么需要内存排序">1. 为什么需要内存排序
-</h4><p>在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。</p>
-<h4 id="rust中的内存排序级别">Rust中的内存排序级别
-</h4><p>Rust通过<code>std::sync::atomic::Ordering</code>提供了几种内存排序级别：</p>
-<h5 id="21-relaxed">2.1 Relaxed
-</h5><ul>
-<li>最弱的内存排序</li>
-<li>只保证当前操作的原子性</li>
-<li>不保证操作之间的顺序</li>
-<li>适用场景：简单的计数器、统计信息</li>
-</ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::atomic::{AtomicUsize, Ordering};
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> counter <span style="color:#f92672">=</span> AtomicUsize::new(<span style="color:#ae81ff">0</span>);
-</span></span><span style="display:flex;"><span>counter.fetch_add(<span style="color:#ae81ff">1</span>, Ordering::Relaxed);
-</span></span></code></pre></div><h5 id="22-release和acquire">2.2 Release和Acquire
-</h5><ul>
-<li><code>Release</code>：
+    <p>时间轮(Time Wheel)是Tokio定时器实现的核心算法，它通过分层的方式高效管理大量定时器。</p>
+<h3 id="1-基本概念">1. 基本概念
+</h3><h4 id="11-wheel结构与层级关系">1.1 Wheel结构与层级关系
+</h4><h5 id="111-时间轮结构">1.1.1 时间轮结构
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Wheel</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">///当前时间轮已过去的时间
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>  elapsed: <span style="color:#66d9ef">u64</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">///时间轮的分层
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>  levels: Box<span style="color:#f92672">&lt;</span>[Level; <span style="color:#66d9ef">NUM_LEVELS</span>]<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">///Entries queued for firing
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>  pending: <span style="color:#a6e22e">EntryList</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="112-层级">1.1.2 层级
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Level</span> {
+</span></span><span style="display:flex;"><span>  slot: [EntryList; <span style="color:#66d9ef">LEVEL_MULT</span>],		<span style="color:#75715e">//槽位数组
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  level: <span style="color:#66d9ef">usize</span>,
+</span></span><span style="display:flex;"><span>  occupied: <span style="color:#66d9ef">u64</span>,										<span style="color:#75715e">// bit field指示slot是否占用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h5 id="113-槽位">1.1.3 槽位
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Slot</span> {
+</span></span><span style="display:flex;"><span>  head: Option<span style="color:#f92672">&lt;</span>NonNull<span style="color:#f92672">&lt;</span>TimerShared<span style="color:#f92672">&gt;&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="12-分层设计">1.2 分层设计
+</h4><p>Tokio使用多级时间轮（通常为6级），每级包含固定数量的槽位，每级包含固定数量的槽位(slots)：</p>
 <ul>
-<li><strong>写屏障</strong>，确保Release操作之前的所有内存操作（读/写）都完成</li>
-<li><strong>可见性保证</strong>，确保这些修改对其他线程可见</li>
-<li>发布数据到共享内存，标记数据准备就绪</li>
+<li>第0级：64个槽位，每个64^0毫秒</li>
+<li>第1级：64个槽位，每个64^1毫秒</li>
+<li>第2级：32个槽位，每个64^2毫秒</li>
+<li>第3级：32个槽位，每个64^3毫秒</li>
+<li>第4级：32个槽位，每个64^4毫秒</li>
+<li>第5级：32个槽位，每个64^5毫秒</li>
+</ul>
+<h4 id="时间轮的工作流程">时间轮的工作流程
+</h4><ol>
+<li><strong>添加一个500ms后触发的定时器</strong>：
+<ul>
+<li>第0级：500 &gt; 64ms → 不适用</li>
+<li>第1级：500 / 64 = 7.8 → 放入第7个槽位</li>
 </ul>
 </li>
-<li><code>Acquire</code>
+<li><strong>时间推进</strong>：
 <ul>
-<li><strong>读屏障</strong>：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改</li>
-<li><strong>可见性保证</strong>：确保看到其他线程Release操作之前的所有修改</li>
-<li>从共享内存读取数据，检查数据是否就绪</li>
+<li>每毫秒检查第0级</li>
+<li>每64ms检查第1级</li>
+<li>依此类推</li>
 </ul>
 </li>
-</ul>
-<h5 id="23-acqrel">2.3 AcqRel
-</h5><ul>
-<li>组合语义，同时具有<code>Release</code>和<code>Acquire</code>的语义</li>
-</ul>
-<h5 id="24-seqcst">2.4 Seqcst
-</h5><ul>
-<li><strong>最强保证</strong>：除了<code>Acquire/Release</code>外，还保证全局一致性</li>
-<li><strong>额外保证</strong>：
+<li><strong>降级</strong>：
 <ul>
-<li>所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的
-<ul>
-<li>要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2)</li>
-<li>要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4)</li>
+<li>当高层级的时间轮转动时，将定时器重新分配到更精确的层级</li>
 </ul>
 </li>
-<li>建立全局操作顺序</li>
+</ol>
+<p>这种多级设计使得tokio能够：</p>
+<ul>
+<li>精确处理短期定时器(毫秒级)</li>
+<li>高效管理长期定时器( 年)</li>
+<li>保持较低的内存占用和计算开销</li>
+<li>根据<code>elapsed</code>确定需要检查的时间轮层级和槽位</li>
 </ul>
-</li>
-</ul>
-<h4 id="小结">小结
-</h4><p><code>Relaxed</code>是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。</p>
+<p>时间轮和时英钟（时针、分针、秒针）可以进行类比理解。</p>
 
 </section>
 

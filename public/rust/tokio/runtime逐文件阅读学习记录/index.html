@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="thread_id.rs 主要类ThreadId，其功能是为线程生成不重复的线程id 主要学习到的内容 内存排序，Atomic类不仅是原子操作，还有内存排序的功能 task_hooks.rs 1. 核心类型 TaskCallback\npub(crate) type TaskCallback = std::sync::Arc&lt;dyn Fn(&amp;TaskMeta&lt;&#39;_&gt;) + Send + Sync&gt;; 表示一个任务回调函数 使用Arc实现引用计数，支持多线程共享 接收&amp;TaskMeta&lt;'_&gt;作为参数，包含任务元数据 TaskMeta\npub struct TaskMeta&lt;&#39;a&gt; { id: super::task::Id, // 任务ID spawned_at: SpawnedAt, // 任务创建位置 _p: std::marker::PhantomData&lt;&amp;&#39;a ()&gt;, } 包含任务的基本数据 使用生命周期参数'a确保引用的有效性 TaskHooks\npub(crate) struct TaskHooks { pub(crate) task_spawn_callback: Option&lt;TaskCallback&gt;, //任务生成 pub(crate) task_terminate_callback: Option&lt;TaskCallback&gt;, //任务结束 #[cfg(tokio_unstable)] pub(crate) before_poll_callback: Option&lt;TaskCallback&gt;, #[cfg(tokio_unstable)] pub(crate) after_poll_callback: Option&lt;TaskCallback&gt;, } 在任务不同的状态回调 process.rs 主要解决Unix系统上孤儿进程回收问题\n通过GlobalOrphanQueue管理需要回收的进程 使用SignalDriver监听SIGCHLD信号 非阻塞地检查子进程状态 孤儿进程指父进程已经终止或退出，但子进程仍在运行的进程。 SIGCHLD是用于通知父进程其子进程状态发生变化的信号。 park.rs 实现线程的挂起与唤醒\ndriver.rs 在tokio运行时中扮演着聚合和管理不同I/O和系统事件驱动器的角色。主要处理线程的挂起和唤醒机制。\n1. 驱动器聚合 它聚合了多种底层驱动器，包括I/O驱动器(IoDriver)，信号驱动器(SingalDriver)和事件驱动器(TimeDriver) 2. 唤醒/挂起支持 提供了park()和unpark()方法用于线程的挂起和唤醒 park()方法会使当前线程进入休眠状态，等待事件发生 unpark()方法用于唤醒被挂起的线程 3. 多模式支持 支持启用或禁用特定功能(如I/O驱动)的不同运行时配置 例如，IoStack枚举有Enabled和Disabled两种变体，分别对应启用和禁用I/O驱动的情况 4. 超时支持 提供了park_timeout()方法，允许线程唤醒在指定的超时后自动唤醒 5. 优秀设计 关注点分离，IoStack关注于parking,IoHandle关注于unparking\n">
+<title>Runtime逐文件阅读学习记录</title>
+
+<link rel='canonical' href='http://localhost:1313/rust/tokio/runtime%E9%80%90%E6%96%87%E4%BB%B6%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Runtime逐文件阅读学习记录">
+<meta property='og:description' content="thread_id.rs 主要类ThreadId，其功能是为线程生成不重复的线程id 主要学习到的内容 内存排序，Atomic类不仅是原子操作，还有内存排序的功能 task_hooks.rs 1. 核心类型 TaskCallback\npub(crate) type TaskCallback = std::sync::Arc&lt;dyn Fn(&amp;TaskMeta&lt;&#39;_&gt;) + Send + Sync&gt;; 表示一个任务回调函数 使用Arc实现引用计数，支持多线程共享 接收&amp;TaskMeta&lt;'_&gt;作为参数，包含任务元数据 TaskMeta\npub struct TaskMeta&lt;&#39;a&gt; { id: super::task::Id, // 任务ID spawned_at: SpawnedAt, // 任务创建位置 _p: std::marker::PhantomData&lt;&amp;&#39;a ()&gt;, } 包含任务的基本数据 使用生命周期参数'a确保引用的有效性 TaskHooks\npub(crate) struct TaskHooks { pub(crate) task_spawn_callback: Option&lt;TaskCallback&gt;, //任务生成 pub(crate) task_terminate_callback: Option&lt;TaskCallback&gt;, //任务结束 #[cfg(tokio_unstable)] pub(crate) before_poll_callback: Option&lt;TaskCallback&gt;, #[cfg(tokio_unstable)] pub(crate) after_poll_callback: Option&lt;TaskCallback&gt;, } 在任务不同的状态回调 process.rs 主要解决Unix系统上孤儿进程回收问题\n通过GlobalOrphanQueue管理需要回收的进程 使用SignalDriver监听SIGCHLD信号 非阻塞地检查子进程状态 孤儿进程指父进程已经终止或退出，但子进程仍在运行的进程。 SIGCHLD是用于通知父进程其子进程状态发生变化的信号。 park.rs 实现线程的挂起与唤醒\ndriver.rs 在tokio运行时中扮演着聚合和管理不同I/O和系统事件驱动器的角色。主要处理线程的挂起和唤醒机制。\n1. 驱动器聚合 它聚合了多种底层驱动器，包括I/O驱动器(IoDriver)，信号驱动器(SingalDriver)和事件驱动器(TimeDriver) 2. 唤醒/挂起支持 提供了park()和unpark()方法用于线程的挂起和唤醒 park()方法会使当前线程进入休眠状态，等待事件发生 unpark()方法用于唤醒被挂起的线程 3. 多模式支持 支持启用或禁用特定功能(如I/O驱动)的不同运行时配置 例如，IoStack枚举有Enabled和Disabled两种变体，分别对应启用和禁用I/O驱动的情况 4. 超时支持 提供了park_timeout()方法，允许线程唤醒在指定的超时后自动唤醒 5. 优秀设计 关注点分离，IoStack关注于parking,IoHandle关注于unparking\n">
+<meta property='og:url' content='http://localhost:1313/rust/tokio/runtime%E9%80%90%E6%96%87%E4%BB%B6%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-09T00:20:36&#43;08:00'/><meta property='article:modified_time' content='2025-09-09T00:20:36&#43;08:00'/>
+<meta name="twitter:title" content="Runtime逐文件阅读学习记录">
+<meta name="twitter:description" content="thread_id.rs 主要类ThreadId，其功能是为线程生成不重复的线程id 主要学习到的内容 内存排序，Atomic类不仅是原子操作，还有内存排序的功能 task_hooks.rs 1. 核心类型 TaskCallback\npub(crate) type TaskCallback = std::sync::Arc&lt;dyn Fn(&amp;TaskMeta&lt;&#39;_&gt;) + Send + Sync&gt;; 表示一个任务回调函数 使用Arc实现引用计数，支持多线程共享 接收&amp;TaskMeta&lt;'_&gt;作为参数，包含任务元数据 TaskMeta\npub struct TaskMeta&lt;&#39;a&gt; { id: super::task::Id, // 任务ID spawned_at: SpawnedAt, // 任务创建位置 _p: std::marker::PhantomData&lt;&amp;&#39;a ()&gt;, } 包含任务的基本数据 使用生命周期参数'a确保引用的有效性 TaskHooks\npub(crate) struct TaskHooks { pub(crate) task_spawn_callback: Option&lt;TaskCallback&gt;, //任务生成 pub(crate) task_terminate_callback: Option&lt;TaskCallback&gt;, //任务结束 #[cfg(tokio_unstable)] pub(crate) before_poll_callback: Option&lt;TaskCallback&gt;, #[cfg(tokio_unstable)] pub(crate) after_poll_callback: Option&lt;TaskCallback&gt;, } 在任务不同的状态回调 process.rs 主要解决Unix系统上孤儿进程回收问题\n通过GlobalOrphanQueue管理需要回收的进程 使用SignalDriver监听SIGCHLD信号 非阻塞地检查子进程状态 孤儿进程指父进程已经终止或退出，但子进程仍在运行的进程。 SIGCHLD是用于通知父进程其子进程状态发生变化的信号。 park.rs 实现线程的挂起与唤醒\ndriver.rs 在tokio运行时中扮演着聚合和管理不同I/O和系统事件驱动器的角色。主要处理线程的挂起和唤醒机制。\n1. 驱动器聚合 它聚合了多种底层驱动器，包括I/O驱动器(IoDriver)，信号驱动器(SingalDriver)和事件驱动器(TimeDriver) 2. 唤醒/挂起支持 提供了park()和unpark()方法用于线程的挂起和唤醒 park()方法会使当前线程进入休眠状态，等待事件发生 unpark()方法用于唤醒被挂起的线程 3. 多模式支持 支持启用或禁用特定功能(如I/O驱动)的不同运行时配置 例如，IoStack枚举有Enabled和Disabled两种变体，分别对应启用和禁用I/O驱动的情况 4. 超时支持 提供了park_timeout()方法，允许线程唤醒在指定的超时后自动唤醒 5. 优秀设计 关注点分离，IoStack关注于parking,IoHandle关注于unparking\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/android-develop/' >
+                
+                
+                
+                <span>Android-Develops</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/learning-reflection/' >
+                
+                
+                
+                <span>Learning-Reflections</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/rust/" >
+                Rust
+            </a>
+        
+            <a href="/categories/tokio/" >
+                Tokio
+            </a>
+        
+            <a href="/categories/runtime/" >
+                Runtime
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/rust/tokio/runtime%E9%80%90%E6%96%87%E4%BB%B6%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/">Runtime逐文件阅读学习记录</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Sep 09, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h4 id="thread_idrs">thread_id.rs
+</h4><ul>
+<li>主要类<code>ThreadId</code>，其功能是为线程生成不重复的线程id</li>
+<li>主要学习到的内容
+<ul>
+<li>内存排序，Atomic类不仅是原子操作，还有内存排序的功能</li>
+</ul>
+</li>
+</ul>
+<h3 id="task_hooksrs">task_hooks.rs
+</h3><h4 id="1-核心类型">1. 核心类型
+</h4><p><code>TaskCallback</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">TaskCallback</span> <span style="color:#f92672">=</span> std::sync::Arc<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">dyn</span> Fn(<span style="color:#f92672">&amp;</span>TaskMeta<span style="color:#f92672">&lt;</span>&#39;_<span style="color:#f92672">&gt;</span>) <span style="color:#f92672">+</span> Send <span style="color:#f92672">+</span> Sync<span style="color:#f92672">&gt;</span>;
+</span></span></code></pre></div><ul>
+<li>表示一个任务回调函数</li>
+<li>使用<code>Arc</code>实现引用计数，支持多线程共享</li>
+<li>接收<code>&amp;TaskMeta&lt;'_&gt;</code>作为参数，包含任务元数据</li>
+</ul>
+<p><code>TaskMeta</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TaskMeta</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span><span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    id: <span style="color:#a6e22e">super</span>::task::Id,         <span style="color:#75715e">// 任务ID
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    spawned_at: <span style="color:#a6e22e">SpawnedAt</span>,       <span style="color:#75715e">// 任务创建位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    _p: <span style="color:#a6e22e">std</span>::marker::PhantomData<span style="color:#f92672">&lt;&amp;</span><span style="color:#a6e22e">&#39;a</span> ()<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>包含任务的基本数据</li>
+<li>使用生命周期参数<code>'a</code>确保引用的有效性</li>
+</ul>
+<p><code>TaskHooks</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TaskHooks</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) task_spawn_callback: Option<span style="color:#f92672">&lt;</span>TaskCallback<span style="color:#f92672">&gt;</span>,  <span style="color:#75715e">//任务生成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) task_terminate_callback: Option<span style="color:#f92672">&lt;</span>TaskCallback<span style="color:#f92672">&gt;</span>, <span style="color:#75715e">//任务结束
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">#[cfg(tokio_unstable)]</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) before_poll_callback: Option<span style="color:#f92672">&lt;</span>TaskCallback<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#[cfg(tokio_unstable)]</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span>(<span style="color:#66d9ef">crate</span>) after_poll_callback: Option<span style="color:#f92672">&lt;</span>TaskCallback<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>在任务不同的状态回调</li>
+</ul>
+<h4 id="processrs">process.rs
+</h4><p>主要解决Unix系统上孤儿进程回收问题</p>
+<ul>
+<li>通过<code>GlobalOrphanQueue</code>管理需要回收的进程</li>
+<li>使用<code>SignalDriver</code>监听<code>SIGCHLD</code>信号</li>
+<li>非阻塞地检查子进程状态</li>
+<li>孤儿进程指父进程已经终止或退出，但子进程仍在运行的进程。</li>
+<li><code>SIGCHLD</code>是用于通知父进程其子进程状态发生变化的信号。</li>
+</ul>
+<h4 id="parkrs">park.rs
+</h4><p>实现线程的挂起与唤醒</p>
+<h4 id="driverrs">driver.rs
+</h4><p>在tokio运行时中扮演着聚合和管理不同I/O和系统事件驱动器的角色。主要处理线程的挂起和唤醒机制。</p>
+<h5 id="1-驱动器聚合">1. 驱动器聚合
+</h5><ul>
+<li>它聚合了多种底层驱动器，包括I/O驱动器(<code>IoDriver</code>)，信号驱动器(<code>SingalDriver</code>)和事件驱动器(<code>TimeDriver</code>)</li>
+</ul>
+<h5 id="2-唤醒挂起支持">2. 唤醒/挂起支持
+</h5><ul>
+<li>提供了<code>park()</code>和<code>unpark()</code>方法用于线程的挂起和唤醒</li>
+<li><code>park()</code>方法会使当前线程进入休眠状态，等待事件发生</li>
+<li><code>unpark()</code>方法用于唤醒被挂起的线程</li>
+</ul>
+<h5 id="3-多模式支持">3. 多模式支持
+</h5><ul>
+<li>支持启用或禁用特定功能(如I/O驱动)的不同运行时配置</li>
+<li>例如，<code>IoStack</code>枚举有<code>Enabled</code>和<code>Disabled</code>两种变体，分别对应启用和禁用I/O驱动的情况</li>
+</ul>
+<h5 id="4-超时支持">4. 超时支持
+</h5><ul>
+<li>提供了<code>park_timeout()</code>方法，允许线程唤醒在指定的超时后自动唤醒</li>
+</ul>
+<h5 id="5-优秀设计">5. 优秀设计
+</h5><p>关注点分离，<code>IoStack</code>关注于parking,<code>IoHandle</code>关注于unparking</p>
+<h5 id="configrs">config.rs
+</h5><p>runtime命令配置，用于定制运行时行为。以下是各字段的详细说明</p>
+<ol>
+<li>
+<p><strong><code>global_queue_interval: Option&lt;u32&gt;</code></strong></p>
+<ul>
+<li>控制从全局/远程任务队列拉取任务的频率</li>
+<li><code>None</code>表示每次检查全局队列</li>
+<li><code>Some(n)</code>表示每n个tick检查一次全局队列</li>
+</ul>
+</li>
+<li>
+<p><strong><code>event_interval: u32</code></strong></p>
+<ul>
+<li>执行定时器和I/O事件检查的频率</li>
+<li>较小的值提高响应性，但可能增加CPU使用率</li>
+</ul>
+</li>
+<li>
+<p><strong><code>before_park: Option&lt;Callback&gt;</code></strong></p>
+<ul>
+<li>
+<p>工作线程挂起前执行的回调</p>
+</li>
+<li>
+<p>用于执行线程特定的清理或状态保存</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong><code>after_unpark: Option&lt;Callback&gt;</code></strong></p>
+<ul>
+<li>
+<p>工作线程唤醒后执行的回调</p>
+</li>
+<li>
+<p>用于恢复线程特定状态或执行初始化</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong><code>before_spawn: Option&lt;TaskCallback&gt;</code></strong></p>
+<ul>
+<li>
+<p>每个任务生成前执行的回调</p>
+</li>
+<li>
+<p>用于任务级别的监控或初始化</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong><code>after_termination: Option&lt;TaskCallback&gt;</code></strong></p>
+<ul>
+<li>
+<p>每个任务终止后执行的回调</p>
+</li>
+<li>
+<p>用于资源清理或统计信息收集</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong><code>before_poll: Option&lt;TaskCallback&gt;</code></strong> (仅限 unstable 特性)</p>
+<ul>
+<li>每次 poll 操作前执行的回调</li>
+<li>用于性能分析或调试</li>
+</ul>
+</li>
+<li>
+<p><strong><code>after_poll: Option&lt;TaskCallback&gt;</code></strong> (仅限 unstable 特性)</p>
+<ul>
+<li>
+<p>每次 poll 操作后执行的回调</p>
+</li>
+<li>
+<p>通常与 <code>before_poll</code> 配对使用</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>LIFO 插槽相关配置</strong>（代码片段中未完全显示）</p>
+<ul>
+<li>
+<p>用于优化任务调度</p>
+</li>
+<li>
+<p>特别适用于消息传递等模式</p>
+</li>
+</ul>
+</li>
+</ol>
+<h4 id="builderrs">builder.rs
+</h4><p><code>Runtime</code>核心构建配置</p>
+<h5 id="io驱动"><strong>I/O驱动<code>enable_io</code>和<code>nevents</code></strong>
+</h5><ul>
+<li><code>enable_io</code>：是否启用I/O驱动
+<ul>
+<li>启用时：支持异步I/O操作（如TCP/UDP套接字、文件I/O等）</li>
+<li>禁用时：相关API将不可用，减少运行时开销</li>
+</ul>
+</li>
+<li><code>nevents</code>： 每次轮询时处理的最大事件数
+<ul>
+<li>影响I/O吞吐量和响应性</li>
+<li>值越大，吞吐量可能越高，但延迟可能增加</li>
+</ul>
+</li>
+</ul>
+<h5 id="事件驱动enable_time">事件驱动(<code>enable_time</code>)
+</h5><ul>
+<li>控制是否启用时间相关的功能</li>
+<li>启用时：
+<ul>
+<li>支持<code>tokio::time</code>模块（如<code>sleep</code>、<code>timeout</code>等）</li>
+<li>允许使用定时器和时间相关的异步操作</li>
+</ul>
+</li>
+<li>禁用时：
+<ul>
+<li>减少运行时开销</li>
+<li>事件相关<code>API</code>将不可用</li>
+</ul>
+</li>
+</ul>
+<h5 id="时钟控制start_paused">时钟控制(<code>start_paused</code>)
+</h5><ul>
+<li>控制运行时时钟的初始状态</li>
+<li><code>true</code>：时钟从暂停状态开始
+<ul>
+<li>时间不会自动推进</li>
+<li>适用于测试，可以精确控制时间</li>
+</ul>
+</li>
+<li><code>false</code>(默认)：使用系统时钟
+<ul>
+<li>时间正常流逝</li>
+<li>适用于生产环境</li>
+</ul>
+</li>
+</ul>
+<h5 id="时间驱动time-wheel实现">时间驱动(Time Wheel)实现
+</h5><ul>
+<li>使用多级时间轮管理定时器</li>
+<li>每个时间轮有不同的精度，形成层级结构
+<ul>
+<li>第一级：毫秒级精度</li>
+<li>第二级：秒级精度</li>
+<li>更高层：分钟/小时级精度</li>
+</ul>
+</li>
+<li>优点：O(1) 时间复杂度插入/删除定时器</li>
+</ul>
+<h5 id="系统调用">系统调用
+</h5><ul>
+<li>主要使用 <code>timerfd</code> (Linux) 或 <code>kqueue</code> (macOS) 等系统级定时器</li>
+<li>与 I/O 多路复用集成，统一事件循环</li>
+</ul>
+<h5 id="与io驱动的集成">与I/O驱动的集成
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// 简化的时间轮结构
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TimeWheel</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 不同精度的时间轮
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    wheels: [Wheel; <span style="color:#66d9ef">LEVELS</span>],
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 当前时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    now: <span style="color:#66d9ef">u64</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

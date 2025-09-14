@@ -6,7 +6,27 @@
         <description>Recent content in Tutorials on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Mon, 08 Sep 2025 12:19:22 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/tutorials/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 08 Sep 2025 14:00:04 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/tutorials/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Vscode高效光标移动</title>
+        <link>http://localhost:1313/tutorials/vscode%E9%AB%98%E6%95%88%E5%85%89%E6%A0%87%E7%A7%BB%E5%8A%A8/</link>
+        <pubDate>Mon, 08 Sep 2025 14:00:04 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tutorials/vscode%E9%AB%98%E6%95%88%E5%85%89%E6%A0%87%E7%A7%BB%E5%8A%A8/</guid>
+        <description>&lt;h4 id=&#34;基础移动&#34;&gt;基础移动
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Option + ←/→&lt;/code&gt; - 按单词移动&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Cmd + ←/→&lt;/code&gt; - 行首/行尾&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Cmd + ↑/↓&lt;/code&gt; - 文件开头/结尾&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Cmd + G&lt;/code&gt; - 跳转到指定行号&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Cmd + P&lt;/code&gt; - 快速打开文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;高级移动&#34;&gt;高级移动
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Option + ↑/↓ &lt;/code&gt; - 移动当前行&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Mac终端美化配置</title>
         <link>http://localhost:1313/tutorials/mac%E7%BB%88%E7%AB%AF%E7%BE%8E%E5%8C%96%E9%85%8D%E7%BD%AE/</link>
         <pubDate>Mon, 08 Sep 2025 12:19:22 +0800</pubDate>

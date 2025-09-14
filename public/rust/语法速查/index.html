@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp; &amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的 trait My Trait: 'static或Box&lt;dyn MyTrait + 'static 实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8] Path，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别 &amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 结构体 Rust不允许将struct中某个字段标记为可变 闭包 根据闭包捕获环境方式可分为三种 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 ">
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp;\n&amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的\ntrait My Trait: 'static或Box&lt;dyn MyTrait + 'static\n实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8]\nPath，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别\n&amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 格式化输出语法\n{[参数索引]:[填充字符][对齐方式][宽度][.精度][类型]} fmt::Formatter是一个功能强大的格式化缓冲区，可以输出到字符串、stdout、文件等\n结构体 Rust不允许将struct中某个字段标记为可变 Rust中源文件（.rs）隐性的视为一个模块，区别于mod的显式声明 闭包 根据闭包捕获环境方式可分为三种，注意区分闭包 捕获的环境变量和闭包的参数 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 Mutex和MutexGuard Mutex是互斥锁本身 MutexGuard指访问受互斥锁保护数据的“许可证”或“钥匙” park()/unpark和sleep() park()/unpark()精准的控制线程的睡眠（park）与唤醒（unpark） sleep()基于时间自动唤醒，无法提前唤醒 ">
 <title>语法速查</title>
 
 <link rel='canonical' href='http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/'>
 
 <link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="语法速查">
-<meta property='og:description' content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp; &amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的 trait My Trait: 'static或Box&lt;dyn MyTrait + 'static 实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8] Path，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别 &amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 结构体 Rust不允许将struct中某个字段标记为可变 闭包 根据闭包捕获环境方式可分为三种 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 ">
+<meta property='og:description' content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp;\n&amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的\ntrait My Trait: 'static或Box&lt;dyn MyTrait + 'static\n实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8]\nPath，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别\n&amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 格式化输出语法\n{[参数索引]:[填充字符][对齐方式][宽度][.精度][类型]} fmt::Formatter是一个功能强大的格式化缓冲区，可以输出到字符串、stdout、文件等\n结构体 Rust不允许将struct中某个字段标记为可变 Rust中源文件（.rs）隐性的视为一个模块，区别于mod的显式声明 闭包 根据闭包捕获环境方式可分为三种，注意区分闭包 捕获的环境变量和闭包的参数 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 Mutex和MutexGuard Mutex是互斥锁本身 MutexGuard指访问受互斥锁保护数据的“许可证”或“钥匙” park()/unpark和sleep() park()/unpark()精准的控制线程的睡眠（park）与唤醒（unpark） sleep()基于时间自动唤醒，无法提前唤醒 ">
 <meta property='og:url' content='http://localhost:1313/rust/%E8%AF%AD%E6%B3%95%E9%80%9F%E6%9F%A5/'>
 <meta property='og:site_name' content='zed的博客'>
 <meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-01T16:22:39&#43;08:00'/><meta property='article:modified_time' content='2025-09-01T16:22:39&#43;08:00'/>
 <meta name="twitter:title" content="语法速查">
-<meta name="twitter:description" content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp; &amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的 trait My Trait: 'static或Box&lt;dyn MyTrait + 'static 实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8] Path，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别 &amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 结构体 Rust不允许将struct中某个字段标记为可变 闭包 根据闭包捕获环境方式可分为三种 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 ">
+<meta name="twitter:description" content="集合或迭代器 drain()方法：核心功能是移除集合中指定范围的元素，同时保持集合的连续性，是一种比**多次调用remove()**更高效的批量处理方式 所有权 所有权和可变性是独立的 所有权完整性保护针对集合 集合需要保证所有元素位置有效 集合在内存中是连续的 结构体允许字段被转移走所有权 结构体字段具有独立性，布局在编译时可知 所有者离开作用域，值将被丢弃 变量和类型 ref和&amp;\n&amp;用于创建引用 &amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用） ref用于模式匹配，获取引用而不是获取所有权 T: 'static:表示类型T内部字段要么没有引用，要么引用都是'static的\ntrait My Trait: 'static或Box&lt;dyn MyTrait + 'static\n实现类型必须满足：Self: 'static (PathBuf, Path)、(String, str)和(BytesMut/Vec&lt;u8&gt;, &amp;[u8]\nPath，str都是DST类型 PathBuf和String都是拥有所有权的 文件路径长度和字符串长度在编译时未知 &amp;buf和&amp;buf[..]的区别\n&amp;buf获取整个数组的引用，类型是&amp;[u8; N]或&amp;Vec&lt;u8&gt;（固定大小数组） &amp;buf[..]获取数组的切片引用，类型是&amp;[u8]（动态大小切片） 格式化输出语法\n{[参数索引]:[填充字符][对齐方式][宽度][.精度][类型]} fmt::Formatter是一个功能强大的格式化缓冲区，可以输出到字符串、stdout、文件等\n结构体 Rust不允许将struct中某个字段标记为可变 Rust中源文件（.rs）隐性的视为一个模块，区别于mod的显式声明 闭包 根据闭包捕获环境方式可分为三种，注意区分闭包 捕获的环境变量和闭包的参数 FnOnce获取所有权 FnMut获取可变引用 Fn获取不可变引用 并发编程 并发编程主要有两种核心范式：共享状态并发和消息传递并发 std::thread::scope 相当于thread::spwan + thread::join，但是它们只能借用'static或者move变量 scope没有以上限制，有编译器的支持 Mutex和MutexGuard Mutex是互斥锁本身 MutexGuard指访问受互斥锁保护数据的“许可证”或“钥匙” park()/unpark和sleep() park()/unpark()精准的控制线程的睡眠（park）与唤醒（unpark） sleep()基于时间自动唤醒，无法提前唤醒 ">
     </head>
     <body class="
     article-page
@@ -237,42 +237,56 @@
 <hr>
 <h4 id="变量和类型">变量和类型
 </h4><ul>
-<li><code>ref</code>和<code>&amp;</code>
+<li>
+<p><code>ref</code>和<code>&amp;</code></p>
 <ul>
 <li>&amp;用于创建引用</li>
 <li>&amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用）</li>
 <li>ref用于模式匹配，获取引用而不是获取所有权</li>
 </ul>
 </li>
-<li><code>T: 'static</code>:表示类型<strong>T内部字段</strong>要么没有引用，要么引用都是<code>'static</code>的</li>
-<li><code>trait My Trait: 'static</code>或<code>Box&lt;dyn MyTrait + 'static</code>
+<li>
+<p><code>T: 'static</code>:表示类型<strong>T内部字段</strong>要么没有引用，要么引用都是<code>'static</code>的</p>
+</li>
+<li>
+<p><code>trait My Trait: 'static</code>或<code>Box&lt;dyn MyTrait + 'static</code></p>
 <ul>
 <li><strong>实现类型</strong>必须满足：<code>Self: 'static</code></li>
 </ul>
 </li>
-<li><code>(PathBuf, Path)</code>、<code>(String, str)</code>和<code>(BytesMut/Vec&lt;u8&gt;, &amp;[u8]</code>
+<li>
+<p><code>(PathBuf, Path)</code>、<code>(String, str)</code>和<code>(BytesMut/Vec&lt;u8&gt;, &amp;[u8]</code></p>
 <ul>
 <li>Path，str都是DST类型</li>
 <li>PathBuf和String都是拥有所有权的</li>
 <li>文件路径长度和字符串长度在编译时未知</li>
 </ul>
 </li>
-<li><code>&amp;buf</code>和<code>&amp;buf[..]</code>的区别
+<li>
+<p><code>&amp;buf</code>和<code>&amp;buf[..]</code>的区别</p>
 <ul>
 <li><code>&amp;buf</code>获取整个数组的引用，类型是<code>&amp;[u8; N]</code>或<code>&amp;Vec&lt;u8&gt;</code>（固定大小数组）</li>
 <li><code>&amp;buf[..]</code>获取数组的切片引用，类型是<code>&amp;[u8]</code>（动态大小切片）</li>
 </ul>
+</li>
+<li>
+<p>格式化输出语法</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span>{[<span style="color:#960050;background-color:#1e0010">参数索引</span>]:[<span style="color:#960050;background-color:#1e0010">填充字符</span>][<span style="color:#960050;background-color:#1e0010">对齐方式</span>][<span style="color:#960050;background-color:#1e0010">宽度</span>][.<span style="color:#960050;background-color:#1e0010">精度</span>][<span style="color:#960050;background-color:#1e0010">类型</span>]}
+</span></span></code></pre></div></li>
+<li>
+<p><code>fmt::Formatter</code>是一个功能强大的格式化缓冲区，可以输出到字符串、stdout、文件等</p>
 </li>
 </ul>
 <hr>
 <h4 id="结构体">结构体
 </h4><ul>
 <li>Rust不允许将struct中某个字段标记为可变</li>
+<li>Rust中源文件（<code>.rs</code>）隐性的视为一个模块，区别于<code>mod</code>的显式声明</li>
 </ul>
 <hr>
 <h4 id="闭包">闭包
 </h4><ul>
-<li>根据闭包捕获环境方式可分为三种
+<li>根据闭包捕获环境方式可分为三种，注意区分闭包 <strong>捕获的环境变量</strong>和<strong>闭包的参数</strong>
 <ul>
 <li><code>FnOnce</code>获取所有权</li>
 <li><code>FnMut</code>获取可变引用</li>
@@ -289,6 +303,18 @@
 <ul>
 <li>相当于<code>thread::spwan</code> + <code>thread::join</code>，但是它们只能借用<code>'static</code>或者<code>move</code>变量</li>
 <li><code>scope</code>没有以上限制，有编译器的支持</li>
+</ul>
+</li>
+<li><code>Mutex</code>和<code>MutexGuard</code>
+<ul>
+<li><code>Mutex</code>是互斥锁本身</li>
+<li><code>MutexGuard</code>指访问受互斥锁保护数据的“许可证”或“钥匙”</li>
+</ul>
+</li>
+<li><code>park()/unpark</code>和<code>sleep()</code>
+<ul>
+<li><code>park()/unpark()</code>精准的控制线程的睡眠（park）与唤醒（unpark）</li>
+<li><code>sleep()</code>基于时间自动唤醒，无法提前唤醒</li>
 </ul>
 </li>
 </ul>

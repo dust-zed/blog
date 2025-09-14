@@ -6,13 +6,639 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Mon, 08 Sep 2025 11:16:22 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 12 Sep 2025 03:02:50 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>对Callback的理解</title>
+        <link>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</link>
+        <pubDate>Fri, 12 Sep 2025 03:02:50 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</guid>
+        <description>&lt;p&gt;个人理解：回调的本质就是将函数作为参数传递，而函数 近似 &lt;strong&gt;操作&lt;/strong&gt;。所以, 有别于普通参数传递的是&lt;strong&gt;数据&lt;/strong&gt;，&lt;code&gt;Callback&lt;/code&gt;传递的是&lt;strong&gt;操作&lt;/strong&gt;或&lt;strong&gt;逻辑&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id=&#34;优势&#34;&gt;优势
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;解耦&lt;/strong&gt;: 完成逻辑的分离,要&lt;strong&gt;做什么(调用者)&lt;strong&gt;与&lt;/strong&gt;何时做分离(被调用者)&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;内存高效&lt;/strong&gt;：避免一次性加载所有数据到内存，特别适合处理流式数据或大量数据(例如避免放到集合在遍历)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;灵活性&lt;/strong&gt;：允许调用者自定义处理逻辑，提高代码复用性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;实时处理&lt;/strong&gt;：数据可以立即处理，降低延迟&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;资源控制&lt;/strong&gt;：可以轻松实现提前终止、错误处理等控制流&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;组合性&lt;/strong&gt;：可以方便地组合多个回调函数，实现复杂的数据处理管道&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;事件驱动&lt;/strong&gt;：天然适合事件驱动的编程模式&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;接口一致性&lt;/strong&gt;：提供统一的接口处理不同类型的操作&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;控制反转&#34;&gt;控制反转
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;普通函数调用：调用者控制执行流程&lt;/li&gt;
+&lt;li&gt;回调：被调用者决定何时执行操作&lt;/li&gt;
+&lt;li&gt;控制权从调用者转移到被调用者&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>各类Handle之职责区分</title>
+        <link>http://localhost:1313/rust/tokio/%E5%90%84%E7%B1%BBhandle%E4%B9%8B%E8%81%8C%E8%B4%A3%E5%8C%BA%E5%88%86/</link>
+        <pubDate>Fri, 12 Sep 2025 02:39:18 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/%E5%90%84%E7%B1%BBhandle%E4%B9%8B%E8%81%8C%E8%B4%A3%E5%8C%BA%E5%88%86/</guid>
+        <description>&lt;p&gt;Tokio中的Handle有很多，它们各自负责不同的功能模块。&lt;/p&gt;
+&lt;h4 id=&#34;1-runtimehandle&#34;&gt;1. runtime::Handle
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;runtime的顶层句柄&lt;/li&gt;
+&lt;li&gt;提供创建任务、进入运行时上下文的能力&lt;/li&gt;
+&lt;li&gt;包含其他子系统的句柄&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;2-timehandle&#34;&gt;2. time::Handle
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;时间子系统的入口&lt;/li&gt;
+&lt;li&gt;管理定时器和时间相关的操作&lt;/li&gt;
+&lt;li&gt;内部持有&lt;code&gt;scheduler::Handle&lt;/code&gt;来唤醒任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;3-schedulerhandle&#34;&gt;3. scheduler::Handle
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;任务调度的核心句柄&lt;/li&gt;
+&lt;li&gt;负责任务的提交和唤醒&lt;/li&gt;
+&lt;li&gt;被其他Handle用来与调度器交互&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;4iostack--iohandle&#34;&gt;4.IoStack / IoHandle
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;I/O子系统的句柄&lt;/li&gt;
+&lt;li&gt;管理I/O资源和事件交互&lt;/li&gt;
+&lt;li&gt;与操作系统I/O原语交互&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;引用关系&#34;&gt;引用关系
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;runtime::Handle
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; time::Handle
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──&lt;/span&gt; scheduler::Handle
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; scheduler::Handle
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──&lt;/span&gt; IoStack
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──&lt;/span&gt; IoHandle
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;设计目的&#34;&gt;设计目的
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;关注点分离：每个Handle只关注自己的领域&lt;/li&gt;
+&lt;li&gt;生命周期管理：通过Arc共享所有权&lt;/li&gt;
+&lt;li&gt;线程安全：内部使用锁或原子操作&lt;/li&gt;
+&lt;li&gt;灵活性：可以单独使用或组合使用&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>时间轮算法</title>
+        <link>http://localhost:1313/rust/tokio/%E6%97%B6%E9%97%B4%E8%BD%AE%E7%AE%97%E6%B3%95/</link>
+        <pubDate>Thu, 11 Sep 2025 21:51:21 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/%E6%97%B6%E9%97%B4%E8%BD%AE%E7%AE%97%E6%B3%95/</guid>
+        <description>&lt;p&gt;时间轮(Time Wheel)是Tokio定时器实现的核心算法，它通过分层的方式高效管理大量定时器。&lt;/p&gt;
+&lt;h3 id=&#34;1-基本概念&#34;&gt;1. 基本概念
+&lt;/h3&gt;&lt;h4 id=&#34;11-wheel结构与层级关系&#34;&gt;1.1 Wheel结构与层级关系
+&lt;/h4&gt;&lt;h5 id=&#34;111-时间轮结构&#34;&gt;1.1.1 时间轮结构
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Wheel&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#e6db74&#34;&gt;///当前时间轮已过去的时间
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;  elapsed: &lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#e6db74&#34;&gt;///时间轮的分层
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;  levels: Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;[Level; &lt;span style=&#34;color:#66d9ef&#34;&gt;NUM_LEVELS&lt;/span&gt;]&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#e6db74&#34;&gt;///Entries queued for firing
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;  pending: &lt;span style=&#34;color:#a6e22e&#34;&gt;EntryList&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;112-层级&#34;&gt;1.1.2 层级
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Level&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  slot: [EntryList; &lt;span style=&#34;color:#66d9ef&#34;&gt;LEVEL_MULT&lt;/span&gt;],		&lt;span style=&#34;color:#75715e&#34;&gt;//槽位数组
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  level: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  occupied: &lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;,										&lt;span style=&#34;color:#75715e&#34;&gt;// bit field指示slot是否占用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;113-槽位&#34;&gt;1.1.3 槽位
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Slot&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  head: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;NonNull&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;TimerShared&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;12-分层设计&#34;&gt;1.2 分层设计
+&lt;/h4&gt;&lt;p&gt;Tokio使用多级时间轮（通常为6级），每级包含固定数量的槽位，每级包含固定数量的槽位(slots)：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第0级：64个槽位，每个64^0毫秒&lt;/li&gt;
+&lt;li&gt;第1级：64个槽位，每个64^1毫秒&lt;/li&gt;
+&lt;li&gt;第2级：32个槽位，每个64^2毫秒&lt;/li&gt;
+&lt;li&gt;第3级：32个槽位，每个64^3毫秒&lt;/li&gt;
+&lt;li&gt;第4级：32个槽位，每个64^4毫秒&lt;/li&gt;
+&lt;li&gt;第5级：32个槽位，每个64^5毫秒&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;时间轮的工作流程&#34;&gt;时间轮的工作流程
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;添加一个500ms后触发的定时器&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;第0级：500 &amp;gt; 64ms → 不适用&lt;/li&gt;
+&lt;li&gt;第1级：500 / 64 = 7.8 → 放入第7个槽位&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;时间推进&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;每毫秒检查第0级&lt;/li&gt;
+&lt;li&gt;每64ms检查第1级&lt;/li&gt;
+&lt;li&gt;依此类推&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;降级&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;当高层级的时间轮转动时，将定时器重新分配到更精确的层级&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这种多级设计使得tokio能够：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;精确处理短期定时器(毫秒级)&lt;/li&gt;
+&lt;li&gt;高效管理长期定时器( 年)&lt;/li&gt;
+&lt;li&gt;保持较低的内存占用和计算开销&lt;/li&gt;
+&lt;li&gt;根据&lt;code&gt;elapsed&lt;/code&gt;确定需要检查的时间轮层级和槽位&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;时间轮和时英钟（时针、分针、秒针）可以进行类比理解。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Time的阅读学习记录</title>
+        <link>http://localhost:1313/rust/tokio/time%E7%9A%84%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/</link>
+        <pubDate>Thu, 11 Sep 2025 16:20:08 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/time%E7%9A%84%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/</guid>
+        <description>&lt;h4 id=&#34;sourcers&#34;&gt;source.rs
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;用于管理时间戳转换&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;start_time&lt;/code&gt;记录运行时启动的绝对时间点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;entryrs&#34;&gt;entry.rs
+&lt;/h4&gt;&lt;h5 id=&#34;1-核心数据结构&#34;&gt;1. 核心数据结构
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TimerEntry&lt;/code&gt;：表示一个定时器条目&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimerShared&lt;/code&gt;：定时器的共享状态，包含并发控制逻辑&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StateCell&lt;/code&gt;：管理定时器状态的原子操作封装&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-主要功能&#34;&gt;2. 主要功能
+&lt;/h5&gt;&lt;h6 id=&#34;定时器状态管理&#34;&gt;定时器状态管理
+&lt;/h6&gt;&lt;ul&gt;
+&lt;li&gt;使用原子操作实现无锁状态转换&lt;/li&gt;
+&lt;li&gt;支持定时器的注册、取消和触发&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StateCell&lt;/code&gt;有三种状态
+&lt;ul&gt;
+&lt;li&gt;具体的过期时间戳（定时器已调度，待触发）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;STATE_PENDING_FIRE&lt;/code&gt;（定时器已到期，正准备触发）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;STATE_DEREGISTERED&lt;/code&gt;(已取消/完成)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;已调度&lt;/span&gt;] &lt;span style=&#34;color:#f92672&#34;&gt;--&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;时间到&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;-&amp;gt; [&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;待触发&lt;/span&gt;] &lt;span style=&#34;color:#f92672&#34;&gt;--&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;触发完成&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;-&amp;gt; [&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;已取消&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;                                          &lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;                                          &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;+------------------&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;取消&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TimerShared&lt;/code&gt;负责管理定时器的共享状态和并发安全，分离了定时器的注册时间，用于时间轮调度&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimerEntry&lt;/code&gt;是用户可见的句柄，包含完整的生命周期管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;modrs&#34;&gt;mod.rs
+&lt;/h4&gt;&lt;p&gt;负责管理所有与时间相关的功能&lt;/p&gt;
+&lt;h5 id=&#34;核心结构&#34;&gt;核心结构
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;Driver结构体，时间驱动的主要实现，负责
+&lt;ul&gt;
+&lt;li&gt;管理时间轮（time wheel）实例&lt;/li&gt;
+&lt;li&gt;处理定时器的注册、取消和触发&lt;/li&gt;
+&lt;li&gt;与I/O驱动协同工作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Inner&lt;/code&gt;和&lt;code&gt;InnerState&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;包含时间轮实例&lt;/li&gt;
+&lt;li&gt;管理驱动状态（如是否已关闭）&lt;/li&gt;
+&lt;li&gt;提供线程安全的内部状态访问&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;关键方法&#34;&gt;关键方法
+&lt;/h5&gt;&lt;p&gt;process_at_time方法&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;处理当前时间点所有到期的定时器&lt;/li&gt;
+&lt;li&gt;处理系统时间回退的情况&lt;/li&gt;
+&lt;li&gt;批量唤醒等待的任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;reregister方法&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;重新注册定时器到新的时间点&lt;/li&gt;
+&lt;li&gt;线程安全的更新定时器&lt;/li&gt;
+&lt;li&gt;处理驱动关闭的情况&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Park 线程挂起的实现</title>
+        <link>http://localhost:1313/rust/tokio/park-%E7%BA%BF%E7%A8%8B%E6%8C%82%E8%B5%B7%E7%9A%84%E5%AE%9E%E7%8E%B0/</link>
+        <pubDate>Wed, 10 Sep 2025 10:04:26 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/park-%E7%BA%BF%E7%A8%8B%E6%8C%82%E8%B5%B7%E7%9A%84%E5%AE%9E%E7%8E%B0/</guid>
+        <description>&lt;p&gt;&lt;code&gt;park.rs&lt;/code&gt;是Tokio运行时中用于线程挂起和恢复的核心。&lt;/p&gt;
+&lt;h4 id=&#34;核心结构&#34;&gt;核心结构
+&lt;/h4&gt;&lt;h5 id=&#34;parkthread-和-unparkthread&#34;&gt;ParkThread 和 UnParkThread
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ParkThread&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  inner: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Inner&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;UnParkThread&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  inner: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Inner&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;乍一看，这两根本就是相同的结构，但是它们是用在不同地方的，以及impl块有区别。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;tokio_thread_local!&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;CURRENT_PARKER&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;ParkThread&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; ParkThread::new();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这是最重要的区别，&lt;code&gt;ParkThread&lt;/code&gt;用在了线程局部变量上，而&lt;code&gt;UnParkThread&lt;/code&gt;没有线程局部限制，另外&lt;code&gt;UnParkThread&lt;/code&gt;只实现了&lt;code&gt;unpark&lt;/code&gt;方法，目的是让其他线程只能唤醒。&lt;/p&gt;
+&lt;h5 id=&#34;inner&#34;&gt;Inner
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;Inner&lt;/code&gt;结构体使用原子操作管理线程状态，这种状态管理是构建无锁并发原语的基础。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;			&lt;span style=&#34;color:#75715e&#34;&gt;//初始状态或unpark状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;PARKED&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;;		&lt;span style=&#34;color:#75715e&#34;&gt;//线程已挂起
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;;	&lt;span style=&#34;color:#75715e&#34;&gt;//线程已被通知唤醒
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Inner&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  state: &lt;span style=&#34;color:#a6e22e&#34;&gt;AtomicUsize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  mutex: &lt;span style=&#34;color:#a6e22e&#34;&gt;Mutex&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  condvar: &lt;span style=&#34;color:#a6e22e&#34;&gt;Condvar&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;为什么直接用&lt;code&gt;Mutex&amp;lt;Usize&amp;gt;&lt;/code&gt;而是多用了一个&lt;code&gt;AtomicUsize&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AtomicUsize&lt;/code&gt;是无锁的，比获取 &lt;code&gt;Mutex&lt;/code&gt;快&lt;/li&gt;
+&lt;li&gt;内存顺序保证&lt;/li&gt;
+&lt;li&gt;状态更新使用原子操作，减少锁的持有时间&lt;/li&gt;
+&lt;li&gt;锁粒度控制，&lt;code&gt;Mutex&lt;/code&gt;只保护条件变量的等待/通知时机&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;具体功能的实现&#34;&gt;具体功能的实现
+&lt;/h4&gt;&lt;h5 id=&#34;park&#34;&gt;park()
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;park&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; self
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  		.state
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  		.compare_exchange(&lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt;, SeqCst, SeqCst)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  		.is_ok() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;; &lt;span style=&#34;color:#75715e&#34;&gt;// “虚假唤醒”保护，另一个线程unpark，此线程又park，避免了没必要的线程挂起和唤醒操作
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 获取锁,并修改状态至parked
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; m: &lt;span style=&#34;color:#a6e22e&#34;&gt;std&lt;/span&gt;::sync::MutexGuard&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&amp;#39;_, ()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.mutex.lock();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self.state.compare_exchange(&lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;PARKED&lt;/span&gt;, SeqCst, SeqCst) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ok(_) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; {}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err(&lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; old &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.state.swap(&lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt;, SeqCst);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#a6e22e&#34;&gt;debug_assert_eq!&lt;/span&gt;(old, &lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;park state changed unexpectedly&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err(actual) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;panic!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;inconsistent park state; actual = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{actual}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;loop&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.condvar.wait(m).unwrap(); &lt;span style=&#34;color:#75715e&#34;&gt;//释放锁并挂起线程等待notify
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; self
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    		.state
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    		.compare_exchange(&lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt;, SeqCst, SeqCst)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    		.is_ok() 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;; &lt;span style=&#34;color:#75715e&#34;&gt;//确保有效唤醒，NOTIFIED -&amp;gt; EMPTY,忽略错误唤醒
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h6 id=&#34;双重检查模式&#34;&gt;双重检查模式
+&lt;/h6&gt;&lt;ul&gt;
+&lt;li&gt;第一次检查避免不必要的锁获取&lt;/li&gt;
+&lt;li&gt;第二次检查处理竞态条件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h6 id=&#34;虚假唤醒处理&#34;&gt;虚假唤醒处理
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;loop&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.condvar.wait(m).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; self.state.compare_exchange(&lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt;, SeqCst, SeqCst).is_ok() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个循环确保只有收到真正的通知才会返回，处理了条件变量的虚假唤醒问题。&lt;/p&gt;
+&lt;h5 id=&#34;unpark&#34;&gt;unpark
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;unpark&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//无论什么状态都置为NOTIFIED
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; self.state.swap(&lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;, SeqCst) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;EMPTY&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;PARKED&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; {}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _ &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;panic!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;inconsistent state in unpark&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//通过lock确保目标线程已经是PARKED了
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  drop(self.mutex.lock());
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  self.condvar.notify_one();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;通过控制ParkThread和UnParkThread的方法，完成了功能分离，配合之前的&lt;code&gt;ThreadLocal&lt;/code&gt;,完成了线程自己挂起，然后其他线程可以唤醒此线程的功能。同时UnParkThread也可以转为&lt;code&gt;Waker&lt;/code&gt;。&lt;/p&gt;
+&lt;h5 id=&#34;shutdown&#34;&gt;shutdown
+&lt;/h5&gt;&lt;p&gt;通知线程该醒了，具体的shutdown操作由调用者处理。&lt;/p&gt;
+&lt;h5 id=&#34;cachedparkthread&#34;&gt;CachedParkThread
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;缓存&lt;code&gt;Waker&lt;/code&gt;避免重复分配&lt;/li&gt;
+&lt;li&gt;提供&lt;code&gt;block_on&lt;/code&gt;方法，这是运行时执行future的基础&lt;/li&gt;
+&lt;li&gt;通过线程局部存储管理每个线程的parker&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_anchor: PhantomData&amp;lt;Rc&amp;lt;()&amp;gt;&amp;gt;&lt;/code&gt;隐含了&lt;code&gt;!Send + !Sync&lt;/code&gt;，CachedParkThread 不可跨线程。&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>Runtime逐文件阅读学习记录</title>
+        <link>http://localhost:1313/rust/tokio/runtime%E9%80%90%E6%96%87%E4%BB%B6%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/</link>
+        <pubDate>Tue, 09 Sep 2025 00:20:36 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/runtime%E9%80%90%E6%96%87%E4%BB%B6%E9%98%85%E8%AF%BB%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/</guid>
+        <description>&lt;h4 id=&#34;thread_idrs&#34;&gt;thread_id.rs
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;主要类&lt;code&gt;ThreadId&lt;/code&gt;，其功能是为线程生成不重复的线程id&lt;/li&gt;
+&lt;li&gt;主要学习到的内容
+&lt;ul&gt;
+&lt;li&gt;内存排序，Atomic类不仅是原子操作，还有内存排序的功能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;task_hooksrs&#34;&gt;task_hooks.rs
+&lt;/h3&gt;&lt;h4 id=&#34;1-核心类型&#34;&gt;1. 核心类型
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;TaskCallback&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TaskCallback&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; std::sync::Arc&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; Fn(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;TaskMeta&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&amp;#39;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; Send &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; Sync&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;表示一个任务回调函数&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;Arc&lt;/code&gt;实现引用计数，支持多线程共享&lt;/li&gt;
+&lt;li&gt;接收&lt;code&gt;&amp;amp;TaskMeta&amp;lt;&#39;_&amp;gt;&lt;/code&gt;作为参数，包含任务元数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;TaskMeta&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TaskMeta&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    id: &lt;span style=&#34;color:#a6e22e&#34;&gt;super&lt;/span&gt;::task::Id,         &lt;span style=&#34;color:#75715e&#34;&gt;// 任务ID
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    spawned_at: &lt;span style=&#34;color:#a6e22e&#34;&gt;SpawnedAt&lt;/span&gt;,       &lt;span style=&#34;color:#75715e&#34;&gt;// 任务创建位置
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;std&lt;/span&gt;::marker::PhantomData&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt; ()&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;包含任务的基本数据&lt;/li&gt;
+&lt;li&gt;使用生命周期参数&lt;code&gt;&#39;a&lt;/code&gt;确保引用的有效性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;TaskHooks&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TaskHooks&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) task_spawn_callback: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;TaskCallback&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;//任务生成
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) task_terminate_callback: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;TaskCallback&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, &lt;span style=&#34;color:#75715e&#34;&gt;//任务结束
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(tokio_unstable)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) before_poll_callback: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;TaskCallback&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(tokio_unstable)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) after_poll_callback: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;TaskCallback&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;在任务不同的状态回调&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;processrs&#34;&gt;process.rs
+&lt;/h4&gt;&lt;p&gt;主要解决Unix系统上孤儿进程回收问题&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;通过&lt;code&gt;GlobalOrphanQueue&lt;/code&gt;管理需要回收的进程&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;SignalDriver&lt;/code&gt;监听&lt;code&gt;SIGCHLD&lt;/code&gt;信号&lt;/li&gt;
+&lt;li&gt;非阻塞地检查子进程状态&lt;/li&gt;
+&lt;li&gt;孤儿进程指父进程已经终止或退出，但子进程仍在运行的进程。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SIGCHLD&lt;/code&gt;是用于通知父进程其子进程状态发生变化的信号。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;parkrs&#34;&gt;park.rs
+&lt;/h4&gt;&lt;p&gt;实现线程的挂起与唤醒&lt;/p&gt;
+&lt;h4 id=&#34;driverrs&#34;&gt;driver.rs
+&lt;/h4&gt;&lt;p&gt;在tokio运行时中扮演着聚合和管理不同I/O和系统事件驱动器的角色。主要处理线程的挂起和唤醒机制。&lt;/p&gt;
+&lt;h5 id=&#34;1-驱动器聚合&#34;&gt;1. 驱动器聚合
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;它聚合了多种底层驱动器，包括I/O驱动器(&lt;code&gt;IoDriver&lt;/code&gt;)，信号驱动器(&lt;code&gt;SingalDriver&lt;/code&gt;)和事件驱动器(&lt;code&gt;TimeDriver&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-唤醒挂起支持&#34;&gt;2. 唤醒/挂起支持
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;提供了&lt;code&gt;park()&lt;/code&gt;和&lt;code&gt;unpark()&lt;/code&gt;方法用于线程的挂起和唤醒&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;park()&lt;/code&gt;方法会使当前线程进入休眠状态，等待事件发生&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;unpark()&lt;/code&gt;方法用于唤醒被挂起的线程&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-多模式支持&#34;&gt;3. 多模式支持
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;支持启用或禁用特定功能(如I/O驱动)的不同运行时配置&lt;/li&gt;
+&lt;li&gt;例如，&lt;code&gt;IoStack&lt;/code&gt;枚举有&lt;code&gt;Enabled&lt;/code&gt;和&lt;code&gt;Disabled&lt;/code&gt;两种变体，分别对应启用和禁用I/O驱动的情况&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-超时支持&#34;&gt;4. 超时支持
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;提供了&lt;code&gt;park_timeout()&lt;/code&gt;方法，允许线程唤醒在指定的超时后自动唤醒&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;5-优秀设计&#34;&gt;5. 优秀设计
+&lt;/h5&gt;&lt;p&gt;关注点分离，&lt;code&gt;IoStack&lt;/code&gt;关注于parking,&lt;code&gt;IoHandle&lt;/code&gt;关注于unparking&lt;/p&gt;
+&lt;h5 id=&#34;configrs&#34;&gt;config.rs
+&lt;/h5&gt;&lt;p&gt;runtime命令配置，用于定制运行时行为。以下是各字段的详细说明&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;global_queue_interval: Option&amp;lt;u32&amp;gt;&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;控制从全局/远程任务队列拉取任务的频率&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;None&lt;/code&gt;表示每次检查全局队列&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Some(n)&lt;/code&gt;表示每n个tick检查一次全局队列&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;event_interval: u32&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;执行定时器和I/O事件检查的频率&lt;/li&gt;
+&lt;li&gt;较小的值提高响应性，但可能增加CPU使用率&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;before_park: Option&amp;lt;Callback&amp;gt;&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;工作线程挂起前执行的回调&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;用于执行线程特定的清理或状态保存&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;after_unpark: Option&amp;lt;Callback&amp;gt;&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;工作线程唤醒后执行的回调&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;用于恢复线程特定状态或执行初始化&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;before_spawn: Option&amp;lt;TaskCallback&amp;gt;&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;每个任务生成前执行的回调&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;用于任务级别的监控或初始化&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;after_termination: Option&amp;lt;TaskCallback&amp;gt;&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;每个任务终止后执行的回调&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;用于资源清理或统计信息收集&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;before_poll: Option&amp;lt;TaskCallback&amp;gt;&lt;/code&gt;&lt;/strong&gt; (仅限 unstable 特性)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;每次 poll 操作前执行的回调&lt;/li&gt;
+&lt;li&gt;用于性能分析或调试&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;after_poll: Option&amp;lt;TaskCallback&amp;gt;&lt;/code&gt;&lt;/strong&gt; (仅限 unstable 特性)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;每次 poll 操作后执行的回调&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通常与 &lt;code&gt;before_poll&lt;/code&gt; 配对使用&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;LIFO 插槽相关配置&lt;/strong&gt;（代码片段中未完全显示）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;用于优化任务调度&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;特别适用于消息传递等模式&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;builderrs&#34;&gt;builder.rs
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Runtime&lt;/code&gt;核心构建配置&lt;/p&gt;
+&lt;h5 id=&#34;io驱动&#34;&gt;&lt;strong&gt;I/O驱动&lt;code&gt;enable_io&lt;/code&gt;和&lt;code&gt;nevents&lt;/code&gt;&lt;/strong&gt;
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;enable_io&lt;/code&gt;：是否启用I/O驱动
+&lt;ul&gt;
+&lt;li&gt;启用时：支持异步I/O操作（如TCP/UDP套接字、文件I/O等）&lt;/li&gt;
+&lt;li&gt;禁用时：相关API将不可用，减少运行时开销&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nevents&lt;/code&gt;： 每次轮询时处理的最大事件数
+&lt;ul&gt;
+&lt;li&gt;影响I/O吞吐量和响应性&lt;/li&gt;
+&lt;li&gt;值越大，吞吐量可能越高，但延迟可能增加&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;事件驱动enable_time&#34;&gt;事件驱动(&lt;code&gt;enable_time&lt;/code&gt;)
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;控制是否启用时间相关的功能&lt;/li&gt;
+&lt;li&gt;启用时：
+&lt;ul&gt;
+&lt;li&gt;支持&lt;code&gt;tokio::time&lt;/code&gt;模块（如&lt;code&gt;sleep&lt;/code&gt;、&lt;code&gt;timeout&lt;/code&gt;等）&lt;/li&gt;
+&lt;li&gt;允许使用定时器和时间相关的异步操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;禁用时：
+&lt;ul&gt;
+&lt;li&gt;减少运行时开销&lt;/li&gt;
+&lt;li&gt;事件相关&lt;code&gt;API&lt;/code&gt;将不可用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;时钟控制start_paused&#34;&gt;时钟控制(&lt;code&gt;start_paused&lt;/code&gt;)
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;控制运行时时钟的初始状态&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;true&lt;/code&gt;：时钟从暂停状态开始
+&lt;ul&gt;
+&lt;li&gt;时间不会自动推进&lt;/li&gt;
+&lt;li&gt;适用于测试，可以精确控制时间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;false&lt;/code&gt;(默认)：使用系统时钟
+&lt;ul&gt;
+&lt;li&gt;时间正常流逝&lt;/li&gt;
+&lt;li&gt;适用于生产环境&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;时间驱动time-wheel实现&#34;&gt;时间驱动(Time Wheel)实现
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;使用多级时间轮管理定时器&lt;/li&gt;
+&lt;li&gt;每个时间轮有不同的精度，形成层级结构
+&lt;ul&gt;
+&lt;li&gt;第一级：毫秒级精度&lt;/li&gt;
+&lt;li&gt;第二级：秒级精度&lt;/li&gt;
+&lt;li&gt;更高层：分钟/小时级精度&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;优点：O(1) 时间复杂度插入/删除定时器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;系统调用&#34;&gt;系统调用
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;主要使用 &lt;code&gt;timerfd&lt;/code&gt; (Linux) 或 &lt;code&gt;kqueue&lt;/code&gt; (macOS) 等系统级定时器&lt;/li&gt;
+&lt;li&gt;与 I/O 多路复用集成，统一事件循环&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;与io驱动的集成&#34;&gt;与I/O驱动的集成
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 简化的时间轮结构
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TimeWheel&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 不同精度的时间轮
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    wheels: [Wheel; &lt;span style=&#34;color:#66d9ef&#34;&gt;LEVELS&lt;/span&gt;],
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 当前时间
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    now: &lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        </item>
+        <item>
         <title>内存排序</title>
         <link>http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/</link>
         <pubDate>Mon, 08 Sep 2025 11:16:22 +0800</pubDate>
         
         <guid>http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/</guid>
-        <description></description>
+        <description>&lt;h4 id=&#34;1-为什么需要内存排序&#34;&gt;1. 为什么需要内存排序
+&lt;/h4&gt;&lt;p&gt;在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。&lt;/p&gt;
+&lt;h4 id=&#34;rust中的内存排序级别&#34;&gt;Rust中的内存排序级别
+&lt;/h4&gt;&lt;p&gt;Rust通过&lt;code&gt;std::sync::atomic::Ordering&lt;/code&gt;提供了几种内存排序级别：&lt;/p&gt;
+&lt;h5 id=&#34;21-relaxed&#34;&gt;2.1 Relaxed
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;最弱的内存排序&lt;/li&gt;
+&lt;li&gt;只保证当前操作的原子性&lt;/li&gt;
+&lt;li&gt;不保证操作之间的顺序&lt;/li&gt;
+&lt;li&gt;适用场景：简单的计数器、统计信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::sync::atomic::{AtomicUsize, Ordering};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; counter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; AtomicUsize::new(&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter.fetch_add(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, Ordering::Relaxed);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;22-release和acquire&#34;&gt;2.2 Release和Acquire
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Release&lt;/code&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;写屏障&lt;/strong&gt;，确保Release操作之前的所有内存操作（读/写）都完成&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;可见性保证&lt;/strong&gt;，确保这些修改对其他线程可见&lt;/li&gt;
+&lt;li&gt;发布数据到共享内存，标记数据准备就绪&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Acquire&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;读屏障&lt;/strong&gt;：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;可见性保证&lt;/strong&gt;：确保看到其他线程Release操作之前的所有修改&lt;/li&gt;
+&lt;li&gt;从共享内存读取数据，检查数据是否就绪&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;23-acqrel&#34;&gt;2.3 AcqRel
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;组合语义，同时具有&lt;code&gt;Release&lt;/code&gt;和&lt;code&gt;Acquire&lt;/code&gt;的语义&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;24-seqcst&#34;&gt;2.4 Seqcst
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;最强保证&lt;/strong&gt;：除了&lt;code&gt;Acquire/Release&lt;/code&gt;外，还保证全局一致性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;额外保证&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的
+&lt;ul&gt;
+&lt;li&gt;要么看到 (3) -&amp;gt; (1) -&amp;gt; (4) -&amp;gt; (2)&lt;/li&gt;
+&lt;li&gt;要么看到 (1) -&amp;gt; (3) -&amp;gt; (2) -&amp;gt; (4)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;建立全局操作顺序&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;小结&#34;&gt;小结
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Relaxed&lt;/code&gt;是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。&lt;/p&gt;
+</description>
         </item>
         <item>
         <title>Runtime的核心概念</title>
@@ -1259,37 +1885,48 @@
 &lt;hr&gt;
 &lt;h4 id=&#34;变量和类型&#34;&gt;变量和类型
 &lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ref&lt;/code&gt;和&lt;code&gt;&amp;amp;&lt;/code&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;ref&lt;/code&gt;和&lt;code&gt;&amp;amp;&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&amp;amp;用于创建引用&lt;/li&gt;
 &lt;li&gt;&amp;amp;用于模式匹配时，行使的是解构操作（一般作用是隐式解引用）&lt;/li&gt;
 &lt;li&gt;ref用于模式匹配，获取引用而不是获取所有权&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;T: &#39;static&lt;/code&gt;:表示类型&lt;strong&gt;T内部字段&lt;/strong&gt;要么没有引用，要么引用都是&lt;code&gt;&#39;static&lt;/code&gt;的&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&lt;/code&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;T: &#39;static&lt;/code&gt;:表示类型&lt;strong&gt;T内部字段&lt;/strong&gt;要么没有引用，要么引用都是&lt;code&gt;&#39;static&lt;/code&gt;的&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;实现类型&lt;/strong&gt;必须满足：&lt;code&gt;Self: &#39;static&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;、&lt;code&gt;(String, str)&lt;/code&gt;和&lt;code&gt;(BytesMut/Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8]&lt;/code&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;(PathBuf, Path)&lt;/code&gt;、&lt;code&gt;(String, str)&lt;/code&gt;和&lt;code&gt;(BytesMut/Vec&amp;lt;u8&amp;gt;, &amp;amp;[u8]&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Path，str都是DST类型&lt;/li&gt;
 &lt;li&gt;PathBuf和String都是拥有所有权的&lt;/li&gt;
 &lt;li&gt;文件路径长度和字符串长度在编译时未知&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;和&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;的区别
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;和&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;的区别&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;&amp;amp;buf&lt;/code&gt;获取整个数组的引用，类型是&lt;code&gt;&amp;amp;[u8; N]&lt;/code&gt;或&lt;code&gt;&amp;amp;Vec&amp;lt;u8&amp;gt;&lt;/code&gt;（固定大小数组）&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;&amp;amp;buf[..]&lt;/code&gt;获取数组的切片引用，类型是&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;（动态大小切片）&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;格式化输出语法&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;参数索引&lt;/span&gt;]:[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;填充字符&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;对齐方式&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;宽度&lt;/span&gt;][.&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;精度&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;类型&lt;/span&gt;]}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;结构体&#34;&gt;结构体
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;Rust不允许将struct中某个字段标记为可变&lt;/li&gt;
+&lt;li&gt;Rust中源文件（&lt;code&gt;.rs&lt;/code&gt;）隐性的视为一个模块，区别于&lt;code&gt;mod&lt;/code&gt;的显式声明&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;闭包&#34;&gt;闭包
@@ -1311,6 +1948,18 @@
 &lt;ul&gt;
 &lt;li&gt;相当于&lt;code&gt;thread::spwan&lt;/code&gt; + &lt;code&gt;thread::join&lt;/code&gt;，但是它们只能借用&lt;code&gt;&#39;static&lt;/code&gt;或者&lt;code&gt;move&lt;/code&gt;变量&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;scope&lt;/code&gt;没有以上限制，有编译器的支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Mutex&lt;/code&gt;和&lt;code&gt;MutexGuard&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Mutex&lt;/code&gt;是互斥锁本身&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MutexGuard&lt;/code&gt;指访问受互斥锁保护数据的“许可证”或“钥匙”&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;park()/unpark&lt;/code&gt;和&lt;code&gt;sleep()&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;park()/unpark()&lt;/code&gt;精准的控制线程的睡眠（park）与唤醒（unpark）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sleep()&lt;/code&gt;基于时间自动唤醒，无法提前唤醒&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;

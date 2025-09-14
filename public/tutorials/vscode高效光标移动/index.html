@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="1. 为什么需要内存排序 在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。\nRust中的内存排序级别 Rust通过std::sync::atomic::Ordering提供了几种内存排序级别：\n2.1 Relaxed 最弱的内存排序 只保证当前操作的原子性 不保证操作之间的顺序 适用场景：简单的计数器、统计信息 use std::sync::atomic::{AtomicUsize, Ordering}; let counter = AtomicUsize::new(0); counter.fetch_add(1, Ordering::Relaxed); 2.2 Release和Acquire Release： 写屏障，确保Release操作之前的所有内存操作（读/写）都完成 可见性保证，确保这些修改对其他线程可见 发布数据到共享内存，标记数据准备就绪 Acquire 读屏障：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改 可见性保证：确保看到其他线程Release操作之前的所有修改 从共享内存读取数据，检查数据是否就绪 2.3 AcqRel 组合语义，同时具有Release和Acquire的语义 2.4 Seqcst 最强保证：除了Acquire/Release外，还保证全局一致性 额外保证： 所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的 要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2) 要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4) 建立全局操作顺序 小结 Relaxed是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。\n">
-<title>内存排序</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="基础移动 Option + ←/→ - 按单词移动 Cmd + ←/→ - 行首/行尾 Cmd + ↑/↓ - 文件开头/结尾 Cmd + G - 跳转到指定行号 Cmd + P - 快速打开文件 高级移动 Option + ↑/↓ - 移动当前行 ">
+<title>Vscode高效光标移动</title>
 
-<link rel='canonical' href='http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/'>
+<link rel='canonical' href='http://localhost:1313/tutorials/vscode%E9%AB%98%E6%95%88%E5%85%89%E6%A0%87%E7%A7%BB%E5%8A%A8/'>
 
-<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="内存排序">
-<meta property='og:description' content="1. 为什么需要内存排序 在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。\nRust中的内存排序级别 Rust通过std::sync::atomic::Ordering提供了几种内存排序级别：\n2.1 Relaxed 最弱的内存排序 只保证当前操作的原子性 不保证操作之间的顺序 适用场景：简单的计数器、统计信息 use std::sync::atomic::{AtomicUsize, Ordering}; let counter = AtomicUsize::new(0); counter.fetch_add(1, Ordering::Relaxed); 2.2 Release和Acquire Release： 写屏障，确保Release操作之前的所有内存操作（读/写）都完成 可见性保证，确保这些修改对其他线程可见 发布数据到共享内存，标记数据准备就绪 Acquire 读屏障：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改 可见性保证：确保看到其他线程Release操作之前的所有修改 从共享内存读取数据，检查数据是否就绪 2.3 AcqRel 组合语义，同时具有Release和Acquire的语义 2.4 Seqcst 最强保证：除了Acquire/Release外，还保证全局一致性 额外保证： 所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的 要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2) 要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4) 建立全局操作顺序 小结 Relaxed是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。\n">
-<meta property='og:url' content='http://localhost:1313/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/'>
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Vscode高效光标移动">
+<meta property='og:description' content="基础移动 Option + ←/→ - 按单词移动 Cmd + ←/→ - 行首/行尾 Cmd + ↑/↓ - 文件开头/结尾 Cmd + G - 跳转到指定行号 Cmd + P - 快速打开文件 高级移动 Option + ↑/↓ - 移动当前行 ">
+<meta property='og:url' content='http://localhost:1313/tutorials/vscode%E9%AB%98%E6%95%88%E5%85%89%E6%A0%87%E7%A7%BB%E5%8A%A8/'>
 <meta property='og:site_name' content='zed的博客'>
-<meta property='og:type' content='article'><meta property='article:section' content='Rust' /><meta property='article:published_time' content='2025-09-08T11:16:22&#43;08:00'/><meta property='article:modified_time' content='2025-09-08T11:16:22&#43;08:00'/>
-<meta name="twitter:title" content="内存排序">
-<meta name="twitter:description" content="1. 为什么需要内存排序 在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。\nRust中的内存排序级别 Rust通过std::sync::atomic::Ordering提供了几种内存排序级别：\n2.1 Relaxed 最弱的内存排序 只保证当前操作的原子性 不保证操作之间的顺序 适用场景：简单的计数器、统计信息 use std::sync::atomic::{AtomicUsize, Ordering}; let counter = AtomicUsize::new(0); counter.fetch_add(1, Ordering::Relaxed); 2.2 Release和Acquire Release： 写屏障，确保Release操作之前的所有内存操作（读/写）都完成 可见性保证，确保这些修改对其他线程可见 发布数据到共享内存，标记数据准备就绪 Acquire 读屏障：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改 可见性保证：确保看到其他线程Release操作之前的所有修改 从共享内存读取数据，检查数据是否就绪 2.3 AcqRel 组合语义，同时具有Release和Acquire的语义 2.4 Seqcst 最强保证：除了Acquire/Release外，还保证全局一致性 额外保证： 所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的 要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2) 要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4) 建立全局操作顺序 小结 Relaxed是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。\n">
+<meta property='og:type' content='article'><meta property='article:section' content='Tutorials' /><meta property='article:published_time' content='2025-09-08T14:00:04&#43;08:00'/><meta property='article:modified_time' content='2025-09-08T14:00:04&#43;08:00'/>
+<meta name="twitter:title" content="Vscode高效光标移动">
+<meta name="twitter:description" content="基础移动 Option + ←/→ - 按单词移动 Cmd + ←/→ - 行首/行尾 Cmd + ↑/↓ - 文件开头/结尾 Cmd + G - 跳转到指定行号 Cmd + P - 快速打开文件 高级移动 Option + ↑/↓ - 移动当前行 ">
     </head>
     <body class="
     article-page
@@ -104,7 +104,7 @@
         </li>
         
         
-        <li >
+        <li  class='current' >
             <a href='/tutorials/' >
                 
                 
@@ -152,8 +152,8 @@
     
     <header class="article-category">
         
-            <a href="/categories/rust/" >
-                Rust
+            <a href="/categories/tutorials/" >
+                Tutorials
             </a>
         
     </header>
@@ -161,7 +161,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/rust/%E5%86%85%E5%AD%98%E6%8E%92%E5%BA%8F/">内存排序</a>
+            <a href="/tutorials/vscode%E9%AB%98%E6%95%88%E5%85%89%E6%A0%87%E7%A7%BB%E5%8A%A8/">Vscode高效光标移动</a>
         </h2>
     
         
@@ -213,58 +213,18 @@
     <section class="article-content">
     
     
-    <h4 id="1-为什么需要内存排序">1. 为什么需要内存排序
-</h4><p>在多线程编程中，编译器和处理器会进行各种优化(如指令重排序)来提供性能。内存排序定义了这些优化在多线程环境中的行为。</p>
-<h4 id="rust中的内存排序级别">Rust中的内存排序级别
-</h4><p>Rust通过<code>std::sync::atomic::Ordering</code>提供了几种内存排序级别：</p>
-<h5 id="21-relaxed">2.1 Relaxed
-</h5><ul>
-<li>最弱的内存排序</li>
-<li>只保证当前操作的原子性</li>
-<li>不保证操作之间的顺序</li>
-<li>适用场景：简单的计数器、统计信息</li>
+    <h4 id="基础移动">基础移动
+</h4><ul>
+<li><code>Option + ←/→</code> - 按单词移动</li>
+<li><code>Cmd + ←/→</code> - 行首/行尾</li>
+<li><code>Cmd + ↑/↓</code> - 文件开头/结尾</li>
+<li><code>Cmd + G</code> - 跳转到指定行号</li>
+<li><code>Cmd + P</code> - 快速打开文件</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::atomic::{AtomicUsize, Ordering};
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> counter <span style="color:#f92672">=</span> AtomicUsize::new(<span style="color:#ae81ff">0</span>);
-</span></span><span style="display:flex;"><span>counter.fetch_add(<span style="color:#ae81ff">1</span>, Ordering::Relaxed);
-</span></span></code></pre></div><h5 id="22-release和acquire">2.2 Release和Acquire
-</h5><ul>
-<li><code>Release</code>：
-<ul>
-<li><strong>写屏障</strong>，确保Release操作之前的所有内存操作（读/写）都完成</li>
-<li><strong>可见性保证</strong>，确保这些修改对其他线程可见</li>
-<li>发布数据到共享内存，标记数据准备就绪</li>
+<h4 id="高级移动">高级移动
+</h4><ul>
+<li><code>Option + ↑/↓ </code> - 移动当前行</li>
 </ul>
-</li>
-<li><code>Acquire</code>
-<ul>
-<li><strong>读屏障</strong>：确保在Acquire操作之后的所有内存操作（读/写）都能看到之前Release操作的所有修改</li>
-<li><strong>可见性保证</strong>：确保看到其他线程Release操作之前的所有修改</li>
-<li>从共享内存读取数据，检查数据是否就绪</li>
-</ul>
-</li>
-</ul>
-<h5 id="23-acqrel">2.3 AcqRel
-</h5><ul>
-<li>组合语义，同时具有<code>Release</code>和<code>Acquire</code>的语义</li>
-</ul>
-<h5 id="24-seqcst">2.4 Seqcst
-</h5><ul>
-<li><strong>最强保证</strong>：除了<code>Acquire/Release</code>外，还保证全局一致性</li>
-<li><strong>额外保证</strong>：
-<ul>
-<li>所有线程看到的操作顺序一致，所有线程看到的操作顺序是一致的
-<ul>
-<li>要么看到 (3) -&gt; (1) -&gt; (4) -&gt; (2)</li>
-<li>要么看到 (1) -&gt; (3) -&gt; (2) -&gt; (4)</li>
-</ul>
-</li>
-<li>建立全局操作顺序</li>
-</ul>
-</li>
-</ul>
-<h4 id="小结">小结
-</h4><p><code>Relaxed</code>是只针对原子变量的，其他内存排序是针对共享内存的，充当着内存屏障的作用。</p>
 
 </section>
 
