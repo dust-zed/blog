@@ -2,6 +2,51 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>http://localhost:1313/categories/rust/</loc>
+    <lastmod>2025-09-19T13:50:29+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/</loc>
+    <lastmod>2025-09-19T13:50:29+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/tokio/</loc>
+    <lastmod>2025-09-19T13:50:29+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/categories/tokio/</loc>
+    <lastmod>2025-09-19T13:50:29+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/tokio/tokio%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9E%8B%E8%A7%A3%E6%9E%90/</loc>
+    <lastmod>2025-09-19T13:50:29+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/</loc>
+    <lastmod>2025-09-19T13:50:29+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/tokio/tokio%E4%BB%BB%E5%8A%A1%E7%B3%BB%E7%BB%9F%E8%A7%A3%E6%9E%90/</loc>
+    <lastmod>2025-09-19T12:38:14+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/phantomdata%E7%9A%84%E4%BD%9C%E7%94%A8/</loc>
+    <lastmod>2025-09-19T10:20:18+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
+    <loc>http://localhost:1313/rust/tokio/task%E9%98%85%E8%AF%BB%E6%89%8B%E8%AE%B0/</loc>
+    <lastmod>2025-09-17T10:00:38+08:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url><url>
     <loc>http://localhost:1313/learning-reflection/</loc>
     <lastmod>2025-09-14T13:31:08+08:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -17,38 +62,13 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/</loc>
-    <lastmod>2025-09-14T13:31:08+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/categories/rust/</loc>
-    <lastmod>2025-09-12T03:02:50+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/rust/</loc>
-    <lastmod>2025-09-12T03:02:50+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
     <loc>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</loc>
     <lastmod>2025-09-12T03:02:50+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>
-    <loc>http://localhost:1313/rust/tokio/</loc>
-    <lastmod>2025-09-12T02:39:18+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
     <loc>http://localhost:1313/rust/tokio/%E5%90%84%E7%B1%BBhandle%E4%B9%8B%E8%81%8C%E8%B4%A3%E5%8C%BA%E5%88%86/</loc>
     <lastmod>2025-09-12T02:39:18+08:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url><url>
-    <loc>http://localhost:1313/categories/tokio/</loc>
-    <lastmod>2025-09-11T21:51:21+08:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url><url>

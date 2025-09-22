@@ -6,7 +6,58 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 12 Sep 2025 03:02:50 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 19 Sep 2025 10:20:18 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>PhantomData的作用</title>
+        <link>http://localhost:1313/rust/phantomdata%E7%9A%84%E4%BD%9C%E7%94%A8/</link>
+        <pubDate>Fri, 19 Sep 2025 10:20:18 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/phantomdata%E7%9A%84%E4%BD%9C%E7%94%A8/</guid>
+        <description>&lt;p&gt;&lt;code&gt;PhantomData&lt;/code&gt;在Rust中是为泛型提供逻辑上的补充，它帮助编译器理解和验证泛型参数的使用方式。&lt;/p&gt;
+&lt;h4 id=&#34;核心作用&#34;&gt;核心作用
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;PhantomData&lt;/code&gt;是一个零类型大小（ZST），它不会在运行时占用任何内存，但在编译期提供重要信息：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;类型标记&lt;/strong&gt;：告诉编译器“这个类型逻辑上拥有&lt;code&gt;T&lt;/code&gt;”&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;生命周期追踪&lt;/strong&gt;：帮组编译器验证生命周期的正确性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;变体控制&lt;/strong&gt;:影响泛型参数的协变/逆变行为&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Drop检查&lt;/strong&gt;：影响&lt;code&gt;Drop&lt;/code&gt;检查器的行为&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在&lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;中的具体作用&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;JoinHandle&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    raw: &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt;,         &lt;span style=&#34;color:#75715e&#34;&gt;// 原始任务指针，不直接包含 T
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,   &lt;span style=&#34;color:#75715e&#34;&gt;// 逻辑上表示这个句柄拥有 T 的所有权
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这里&lt;code&gt;PhantomData&amp;lt;T&amp;gt;&lt;/code&gt;表示：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;所有权标记&lt;/strong&gt;: &lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;逻辑上“拥有”一个&lt;code&gt;T&lt;/code&gt;类型的值&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;类型关联&lt;/strong&gt;: 将&lt;code&gt;RawTask&lt;/code&gt;与返回类型&lt;code&gt;T&lt;/code&gt;关联起来&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Drop检查&lt;/strong&gt;： 确保当&lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;被drop时，&lt;code&gt;T&lt;/code&gt;的析构函数会被正确调用&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;其他常见使用场景&#34;&gt;其他常见使用场景
+&lt;/h4&gt;&lt;h5 id=&#34;1-不安全的代码中标记所有权&#34;&gt;1. 不安全的代码中标记所有权：
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;MyPtr&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ptr: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  _marker: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, &lt;span style=&#34;color:#75715e&#34;&gt;//逻辑上拥有T
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-生命周期标记&#34;&gt;2. 生命周期标记
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Slice&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt;, T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    data: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; T,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    len: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _marker: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt; T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 表示包含对 T 的生命周期 &amp;#39;a 的引用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;3-变体控制&#34;&gt;3. 变体控制
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Producer&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    data: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; (),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _marker: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt;() -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;T&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 使 T 协变
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;4-类型安全抽象&#34;&gt;4. 类型安全抽象
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Token&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _private: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 创建类型级别的标记
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;总结&#34;&gt;总结
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;PhantomData&lt;/code&gt;是Rust类型系统中一个强大工具，它允许在不实际存储值的情况下，表达类型之间的关系和约束。&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>对Callback的理解</title>
         <link>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</link>
         <pubDate>Fri, 12 Sep 2025 03:02:50 +0800</pubDate>

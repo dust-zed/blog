@@ -6,7 +6,930 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 12 Sep 2025 03:02:50 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 19 Sep 2025 13:50:29 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Tokio核心模型解析</title>
+        <link>http://localhost:1313/rust/tokio/tokio%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9E%8B%E8%A7%A3%E6%9E%90/</link>
+        <pubDate>Fri, 19 Sep 2025 13:50:29 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/tokio%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9E%8B%E8%A7%A3%E6%9E%90/</guid>
+        <description>&lt;h1 id=&#34;tokio-核心模型解析&#34;&gt;Tokio 核心模型解析
+&lt;/h1&gt;&lt;p&gt;让我们从顶层设计开始，逐步深入 Tokio 的异步运行时模型。&lt;/p&gt;
+&lt;h2 id=&#34;1-核心抽象模型&#34;&gt;1. 核心抽象模型
+&lt;/h2&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;+-------------------------------------------------+
+|                Runtime (运行时)                  |
+|  +-------------------------------------------+  |
+|  |              Reactor (反应器)              |  |
+|  |  - I/O 多路复用 (epoll/kqueue/IOCP)        |  |
+|  |  - 处理 I/O 事件通知                        |  |
+|  +-------------------------------------------+  |
+|                                                 |
+|  +-------------------------------------------+  |
+|  |              Scheduler (调度器)            |  |
+|  |  - 多线程工作窃取调度                      |  |
+|  |  - 任务队列管理                            |  |
+|  +-------------------------------------------+  |
+|                                                 |
+|  +-------------------------------------------+  |
+|  |               Timer (定时器)               |  |
+|  |  - 管理定时任务                            |  |
+|  |  - 基于时间轮的定时器实现                   |  |
+|  +-------------------------------------------+  |
++-------------------------------------------------+
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;2-任务生命周期模型&#34;&gt;2. 任务生命周期模型
+&lt;/h2&gt;&lt;h3 id=&#34;21-任务状态机&#34;&gt;2.1 任务状态机
+&lt;/h3&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-mermaid&#34; data-lang=&#34;mermaid&#34;&gt;stateDiagram-v2
+    [*] --&amp;gt; Created: 创建
+    Created --&amp;gt; Scheduled: 调度
+    Scheduled --&amp;gt; Running: 执行
+    Running --&amp;gt; Pending: 等待I/O
+    Pending --&amp;gt; Scheduled: I/O就绪
+    Running --&amp;gt; Complete: 完成
+    Running --&amp;gt; Panicked: 恐慌
+    Running --&amp;gt; Cancelled: 取消
+    Pending --&amp;gt; Cancelled: 取消
+    Panicked --&amp;gt; [*]
+    Complete --&amp;gt; [*]
+    Cancelled --&amp;gt; [*]
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;22-状态位表示&#34;&gt;2.2 状态位表示
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 状态位域
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;RUNNING&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0b0001&lt;/span&gt;;      &lt;span style=&#34;color:#75715e&#34;&gt;// 任务正在执行
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;COMPLETE&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0b0010&lt;/span&gt;;     &lt;span style=&#34;color:#75715e&#34;&gt;// 任务已完成
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0b0100&lt;/span&gt;;     &lt;span style=&#34;color:#75715e&#34;&gt;// 任务已通知调度器
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;JOIN_INTEREST&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0b1000&lt;/span&gt;; &lt;span style=&#34;color:#75715e&#34;&gt;// 有任务在等待Join
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;JOIN_WAKER&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0b1_0000&lt;/span&gt;;  &lt;span style=&#34;color:#75715e&#34;&gt;// 已设置Join Waker
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;CANCELLED&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0b10_0000&lt;/span&gt;;  &lt;span style=&#34;color:#75715e&#34;&gt;// 任务已取消
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;3-核心数据结构&#34;&gt;3. 核心数据结构
+&lt;/h2&gt;&lt;h3 id=&#34;31-任务结构-rawtask&#34;&gt;3.1 任务结构 (RawTask)
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    header: &lt;span style=&#34;color:#a6e22e&#34;&gt;Header&lt;/span&gt;,          &lt;span style=&#34;color:#75715e&#34;&gt;// 任务头信息
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;Scheduler&lt;/span&gt;,    &lt;span style=&#34;color:#75715e&#34;&gt;// 调度器
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    state: &lt;span style=&#34;color:#a6e22e&#34;&gt;State&lt;/span&gt;,           &lt;span style=&#34;color:#75715e&#34;&gt;// 任务状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    future: &lt;span style=&#34;color:#a6e22e&#34;&gt;Future&lt;/span&gt;,         &lt;span style=&#34;color:#75715e&#34;&gt;// 要执行的Future
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    output: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, &lt;span style=&#34;color:#75715e&#34;&gt;// Future的输出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;32-调度器模型&#34;&gt;3.2 调度器模型
+&lt;/h3&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;+----------------+     +----------------+     +----------------+
+|   Local Queue  | &amp;lt;-&amp;gt; | Global Queue  | &amp;lt;-&amp;gt; | Worker Threads |
++----------------+     +----------------+     +----------------+
+        ^                     ^                       ^
+        |                     |                       |
+        v                     v                       v
++----------------+     +----------------+     +----------------+
+| Task Producer  |     | Work Stealing  |     | Task Consumer  |
+| (spawn)        |     | (负载均衡)      |     | (poll)         |
++----------------+     +----------------+     +----------------+
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;4-执行流程&#34;&gt;4. 执行流程
+&lt;/h2&gt;&lt;h3 id=&#34;41-任务创建与调度&#34;&gt;4.1 任务创建与调度
+&lt;/h3&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-mermaid&#34; data-lang=&#34;mermaid&#34;&gt;sequenceDiagram
+    participant A as 用户代码
+    participant B as Runtime
+    participant C as 调度器
+    participant D as 工作线程
+    
+    A-&amp;gt;&amp;gt;B: spawn(future)
+    B-&amp;gt;&amp;gt;C: 创建任务并加入队列
+    C-&amp;gt;&amp;gt;D: 工作线程窃取任务
+    D-&amp;gt;&amp;gt;D: 执行future.poll()
+    alt Future返回Pending
+        D-&amp;gt;&amp;gt;B: 注册Waker
+    else Future返回Ready
+        D-&amp;gt;&amp;gt;B: 设置输出结果
+    end
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;42-io-就绪处理&#34;&gt;4.2 I/O 就绪处理
+&lt;/h3&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-mermaid&#34; data-lang=&#34;mermaid&#34;&gt;sequenceDiagram
+    participant A as Reactor
+    participant B as 调度器
+    participant C as 任务
+    
+    A-&amp;gt;&amp;gt;B: I/O 就绪事件
+    B-&amp;gt;&amp;gt;C: 唤醒关联的Waker
+    C-&amp;gt;&amp;gt;B: 将任务加入就绪队列
+    B-&amp;gt;&amp;gt;C: 调度执行
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;5-关键优化技术&#34;&gt;5. 关键优化技术
+&lt;/h2&gt;&lt;h3 id=&#34;51-无锁队列&#34;&gt;5.1 无锁队列
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用crossbeam的无锁队列
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TaskQueue&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; crossbeam_deque::Worker&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Arc&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Task&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;52-工作窃取&#34;&gt;5.2 工作窃取
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 工作线程尝试从其他队列窃取任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;steal_work&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Task&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 随机选择受害者队列
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; len &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.workers.len();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; start &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.rng.&lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;len);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; i &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;len {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; idx &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; (start &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; i) &lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt; len;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(task) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.workers[idx].steal() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; Some(task);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    None
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;53-零成本抽象&#34;&gt;5.3 零成本抽象
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用泛型和编译期多态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;spawn&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;F, T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(future: &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;JoinHandle&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    F: &lt;span style=&#34;color:#a6e22e&#34;&gt;Future&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Output &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; Send &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &amp;#39;static,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    T: Send &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &amp;#39;static,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 编译时生成特定类型的代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;6-内存模型&#34;&gt;6. 内存模型
+&lt;/h2&gt;&lt;h3 id=&#34;61-任务分配&#34;&gt;6.1 任务分配
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 自定义内存分配器优化
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; layout &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Layout::new::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .extend(Layout::new::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Scheduler&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;())&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;.&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    .extend(Layout::new::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;())&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;.&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ptr &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; alloc(layout);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;62-引用计数&#34;&gt;6.2 引用计数
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用原子引用计数管理任务生命周期
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Task&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    header: &lt;span style=&#34;color:#a6e22e&#34;&gt;Arc&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Drop &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Task {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;drop&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; Arc::strong_count(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self.header) &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#75715e&#34;&gt;// 最后一个引用，释放资源
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;7-调试与追踪&#34;&gt;7. 调试与追踪
+&lt;/h2&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(tokio_unstable)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TaskMeta&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    name: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&amp;#39;static &lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    location: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&amp;#39;static &lt;span style=&#34;color:#a6e22e&#34;&gt;std&lt;/span&gt;::panic::Location&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&amp;#39;static&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;8-使用模型&#34;&gt;8. 使用模型
+&lt;/h2&gt;&lt;h3 id=&#34;81-基本使用&#34;&gt;8.1 基本使用
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[tokio::main]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 创建任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; handle &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; tokio::spawn(&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 异步代码
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Hello, Tokio!&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    });
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 等待任务完成
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; result &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; handle.&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;.unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, result);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;82-任务间通信&#34;&gt;8.2 任务间通信
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用通道进行任务间通信
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (tx, &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; rx) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; tokio::sync::mpsc::channel(&lt;span style=&#34;color:#ae81ff&#34;&gt;32&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 生产者任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;tokio::spawn(&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;move&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    tx.send(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Hello&amp;#34;&lt;/span&gt;).&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt;.unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 消费者任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;tokio::spawn(&lt;span style=&#34;color:#66d9ef&#34;&gt;async&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;move&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(message) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; rx.recv().&lt;span style=&#34;color:#66d9ef&#34;&gt;await&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;received: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, message);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;9-性能考量&#34;&gt;9. 性能考量
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;任务大小&lt;/strong&gt;：保持任务小巧高效&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;避免阻塞&lt;/strong&gt;：不要在异步上下文中执行阻塞操作&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;批量处理&lt;/strong&gt;：合并小的I/O操作为批量操作&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;合理使用spawn&lt;/strong&gt;：避免创建过多任务&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;10-调试技巧&#34;&gt;10. 调试技巧
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;启用 &lt;code&gt;tokio_unstable&lt;/code&gt; 特性获取更多调试信息&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;tracing&lt;/code&gt; 进行分布式追踪&lt;/li&gt;
+&lt;li&gt;监控运行时指标（任务数、队列长度等）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这个模型展示了 Tokio 如何高效地管理异步任务。理解这些核心概念后，您可以更深入地研究特定组件的实现细节。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Tokio任务系统解析</title>
+        <link>http://localhost:1313/rust/tokio/tokio%E4%BB%BB%E5%8A%A1%E7%B3%BB%E7%BB%9F%E8%A7%A3%E6%9E%90/</link>
+        <pubDate>Fri, 19 Sep 2025 12:38:14 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/tokio%E4%BB%BB%E5%8A%A1%E7%B3%BB%E7%BB%9F%E8%A7%A3%E6%9E%90/</guid>
+        <description>&lt;p&gt;Tokio的任务系统是其异步运行时的核心，它负责调度和执行异步任务。让我们深入分析其设计和实现。&lt;/p&gt;
+&lt;h3 id=&#34;1-核心组件&#34;&gt;1. 核心组件
+&lt;/h3&gt;&lt;h4 id=&#34;11-任务表示&#34;&gt;1.1 任务表示
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Task&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;S: &amp;#39;static&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  raw: &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;RawTask&lt;/code&gt;：实际的任务数据，包含任务状态、调度器等。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PhantomData&amp;lt;S&amp;gt;&lt;/code&gt;：关联调度器类型，用于类型安全&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;12-任务头header&#34;&gt;1.2 任务头(Header)
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Header&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    state: &lt;span style=&#34;color:#a6e22e&#34;&gt;State&lt;/span&gt;,                   &lt;span style=&#34;color:#75715e&#34;&gt;// 任务状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    queue_next: &lt;span style=&#34;color:#a6e22e&#34;&gt;UnsafeCell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;..&lt;/span&gt;.&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,    &lt;span style=&#34;color:#75715e&#34;&gt;// 任务队列指针
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    vtable: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&amp;#39;static &lt;span style=&#34;color:#a6e22e&#34;&gt;Vtable&lt;/span&gt;,        &lt;span style=&#34;color:#75715e&#34;&gt;// 虚函数表
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    owner_id: &lt;span style=&#34;color:#a6e22e&#34;&gt;UnsafeCell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;..&lt;/span&gt;.&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,      &lt;span style=&#34;color:#75715e&#34;&gt;// 任务所有者ID
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;2-任务生命周期&#34;&gt;2. 任务生命周期
+&lt;/h4&gt;&lt;h4 id=&#34;21-创建任务&#34;&gt;2.1 创建任务
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;new_task&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(task: &lt;span style=&#34;color:#a6e22e&#34;&gt;T&lt;/span&gt;, scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;S&lt;/span&gt;, id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;) -&amp;gt; (Task&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, Notified&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, JoinHandle&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    T: &lt;span style=&#34;color:#a6e22e&#34;&gt;Future&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &amp;#39;static,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    S: &lt;span style=&#34;color:#a6e22e&#34;&gt;Schedule&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; raw &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; RawTask::new::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(task, scheduler, id, spawned_at);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 创建三种句柄
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; task &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Task { raw, _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt; };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; notified &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Notified(Task { raw, _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt; });
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; join &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; JoinHandle::new(raw);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (task, notified, join)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;RawTask&lt;/code&gt;实现了Copy，故这里可以这样做，同时我们需要知道&lt;code&gt;RawTask&lt;/code&gt;的初始引用计数状态。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;new&lt;/span&gt;() -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;State&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  State {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    val: &lt;span style=&#34;color:#a6e22e&#34;&gt;AtomicUsize&lt;/span&gt;::new(&lt;span style=&#34;color:#66d9ef&#34;&gt;INTIAL_STATE&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;初始状态设置为：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;INITIAL_STATE&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; (&lt;span style=&#34;color:#66d9ef&#34;&gt;REF_ONE&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;) &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;JOIN_INTEREST&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;NOTIFIED&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这意味着：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;初始引用计数是&lt;code&gt;REF_ONE * 3&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;同时设置了 &lt;code&gt;JOIN_INTEREST&lt;/code&gt; 和 &lt;code&gt;NOTIFIED&lt;/code&gt; 标志位&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;一个任务创建会返回三个句柄：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;Task&lt;/code&gt;：用于取消或释放任务&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Notified&lt;/code&gt;：表示任务已准备好执行&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;JoinHandle&lt;/code&gt;：用于等待任务完成并获取结果&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;3-核心机制&#34;&gt;3. 核心机制
+&lt;/h3&gt;&lt;h4 id=&#34;31-任务调度&#34;&gt;3.1 任务调度
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 在调度器中的执行循环
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;loop&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; task &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.next_task();  &lt;span style=&#34;color:#75715e&#34;&gt;// 获取下一个就绪任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    task.run();                  &lt;span style=&#34;color:#75715e&#34;&gt;// 执行任务
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;32-唤醒机制&#34;&gt;3.2 唤醒机制
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Waker 实现
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Waker&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    header: &lt;span style=&#34;color:#a6e22e&#34;&gt;NonNull&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; std::task::Wake &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Waker {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;wake&lt;/span&gt;(self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        self.wake_by_ref();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;wake_by_ref&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 将任务标记为就绪并重新调度
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { (self.header.as_ref().vtable.schedule)(self.header) };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;4-内存管理&#34;&gt;4. 内存管理
+&lt;/h3&gt;&lt;h4 id=&#34;41-任务分配&#34;&gt;4.1 任务分配
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T: &lt;span style=&#34;color:#a6e22e&#34;&gt;Future&lt;/span&gt;, S: &lt;span style=&#34;color:#a6e22e&#34;&gt;Schedule&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; RawTask&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;new&lt;/span&gt;(future: &lt;span style=&#34;color:#a6e22e&#34;&gt;T&lt;/span&gt;, scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;S&lt;/span&gt;, id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;NonNull&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 1. 计算内存布局
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 2. 分配内存
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 3. 初始化 Header 和 Future
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 4. 返回指向 Header 的指针
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;42-内存布局&#34;&gt;4.2 内存布局
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;      Header       &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 包含任务元数据和虚函数表
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Scheduler (S)   &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 调度器实例
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Future (T)      &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 实际的 Future
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Output Slot     &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 存储 Future 的输出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Traces          &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 调试和跟踪信息
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+-------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;5-并发控制&#34;&gt;5. 并发控制
+&lt;/h3&gt;&lt;h4 id=&#34;51-状态管理&#34;&gt;5.1 状态管理
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;State&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 使用原子操作管理状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// - 运行中标志
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// - 完成标志
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// - 取消标志
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// - 引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    value: &lt;span style=&#34;color:#a6e22e&#34;&gt;AtomicUsize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;具体来说：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;高位的比特位用于引用计数(&lt;code&gt;REF_COUNT_MASK&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;低位的比特位用于任务状态(&lt;code&gt;STATE_MASK&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;52-锁优化&#34;&gt;5.2 锁优化
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用无锁算法优化热点路径
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;transition_to_running&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TransitionToRunning&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 使用原子操作更新状态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 避免使用互斥锁
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;7-设计模式&#34;&gt;7. 设计模式
+&lt;/h3&gt;&lt;h4 id=&#34;71-类型擦除&#34;&gt;7.1 类型擦除
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用虚函数表实现类型擦除
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Vtable&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    poll: &lt;span style=&#34;color:#a6e22e&#34;&gt;unsafe&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt;(NonNull&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    dealloc: &lt;span style=&#34;color:#a6e22e&#34;&gt;unsafe&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt;(NonNull&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;72-零成本抽象&#34;&gt;7.2 零成本抽象
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用泛型和编译期多态
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; Task&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 零成本抽象
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        </item>
+        <item>
+        <title>PhantomData的作用</title>
+        <link>http://localhost:1313/rust/phantomdata%E7%9A%84%E4%BD%9C%E7%94%A8/</link>
+        <pubDate>Fri, 19 Sep 2025 10:20:18 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/phantomdata%E7%9A%84%E4%BD%9C%E7%94%A8/</guid>
+        <description>&lt;p&gt;&lt;code&gt;PhantomData&lt;/code&gt;在Rust中是为泛型提供逻辑上的补充，它帮助编译器理解和验证泛型参数的使用方式。&lt;/p&gt;
+&lt;h4 id=&#34;核心作用&#34;&gt;核心作用
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;PhantomData&lt;/code&gt;是一个零类型大小（ZST），它不会在运行时占用任何内存，但在编译期提供重要信息：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;类型标记&lt;/strong&gt;：告诉编译器“这个类型逻辑上拥有&lt;code&gt;T&lt;/code&gt;”&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;生命周期追踪&lt;/strong&gt;：帮组编译器验证生命周期的正确性&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;变体控制&lt;/strong&gt;:影响泛型参数的协变/逆变行为&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Drop检查&lt;/strong&gt;：影响&lt;code&gt;Drop&lt;/code&gt;检查器的行为&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在&lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;中的具体作用&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;JoinHandle&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    raw: &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt;,         &lt;span style=&#34;color:#75715e&#34;&gt;// 原始任务指针，不直接包含 T
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    _p: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,   &lt;span style=&#34;color:#75715e&#34;&gt;// 逻辑上表示这个句柄拥有 T 的所有权
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这里&lt;code&gt;PhantomData&amp;lt;T&amp;gt;&lt;/code&gt;表示：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;所有权标记&lt;/strong&gt;: &lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;逻辑上“拥有”一个&lt;code&gt;T&lt;/code&gt;类型的值&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;类型关联&lt;/strong&gt;: 将&lt;code&gt;RawTask&lt;/code&gt;与返回类型&lt;code&gt;T&lt;/code&gt;关联起来&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Drop检查&lt;/strong&gt;： 确保当&lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;被drop时，&lt;code&gt;T&lt;/code&gt;的析构函数会被正确调用&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;其他常见使用场景&#34;&gt;其他常见使用场景
+&lt;/h4&gt;&lt;h5 id=&#34;1-不安全的代码中标记所有权&#34;&gt;1. 不安全的代码中标记所有权：
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;MyPtr&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ptr: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;u8&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  _marker: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;, &lt;span style=&#34;color:#75715e&#34;&gt;//逻辑上拥有T
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-生命周期标记&#34;&gt;2. 生命周期标记
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Slice&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt;, T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    data: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; T,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    len: &lt;span style=&#34;color:#66d9ef&#34;&gt;usize&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _marker: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt; T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 表示包含对 T 的生命周期 &amp;#39;a 的引用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;3-变体控制&#34;&gt;3. 变体控制
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Producer&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    data: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; (),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _marker: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt;() -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;T&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 使 T 协变
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;4-类型安全抽象&#34;&gt;4. 类型安全抽象
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Token&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _private: &lt;span style=&#34;color:#a6e22e&#34;&gt;PhantomData&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,  &lt;span style=&#34;color:#75715e&#34;&gt;// 创建类型级别的标记
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;总结&#34;&gt;总结
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;PhantomData&lt;/code&gt;是Rust类型系统中一个强大工具，它允许在不实际存储值的情况下，表达类型之间的关系和约束。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Task阅读手记</title>
+        <link>http://localhost:1313/rust/tokio/task%E9%98%85%E8%AF%BB%E6%89%8B%E8%AE%B0/</link>
+        <pubDate>Wed, 17 Sep 2025 10:00:38 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/tokio/task%E9%98%85%E8%AF%BB%E6%89%8B%E8%AE%B0/</guid>
+        <description>&lt;h4 id=&#34;errorrs&#34;&gt;error.rs
+&lt;/h4&gt;&lt;h5 id=&#34;主要结构&#34;&gt;主要结构
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;JoinError&lt;/strong&gt;：表示任务执行失败的错误类型，包含&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;repr&lt;/code&gt;:错误的具体表示&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;id&lt;/code&gt;:任务的唯一标识符&lt;/li&gt;
+&lt;li&gt;为&lt;code&gt;io::Error&lt;/code&gt;实现了&lt;code&gt;From&amp;lt;JoinError&amp;gt;&lt;/code&gt;，方便类型转换，提升兼容性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Repr&lt;/strong&gt;枚举：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Canceled&lt;/code&gt;：表示任务被取消&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Panic&lt;/code&gt;:表示任务因panic而终止，包含panic信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;joinrs&#34;&gt;join.rs
+&lt;/h4&gt;&lt;p&gt;实现了Tokio异步运行时中的&lt;code&gt;JoinHandle&lt;/code&gt;类型，这是tokio任务系统的核心组件之一。&lt;/p&gt;
+&lt;h5 id=&#34;核心功能&#34;&gt;核心功能
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;JoinHandle&amp;lt;T&amp;gt;&lt;/code&gt;是一个表示异步任务执行结果的句柄，主要功能包括：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;任务结果获取：通过&lt;code&gt;await&lt;/code&gt;获取任务的执行结果&lt;/li&gt;
+&lt;li&gt;任务取消：可以取消正在运行的任务&lt;/li&gt;
+&lt;li&gt;任务状态查询：检查任务是否已完成&lt;/li&gt;
+&lt;li&gt;任务ID获取：获取任务的唯一标识符&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;code&gt;Future&lt;/code&gt;实现&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;允许直接&lt;code&gt;await&lt;/code&gt; &lt;code&gt;JoinHandle&lt;/code&gt;来等待任务完成&lt;/li&gt;
+&lt;li&gt;返回&lt;code&gt;Result&amp;lt;T, JoinError&amp;gt;&lt;/code&gt;，其中&lt;code&gt;T&lt;/code&gt;是任务的返回类型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;与其他组件的交互&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;与&lt;code&gt;RwaTask&lt;/code&gt;交互来管理任务的状态&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;Header&lt;/code&gt;来访问任务的元数据&lt;/li&gt;
+&lt;li&gt;与运行时调度器协作来执行任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;corers&#34;&gt;core.rs
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;core.rs&lt;/code&gt;是Tokio任务系统的核心实现文件，定义了任务的核心数据结构和底层操作。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Cell&amp;lt;T, S&amp;gt;&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Cell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T: &lt;span style=&#34;color:#a6e22e&#34;&gt;Future&lt;/span&gt;, S: &amp;#39;static&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Header field
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) header: &lt;span style=&#34;color:#a6e22e&#34;&gt;Header&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Scheduler-specific data
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;UnsafeCell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;/// Either the future or output, depending on the execution stage.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) stage: &lt;span style=&#34;color:#a6e22e&#34;&gt;CoreStage&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;任务的基本内存布局&lt;/li&gt;
+&lt;li&gt;包含任务头、调度器和任务阶段信息&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;UnsafeCell&lt;/code&gt;实现内部可变性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;Header&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Header&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) state: &lt;span style=&#34;color:#a6e22e&#34;&gt;State&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) vtable: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&amp;#39;static &lt;span style=&#34;color:#a6e22e&#34;&gt;Vtable&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) owner_id: &lt;span style=&#34;color:#a6e22e&#34;&gt;UnsafeCell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;NonZeroU64&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) next_atomic: &lt;span style=&#34;color:#a6e22e&#34;&gt;UnsafeCell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;NonNull&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) vtable_padding: &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; (),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(tokio_unstable)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(not(tokio_unstable))]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;任务头信息&lt;/li&gt;
+&lt;li&gt;包含任务状态、虚函数表、所有者ID等&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;UnsafeCell&lt;/code&gt;实现线程安全&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;Core&amp;lt;T, S&amp;gt;&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Core&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T: &lt;span style=&#34;color:#a6e22e&#34;&gt;Future&lt;/span&gt;, S: &amp;#39;static&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) stage: &lt;span style=&#34;color:#a6e22e&#34;&gt;CoreStage&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;UnsafeCell&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) task_id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;任务核心逻辑&lt;/li&gt;
+&lt;li&gt;管理任务执行阶段和调度器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;任务生命周期管理&#34;&gt;任务生命周期管理
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;任务阶段&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Stage&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Running(T),      &lt;span style=&#34;color:#75715e&#34;&gt;// 任务正在执行
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    Finished(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;::Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;),  &lt;span style=&#34;color:#75715e&#34;&gt;// 任务已完成
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    Consumed,        &lt;span style=&#34;color:#75715e&#34;&gt;// 任务结果已被消费
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;任务轮询&#34;&gt;任务轮询
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;poll&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self, &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; cx: &lt;span style=&#34;color:#a6e22e&#34;&gt;Context&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&amp;#39;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Poll&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; res &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    self.stage.stage.with_mut(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;ptr&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#75715e&#34;&gt;// 获取任务阶段的可变引用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; future &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;ptr } {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Stage::Running(future) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; future,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        _ &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;unreachable!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unexpected stage&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#75715e&#34;&gt;// 轮询future
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; future &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { Pin::new_unchecked(future) };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; _guard &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; TaskIdGuard::enter(self.task_id);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      future.poll(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; cx)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    })
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;//清理工作
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; res.is_ready() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    self.drop_future_or_output();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  res
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;任务输出管理&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 存储任务输出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;store_output&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self, output: &lt;span style=&#34;color:#a6e22e&#34;&gt;super&lt;/span&gt;::Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    self.set_stage(Stage::Finished(output));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 获取任务输出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;take_output&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;super&lt;/span&gt;::Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T::Output&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::mem;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  self.stage.stage.with_mut(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;ptr&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// Safety:: the caller ensures mutual exclusion to the field.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;match&lt;/span&gt; mem::replace(&lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;ptr }, Stage::Consumed) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Stage::Finished(output) &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; output,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      _ &lt;span style=&#34;color:#f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;panic!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;JoinHandle polled after completion&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  })
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;内存布局优化&lt;/p&gt;
+&lt;p&gt;文件开头的注释详细说明了不同架构下的缓存行大小优化:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#[cfg_attr(
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;    any(
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;        target_arch = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;x86_64&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;        target_arch = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;aarch64&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;        target_arch = &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;powerpc64&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;    ),
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;    repr(align(128))  // 128字节对齐
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;任务ID管理&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;/// 在执行或删除 future 时设置和清除上下文中的任务 ID
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TaskIdGuard&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    parent_task_id: Option&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Id&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; TaskIdGuard {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;enter&lt;/span&gt;(id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Self&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        TaskIdGuard {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            parent_task_id: &lt;span style=&#34;color:#a6e22e&#34;&gt;context&lt;/span&gt;::set_current_task_id(Some(id)),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Drop &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; TaskIdGuard {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;drop&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        context::set_current_task_id(self.parent_task_id);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;abortrs&#34;&gt;abort.rs
+&lt;/h4&gt;&lt;p&gt;实现了&lt;code&gt;AbortHandle&lt;/code&gt;类型，这是Tokio任务系统中用于取消任务的核心组件。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;AbortHandle&lt;/code&gt;提供了以下主要功能：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;任务取消：允许外部取消正在运行的异步任务&lt;/li&gt;
+&lt;li&gt;任务状态查询：检查任务是否已完成&lt;/li&gt;
+&lt;li&gt;任务标识：获取任务的唯一标识符&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;AbortHandle&lt;/code&gt;是一个典型的所有权代理模式：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;轻量级句柄：只包含必要的信息来引用任务&lt;/li&gt;
+&lt;li&gt;引用计数：使用&lt;code&gt;Arc&lt;/code&gt;风格的引用计数管理生命周期&lt;/li&gt;
+&lt;li&gt;线程安全：内部使用原子操作保证线程安全&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;引用计数的实现&lt;/p&gt;
+&lt;p&gt;引用计数增加(Clone实现)&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Clone &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; AbortHandle {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;clone&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Self&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 1. 增加引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        self.raw.ref_inc();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 2. 创建新实例
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        Self::new(self.raw)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;引用计数减少(Drop表现)&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; Drop &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; AbortHandle {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;drop&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 减少引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        self.raw.drop_abort_handle();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;RawTask&lt;/code&gt;内部实现了引用计数逻辑&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 伪代码，展示 RawTask 内部实现
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ptr: &lt;span style=&#34;color:#a6e22e&#34;&gt;NonNull&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt; RawTask {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 增加引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ref_inc&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 1. 获取 Header 的可变引用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 2. 原子地增加引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ref_count &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.header().ref_count.fetch_add(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, Ordering::Relaxed);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 防止引用计数溢出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; ref_count &lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;MAX_REF_COUNT&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            std::process::abort();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 减少引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;crate&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;drop_abort_handle&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 1. 原子地减少引用计数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ref_count &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.header().ref_count.fetch_sub(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, Ordering::Release);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 2. 如果这是最后一个引用，执行清理
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; ref_count &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#75715e&#34;&gt;// 确保所有先前的写操作对其他线程可见
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;            std::sync::atomic::fence(Ordering::Acquire);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#75715e&#34;&gt;// 释放资源
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;            self.free();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 获取 Header 的引用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;header&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;Header&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;*&lt;/span&gt;self.ptr.as_ptr() }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;rawrs&#34;&gt;raw.rs
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;raw.rs&lt;/code&gt;是Tokio任务系统的核心实现文件，它定义了底层&lt;code&gt;RawTask&lt;/code&gt;类型，负责管理任务内存和生命周期。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;核心结构&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;code&gt;RawTask&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ptr: &lt;span style=&#34;color:#a6e22e&#34;&gt;NonNull&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Header&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;轻量级包装，包含指向任务头的指针&lt;/li&gt;
+&lt;li&gt;实现了自定义的引用计数和生命周期管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;内存布局&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;     Header       &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;--&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;包含状态、虚表等元数据&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Scheduler      &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;--&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;调度器特定数据&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Future         &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;--&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;用户提供的&lt;/span&gt; Future
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;   Output         &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;--&lt;/span&gt; Future &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;的输出&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;    Trailer       &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;--&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;其他元数据（如&lt;/span&gt; waker&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+------------------+&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;主要功能&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;new&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;T, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    task: &lt;span style=&#34;color:#a6e22e&#34;&gt;T&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    scheduler: &lt;span style=&#34;color:#a6e22e&#34;&gt;S&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    id: &lt;span style=&#34;color:#a6e22e&#34;&gt;Id&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _spawned_at: &lt;span style=&#34;color:#a6e22e&#34;&gt;SpawnLocation&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;RawTask&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;分配内存并初始化任务&lt;/li&gt;
+&lt;li&gt;设置初始状态和虚表&lt;/li&gt;
+&lt;li&gt;返回&lt;code&gt;RawTask&lt;/code&gt;实例&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;引用计数&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ref_inc&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; n &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.header().state.ref_inc();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; n &lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;MAX_REF_COUNT&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 处理溢出
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;super&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;ref_dec&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; self.header().state.ref_dec() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;// 最后一个引用被丢弃
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;        self.drop_reference();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;内存分配&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ptr &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Box::into_raw(Cell::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;_, S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;::new(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    task,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    scheduler,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    State::new(),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    id,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#[cfg(tokio_unstable)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    _spawned_at.&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;内存释放&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;drop_abort_handle_slow&lt;/span&gt;(self) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 释放资源
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ptr &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; self.ptr.as_ptr();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; _ &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Box::from_raw(ptr.cast::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Cell&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(), S&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt;());
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;管理任务的内存布局和生命周期&lt;/li&gt;
+&lt;li&gt;实现自定义的引用计数&lt;/li&gt;
+&lt;li&gt;提供与调度器的集成点&lt;/li&gt;
+&lt;li&gt;处理任务状态转换&lt;/li&gt;
+&lt;li&gt;提供线程安全的操作&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 1. 分配内存并创建 Box
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; boxed &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Box::new(MyData::new());
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 2. 转换为原始指针，放弃所有权
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 放弃所有权 = 讲值的所有权从Rust的所有权系统移除
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 明确放弃 Rust 对这块内存的所有权管理
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 调用者必须手动管理内存
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; raw &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Box::into_raw(boxed);  &lt;span style=&#34;color:#75715e&#34;&gt;// 不会自动释放
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 3. 使用原始指针
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { (&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;raw).do_something() };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 4. 手动释放内存
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; _ &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { Box::from_raw(raw) };  &lt;span style=&#34;color:#75715e&#34;&gt;// 析构并释放内存
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 或者更安全地：
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; _boxed &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;unsafe&lt;/span&gt; { Box::from_raw(raw) };  &lt;span style=&#34;color:#75715e&#34;&gt;// 重新获得所有权
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// _boxed 在这里被 drop，内存被释放
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;放弃所有权意味着：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;无自动析构：Rust不会自动调用&lt;code&gt;drop&lt;/code&gt;或释放内存&lt;/li&gt;
+&lt;li&gt;内存泄漏风险：如果忘记手动释放，会导致内存泄漏&lt;/li&gt;
+&lt;li&gt;安全性责任：调用者必须确保
+&lt;ol&gt;
+&lt;li&gt;指针有效（非空、未释放）&lt;/li&gt;
+&lt;li&gt;正确调用析构函数&lt;/li&gt;
+&lt;li&gt;正确释放内存&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;为什么需要放弃所有权？&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;FFI交互：与C代码交互时需要使用原始指针&lt;/li&gt;
+&lt;li&gt;自引用结构：构建自引用或复杂数据结构&lt;/li&gt;
+&lt;li&gt;性能优化：避免引用计数的开销&lt;/li&gt;
+&lt;li&gt;生命周期扩展：需要比Rust生命周期系统更灵活的生命周期管理&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;staters&#34;&gt;state.rs
+&lt;/h4&gt;&lt;p&gt;Tokio 异步运行时中任务状态管理的核心组件之一。它负责管理异步任务的生命周期状态，使用原子操作来确保线程安全。&lt;/p&gt;
+&lt;h5 id=&#34;主要功能&#34;&gt;主要功能
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;状态管理
+&lt;ul&gt;
+&lt;li&gt;使用&lt;code&gt;State&lt;/code&gt;结构体封装了一个原子整数，表示任务的当前状态&lt;/li&gt;
+&lt;li&gt;通过&lt;code&gt;Snapshot&lt;/code&gt;类型提供对状态的不可变快照访问&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;状态转换
+&lt;ul&gt;
+&lt;li&gt;提供线程安全的状态转换方法,如&lt;code&gt;transition_to_running()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;使用原子操作确保状态转换的线程安全性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;引用计数：
+&lt;ul&gt;
+&lt;li&gt;管理任务的引用计数，跟踪任务的所有者数量&lt;/li&gt;
+&lt;li&gt;处理任务的创建和销毁&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;生命周期管理
+&lt;ul&gt;
+&lt;li&gt;跟踪任务是否完成、是否被取消&lt;/li&gt;
+&lt;li&gt;管理任务的通知状态&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;关键结构体&#34;&gt;关键结构体
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;State.rs&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;包含一个&lt;code&gt;AtomicUsize&lt;/code&gt;，以线程安全的方式存储状态&lt;/li&gt;
+&lt;li&gt;提供各种状态转换方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Snapshot&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;状态的不可变快照&lt;/li&gt;
+&lt;li&gt;提供查询方法检查状态&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TransitionToRunning&lt;/code&gt;等枚举
+&lt;ul&gt;
+&lt;li&gt;表示状态转换的结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;wakerrs&#34;&gt;waker.rs
+&lt;/h4&gt;&lt;p&gt;是Tokio运行时中实现Waker功能的核心模块，负责异步任务的唤醒机制。以下是其主要功能和作用：&lt;/p&gt;
+&lt;h5 id=&#34;核心功能-1&#34;&gt;核心功能
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;Waker实现：
+&lt;ul&gt;
+&lt;li&gt;提供了&lt;code&gt;WakerRef&lt;/code&gt;结构体，是&lt;code&gt;std::task::Waker&lt;/code&gt;的轻量级包装&lt;/li&gt;
+&lt;li&gt;实现了&lt;code&gt;Deref&lt;/code&gt;trait,使其可以透明地作为&lt;code&gt;Waker&lt;/code&gt;使用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;性能优化
+&lt;ul&gt;
+&lt;li&gt;使用&lt;code&gt;ManuallyDrop&lt;/code&gt;避免不必要的引用计数操作&lt;/li&gt;
+&lt;li&gt;通过&lt;code&gt;PhantomData&lt;/code&gt;确保类型安全&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;调试支持：
+&lt;ul&gt;
+&lt;li&gt;在启用&lt;code&gt;trace&lt;/code&gt;特性时，提供详细的任务唤醒日志&lt;/li&gt;
+&lt;li&gt;记录任务ID和操作类型，便于调试和性能分析&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;关键组件&#34;&gt;关键组件
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;WakerRef&lt;/code&gt;结构体&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;封装了标准库的&lt;code&gt;Waker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;使用&lt;code&gt;PhantomData&lt;/code&gt;关联调度器类型&lt;code&gt;S&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Waker VTable&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;定义了Waker的行为
+&lt;ul&gt;
+&lt;li&gt;clone_waker：克隆Waker&lt;/li&gt;
+&lt;li&gt;drop_waker：释放Waker资源&lt;/li&gt;
+&lt;li&gt;wake_by_val：消费Waker并唤醒任务&lt;/li&gt;
+&lt;li&gt;wake_by_ref:不消费Waker的情况下唤醒任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;raw_waker&lt;/code&gt;函数&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;从&lt;code&gt;Header&lt;/code&gt;创建原始Waker&lt;/li&gt;
+&lt;li&gt;使用静态的&lt;code&gt;WAKER_VTABLE&lt;/code&gt;定义&lt;code&gt;Waker&lt;/code&gt;的行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;在tokio的作用&#34;&gt;在Tokio的作用
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;任务唤醒
+&lt;ul&gt;
+&lt;li&gt;当异步操作完成时，通过Waker通知执行器任务可以继续执行&lt;/li&gt;
+&lt;li&gt;支持&lt;code&gt;wake_by_val&lt;/code&gt;和&lt;code&gt;wake_by_ref&lt;/code&gt;两种唤醒方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;性能优化
+&lt;ul&gt;
+&lt;li&gt;避免不必要的Waker克隆&lt;/li&gt;
+&lt;li&gt;减少引用计数操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;调试支持
+&lt;ul&gt;
+&lt;li&gt;提供详细的唤醒日志，帮助诊断死锁和性能问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;harnessrs&#34;&gt;harness.rs
+&lt;/h4&gt;&lt;p&gt;是Tokio任务执行的核心模块之一，它封装了任务执行的生命周期管理。这个文件主要处理任务的轮询和状态转换。&lt;/p&gt;
+&lt;h5 id=&#34;核心功能-2&#34;&gt;核心功能
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;任务轮询管理
+&lt;ul&gt;
+&lt;li&gt;提供了&lt;code&gt;poll_inner&lt;/code&gt;方法，负责执行异步任务的轮询&lt;/li&gt;
+&lt;li&gt;处理任务从运行状态到空闲状态的转换&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;状态机转换
+&lt;ul&gt;
+&lt;li&gt;管理任务状态的转换，包括
+&lt;ul&gt;
+&lt;li&gt;运行中(Running)&lt;/li&gt;
+&lt;li&gt;空闲(Idle)&lt;/li&gt;
+&lt;li&gt;完成(Complete)&lt;/li&gt;
+&lt;li&gt;取消(Cancelled)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;生命周期控制
+&lt;ul&gt;
+&lt;li&gt;处理任务的创建、执行和销毁&lt;/li&gt;
+&lt;li&gt;管理任务的引用计数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;主要组件&#34;&gt;主要组件
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;Harness&lt;/code&gt;结构体&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;封装了任务执行所需的所有状态和上下文&lt;/li&gt;
+&lt;li&gt;提供了操作任务生命周期的方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;状态转换&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;transition_to_running&lt;/code&gt;将任务状态设置为运行中&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;transition_to_idle&lt;/code&gt;将任务状态设置为空闲&lt;/li&gt;
+&lt;li&gt;处理各种转换结果（成功、通知、取消等）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Waker集成&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;创建&lt;code&gt;waker_ref&lt;/code&gt;用于唤醒任务&lt;/li&gt;
+&lt;li&gt;构建&lt;code&gt;Context&lt;/code&gt;传递给future的&lt;code&gt;poll&lt;/code&gt;方法&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;任务调度：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;作为任务调度的核心组件&lt;/li&gt;
+&lt;li&gt;与调度器协同工作，管理任务的运行&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
         <title>对Callback的理解</title>
         <link>http://localhost:1313/rust/%E5%AF%B9callback%E7%9A%84%E7%90%86%E8%A7%A3/</link>
         <pubDate>Fri, 12 Sep 2025 03:02:50 +0800</pubDate>
@@ -1921,6 +2844,9 @@
 &lt;p&gt;格式化输出语法&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;参数索引&lt;/span&gt;]:[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;填充字符&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;对齐方式&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;宽度&lt;/span&gt;][.&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;精度&lt;/span&gt;][&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;类型&lt;/span&gt;]}
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;fmt::Formatter&lt;/code&gt;是一个功能强大的格式化缓冲区，可以输出到字符串、stdout、文件等&lt;/p&gt;
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;结构体&#34;&gt;结构体
@@ -1931,7 +2857,7 @@
 &lt;hr&gt;
 &lt;h4 id=&#34;闭包&#34;&gt;闭包
 &lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;根据闭包捕获环境方式可分为三种
+&lt;li&gt;根据闭包捕获环境方式可分为三种，注意区分闭包 &lt;strong&gt;捕获的环境变量&lt;/strong&gt;和&lt;strong&gt;闭包的参数&lt;/strong&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;FnOnce&lt;/code&gt;获取所有权&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;FnMut&lt;/code&gt;获取可变引用&lt;/li&gt;
