@@ -6,7 +6,232 @@
         <description>Recent content on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Fri, 19 Sep 2025 13:50:29 +0800</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 22 Sep 2025 12:19:53 +0800</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Regex</title>
+        <link>http://localhost:1313/rust/docs_rs_zh/regex/</link>
+        <pubDate>Mon, 22 Sep 2025 12:19:53 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/docs_rs_zh/regex/</guid>
+        <description>&lt;p&gt;这个crate提供了在字符串中搜索与正则表达式匹配(&lt;code&gt;regular expression&lt;/code&gt;简称&lt;code&gt;regex&lt;/code&gt;)的例程。本库支持的正则表达式语法和其他正则引擎相似，但是缺少了一些无法高效实现的功能。包括但不限于，&lt;code&gt;look-around&lt;/code&gt;和&lt;code&gt;backrefernces&lt;/code&gt;。相应的，本库的正则搜索最差的时间复杂度是&lt;code&gt;O(m * n)&lt;/code&gt;，&lt;code&gt;m&lt;/code&gt;和正则表达式成正比，&lt;code&gt;n&lt;/code&gt;和被搜索的字符串成正比。&lt;/p&gt;
+&lt;p&gt;如果你只需要API文档，只需要跳转至[Regex][https://docs.rs/regex/latest/regex/struct.Regex.html]类型。否则，此处是快速示例，展示如何解析类似grep程序的输出：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?m)^([^:]+):([0-9]+):(.+)$&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; hay &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;path/to/foo:54:Blue Harvest
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;path/to/bar:90:Something, Something, Something, Dark Side
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;path/to/baz:3:It&amp;#39;s a Trap!
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; results &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[];
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; (_, [path, lineno, line]) &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; re.captures_iter(hay).map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;c&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; c.extract()) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    results.push((path, lineno.parse::&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;()&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;, line));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(results, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;path/to/foo&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;54&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Blue Harvest&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;path/to/bar&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;90&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Something, Something, Something, Dark Side&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;path/to/baz&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;It&amp;#39;s a Trap!&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;概述&#34;&gt;概述
+&lt;/h4&gt;&lt;hr&gt;
+&lt;p&gt;本库的主要类型是&lt;code&gt;Regex&lt;/code&gt;。其重要的方法如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Regex::new&lt;/code&gt;使用默认配置编译正则表达式。&lt;code&gt;RegexBuilder&lt;/code&gt;允许配置非默认配置。（例如，不区分大小写匹配，详细模式等。）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Regex::is_match&lt;/code&gt; 报告在特定的haystack是否存在匹配。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Regex::find&lt;/code&gt;报告匹配项在haystack的字节偏移，如果存在的话。&lt;code&gt;Regex::find_iter&lt;/code&gt;返回一个迭代器，用于遍历所有匹配项。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Regex::captures&lt;/code&gt;返回&lt;code&gt;Captures&lt;/code&gt;,它报告了在haystack中匹配的字节偏移量以及从haystack中的regex匹配的每个捕获组的字节偏移量。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也有&lt;code&gt;RegexSet&lt;/code&gt;，它允许在一次搜索中搜索多个正则表达式。然而，它只报告匹配的模式而不报告匹配的字节偏移量。&lt;/p&gt;
+&lt;p&gt;此外，顶级crate文档组织如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;#Usage&#34; &gt;Usage&lt;/a&gt;展示了如何在Rust工程中添加&lt;code&gt;regex&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;#Examples&#34; &gt;Examples&lt;/a&gt;提供了有限的正则表达式示例。&lt;/li&gt;
+&lt;li&gt;[Performance][]提供了如何优化正则搜索速度的简单总结。&lt;/li&gt;
+&lt;li&gt;[Unicode][]讨论了对non-ASCII的支持。&lt;/li&gt;
+&lt;li&gt;[Syntax][]列举了本库明确支持的正则表达式语法。&lt;/li&gt;
+&lt;li&gt;[Untrusted input][]讨论了本库如何处理不受信任的regex或haystack。&lt;/li&gt;
+&lt;li&gt;[Crate features][]记录了这个库可以被启用或禁用的特性。&lt;/li&gt;
+&lt;li&gt;[Other crates][]与正则家族中其他库链接。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;usage&#34;&gt;Usage
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;regex&lt;/code&gt;在 [crates.io][https://crates.io/crates/regex]上，可以通过在项目&lt;code&gt;Cargo.toml&lt;/code&gt;文件添加&lt;code&gt;regex&lt;/code&gt;到你的依赖项来使用。更简单的方式，只需要&lt;code&gt;cargo run regex&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;这是一个完整的示例，它创建了一个新的 Rust 项目，添加了对 &lt;code&gt;regex&lt;/code&gt; 的依赖，创建了正则搜索的源代码，然后运行了程序。&lt;/p&gt;
+&lt;p&gt;第一步，在新目录新建项目：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ mkdir regex-example
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ cd regex-example
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ crago init
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;第二步，添加&lt;code&gt;regex&lt;/code&gt;依赖：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ cargo add regex
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;第三步：编辑&lt;code&gt;src/main.rs&lt;/code&gt;，用以下内容替换其源码：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Hello (?&amp;lt;name&amp;gt;\w+)!&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(caps) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.captures(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Hello Murphy!&amp;#34;&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;no match!&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;println!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;The name is: &lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;{}&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;caps[&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;第四步，执行&lt;code&gt;cargo run&lt;/code&gt;运行&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ cargo run
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   Compiling memchr v2.5.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   Compiling regex-syntax v0.7.1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   Compiling aho-corasick v1.0.1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   Compiling regex v1.8.1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   Compiling regex-example v0.1.0 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;/tmp/regex-example&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Finished dev &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;unoptimized + debuginfo&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; target&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;s&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in 4.22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;     Running &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;target/debug/regex-example&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;The name is: Murphy
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;程序第一次运行将展示更多输出，如上所示。但是后续运行不需要重新编译依赖项。、&lt;/p&gt;
+&lt;h4 id=&#34;examples&#34;&gt;Examples
+&lt;/h4&gt;&lt;hr&gt;
+&lt;p&gt;本节提供了一些示例，以教程风格展示如何使用正则表达式在haystack中进行搜索。API文档中还有更多示例。&lt;/p&gt;
+&lt;p&gt;在开始之前，有必要定义一些术语：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;regex&lt;/strong&gt;是类型为&lt;code&gt;Regex&lt;/code&gt;的值。我们用&lt;code&gt;re&lt;/code&gt;作为正则表达式的变量名。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;pattern&lt;/strong&gt;用于构建正则表达式的字符串。我们用&lt;code&gt;pat&lt;/code&gt;作为模式的变量名。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;haystack&lt;/strong&gt;是被正则表达式搜索的字符串。我们用&lt;code&gt;hay&lt;/code&gt;作为haystack的变量名。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;有时候“regex”和“pattern”这两个词会被互换使用。&lt;/p&gt;
+&lt;p&gt;在这个crate中，常规表达式的一般使用方法是将一个模式编译成一个正则表达式，然后使用该正则表达式来搜索、分割或替换字符串的一部分。&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;[原地址][https://docs.rs/regex/latest/regex/ ]&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;单词&#34;&gt;单词
+&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;verbose&lt;/code&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;adj.&lt;/code&gt; 冗长的，啰嗦的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;routine&lt;/code&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;n.&lt;/code&gt; 常规， 无聊&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;adj.&lt;/code&gt; 常规的，无聊的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;subsequent&lt;/code&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;adj.&lt;/code&gt;随后的，后来的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Weekly Learning Log - 2025-09-21</title>
+        <link>http://localhost:1313/learning-reflection/2025-09-21-weekly/</link>
+        <pubDate>Sun, 21 Sep 2025 14:02:18 +0800</pubDate>
+        
+        <guid>http://localhost:1313/learning-reflection/2025-09-21-weekly/</guid>
+        <description>&lt;h3 id=&#34;what-i-learned&#34;&gt;What I Learned
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;掌握了协变和逆变的概念&lt;/li&gt;
+&lt;li&gt;phantomData的学习&lt;/li&gt;
+&lt;li&gt;tokio放弃所有权，改用裸指针的原因&lt;/li&gt;
+&lt;li&gt;select！宏的使用学习&lt;/li&gt;
+&lt;li&gt;看了tokio的Task部分，但是阅读过后印象不是很深&lt;/li&gt;
+&lt;li&gt;双工&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;challenges--solutions&#34;&gt;Challenges &amp;amp; Solutions
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;阅读源码到了疲软期，感觉学不到什么东西 &amp;mdash; 转为实现小项目或者看简单版本的项目&lt;/li&gt;
+&lt;li&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;this-weeks-win&#34;&gt;This Week&amp;rsquo;s Win
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;实现了简单的Echo服务器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;next-week-focus&#34;&gt;Next Week Focus
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;心态调整，不要妄想一口气吃成胖子，需要慢慢积累&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;strong&gt;学习时长:&lt;/strong&gt;
+&lt;strong&gt;完成任务:&lt;/strong&gt;&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>版本迭代式学习项目源码</title>
+        <link>http://localhost:1313/tutorials/%E7%89%88%E6%9C%AC%E8%BF%AD%E4%BB%A3%E5%BC%8F%E5%AD%A6%E4%B9%A0%E9%A1%B9%E7%9B%AE%E6%BA%90%E7%A0%81/</link>
+        <pubDate>Sun, 21 Sep 2025 13:21:34 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tutorials/%E7%89%88%E6%9C%AC%E8%BF%AD%E4%BB%A3%E5%BC%8F%E5%AD%A6%E4%B9%A0%E9%A1%B9%E7%9B%AE%E6%BA%90%E7%A0%81/</guid>
+        <description>&lt;h4 id=&#34;1-看里程碑版本&#34;&gt;1. 看里程碑版本
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 先看标签历史，找重要版本&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git tag --sort&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;-version:refname | head -20
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 输出可能是这样：&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 13.0.0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 12.1.0  &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 12.0.0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 11.0.0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# ...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 0.1.0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 重点看这些版本：&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 0.1.0    &lt;span style=&#34;color:#75715e&#34;&gt;# 最初版本 - 理解核心思想&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 0.5.0    &lt;span style=&#34;color:#75715e&#34;&gt;# 早期稳定版 - 基本功能完整&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 1.0.0    &lt;span style=&#34;color:#75715e&#34;&gt;# 第一个大版本 - 设计成型&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 5.0.0    &lt;span style=&#34;color:#75715e&#34;&gt;# 中期版本 - 性能优化&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 13.0.0   &lt;span style=&#34;color:#75715e&#34;&gt;# 最新版本 - 对比演进&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;2-看关键提交&#34;&gt;2. 看关键提交
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 搜索重要的设计决策提交&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;refactor&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;performance&amp;#34;&lt;/span&gt;  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rewrite&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --author&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;BurntSushi&amp;#34;&lt;/span&gt; --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;initial&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 看文件变化最大的提交&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --stat | grep -A5 -B1 &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;files changed.*insertions.*deletions&amp;#34;&lt;/span&gt; | head -20
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;3-按功能模块学习&#34;&gt;3. 按功能模块学习
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 看特定文件的演进历史&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline src/main.rs | tail -10        &lt;span style=&#34;color:#75715e&#34;&gt;# main 函数的演进&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline src/search.rs | tail -5       &lt;span style=&#34;color:#75715e&#34;&gt;# 搜索逻辑的演进  &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline Cargo.toml | tail -5          &lt;span style=&#34;color:#75715e&#34;&gt;# 依赖的演进&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 看某个功能的引入&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;SIMD&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;regex&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;parallel&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;推荐的学习路径&#34;&gt;推荐的学习路径
+&lt;/h4&gt;&lt;h5 id=&#34;第一阶段理解核心设计&#34;&gt;第一阶段：理解核心设计
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 0.1.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 看这个版本的代码结构，理解最基本的实现&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 代码量小，容易理解核心思路&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 0.10.0  &lt;span style=&#34;color:#75715e&#34;&gt;# 跳跃式地看几个早期版本&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout 1.0.0
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;第二阶段关键演进点&#34;&gt;第二阶段：关键演进点
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 搜索重要的提交信息&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rewrite&amp;#34;&lt;/span&gt; | head -5
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git log --oneline --grep&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;performance&amp;#34;&lt;/span&gt; | head -5
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 手动选择几个关键提交看&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git show &amp;lt;重要提交哈希&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;第三阶段对比学习&#34;&gt;第三阶段：对比学习
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout main
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 对比最新版本和早期版本的差异&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git diff 0.1.0..main src/main.rs
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        </item>
+        <item>
+        <title>Git命令积累</title>
+        <link>http://localhost:1313/tutorials/git%E5%91%BD%E4%BB%A4%E7%A7%AF%E7%B4%AF/</link>
+        <pubDate>Sun, 21 Sep 2025 11:08:27 +0800</pubDate>
+        
+        <guid>http://localhost:1313/tutorials/git%E5%91%BD%E4%BB%A4%E7%A7%AF%E7%B4%AF/</guid>
+        <description>&lt;h5 id=&#34;git-log---oneline--tail--20&#34;&gt;&lt;code&gt;git log --oneline | tail -20&lt;/code&gt;
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;git log&lt;/code&gt;现实提交历史&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--oneline&lt;/code&gt;将每个提交压缩为一行显示&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;|&lt;/code&gt;，管道符， 将前一个命令的输出作为后一个命令输入&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tail -20&lt;/code&gt;,显示输入或文件末尾部分，&lt;code&gt;-20&lt;/code&gt;参数表示显示最后一行&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Tokio核心模型解析</title>
         <link>http://localhost:1313/rust/tokio/tokio%E6%A0%B8%E5%BF%83%E6%A8%A1%E5%9E%8B%E8%A7%A3%E6%9E%90/</link>
         <pubDate>Fri, 19 Sep 2025 13:50:29 +0800</pubDate>

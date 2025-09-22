@@ -6,7 +6,40 @@
         <description>Recent content in Summary on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Sun, 14 Sep 2025 13:31:08 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/summary/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sun, 21 Sep 2025 14:02:18 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/summary/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Weekly Learning Log - 2025-09-21</title>
+        <link>http://localhost:1313/learning-reflection/2025-09-21-weekly/</link>
+        <pubDate>Sun, 21 Sep 2025 14:02:18 +0800</pubDate>
+        
+        <guid>http://localhost:1313/learning-reflection/2025-09-21-weekly/</guid>
+        <description>&lt;h3 id=&#34;what-i-learned&#34;&gt;What I Learned
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;掌握了协变和逆变的概念&lt;/li&gt;
+&lt;li&gt;phantomData的学习&lt;/li&gt;
+&lt;li&gt;tokio放弃所有权，改用裸指针的原因&lt;/li&gt;
+&lt;li&gt;select！宏的使用学习&lt;/li&gt;
+&lt;li&gt;看了tokio的Task部分，但是阅读过后印象不是很深&lt;/li&gt;
+&lt;li&gt;双工&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;challenges--solutions&#34;&gt;Challenges &amp;amp; Solutions
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;阅读源码到了疲软期，感觉学不到什么东西 &amp;mdash; 转为实现小项目或者看简单版本的项目&lt;/li&gt;
+&lt;li&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;this-weeks-win&#34;&gt;This Week&amp;rsquo;s Win
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;实现了简单的Echo服务器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;next-week-focus&#34;&gt;Next Week Focus
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;心态调整，不要妄想一口气吃成胖子，需要慢慢积累&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;strong&gt;学习时长:&lt;/strong&gt;
+&lt;strong&gt;完成任务:&lt;/strong&gt;&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>Weekly Learning Log - 2025-09-14</title>
         <link>http://localhost:1313/learning-reflection/2025-09-14-weekly/</link>
         <pubDate>Sun, 14 Sep 2025 13:31:08 +0800</pubDate>
