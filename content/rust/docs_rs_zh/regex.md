@@ -124,7 +124,130 @@ The name is: Murphy
 
 在这个crate中，常规表达式的一般使用方法是将一个模式编译成一个正则表达式，然后使用该正则表达式来搜索、分割或替换字符串的一部分。
 
----------
+##### Example: find a middle intial
+
+------------
+
+我们从一个非常简单的例子开始：一个正则表达式，用于查找特定的名称，但使用通配符来匹配中间名。
+
+```rust
+use regex::Regex;
+
+// We use 'unwrap()' here because it would be a bug in our program if the
+// pattern failed to compile to a regex. Panicking in the presence of a bug
+// is okay.
+let re = Regex::new(r"Homer (.)\. Simpson").unwrap();
+let hay = "Homer J. Simpson";
+let Some(caps) = re.captures(hay) else { return };
+assert_eq!("J", &caps[1]);
+```
+
+在第一个例子有些值得注意的地方：
+
+* `.` 是一个特殊的模式元字符，表示“匹配任何单个字符，除了换行符。”（更精确地说，在这个 crate 中，表示“匹配任何 UTF-8 编码的任何 Unicode 标量值，除了 \n。”）
+* 我们可以用转义字符来匹配实际的点号，即` \.`。
+* 我们使用 Rust 的原始字符串来避免在正则表达式模式语法和 Rust 的字符串字面量语法中处理转义序列。如果我们不使用原始字符串，我们需要使用`\\.`去匹配字符`.`。`r"\."`和`\\.`是等效的模式。
+* 我们将通配符` \.` 指令放在括号中。这些括号具有特殊含义，表示“将 haystack 中与这些括号匹配的部分作为捕获组可用”。找到匹配后，我们使用 &caps[1] 访问此捕获组。
+
+否则，我们使用 `re.captures(hay) `执行搜索，并在没有匹配时从我们的函数中返回。然后，我们通过询问与捕获组索引为`1`的部分匹配的haystack的那一部分来引用中间名。（索引为0的捕获组是隐式的，总是对应整个匹配。在这种情况下，那就是`Homer J. Simpson`。）
+
+##### Example: named capture groups
+
+------
+
+在我们上面的中间初始示例中，我们可以稍微调整一下模式，给匹配中间初始的组命名：
+
+```rust
+use regex::Regex;
+// Note that (?P<middle>.) is a different way to spell the same thing.
+let re = Regex::new(r"Homer (?<middle>.)\. Simpson").unwrap();
+let hay = "Homer J. Simpson";
+let Some(caps) = re.captures(hay) else {return};
+assert_eq!("J", &caps["middle"]);
+```
+
+给一组命名在模式中有多个组时很有用。它使引用这些组的代码更容易理解。
+
+##### Example: validating a particular date format
+
+----------
+
+这个示例展示了如何确认一个字符串（haystack）是否完全匹配某个特定的日期格式：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
+assert!(re.is_match("2010-03-14"));
+```
+
+注意 `^` 和 `$` 锚点的使用。在这个crate中，每个正则表达式搜索都会在其模式的开头隐式地加上`(?s:.)*?`，这使得正则表达式可以在haystack的任何位置进行匹配。正如上面所提到的，锚点可以用来确保整个haystack匹配一个模式。
+
+这个 crate 默认是 Unicode 感知的，这意味着 `\d `可能会匹配你可能预期的更多内容。例如：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
+assert!(re.is_match("𝟚𝟘𝟙𝟘-𝟘𝟛-𝟙𝟜"));
+```
+
+要仅匹配ASCII十进制数字，以下所有内容都是等效的：
+
+* `[0-9]`
+* `[?-u:\d]`
+* `[[:digit:]]`
+* `[\d&&\p{ascii}]`
+
+##### Example: find dates in a haystack
+
+-------
+
+在之前的例子中，我们展示了如何验证整个haystack是否对应于特定的日期格式。但是，如果我们想要从一大堆数据中提取出特定格式看起来像日期的所有东西，该怎么办？要实现这一点，我们可以使用一个迭代器API来查找所有匹配项（请注意，我们已经移除了锚点并切换到查找仅包含ASCII字符的数字）：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"[0-9]{4}-[0-9]{2}-[0-9]{2}").unwrap();
+let hay = "What do 1865-04-14, 1881-07-02, 1901-09-06 and 1963-11-22 have in common?";
+// 'm' is a 'Match', and 'as_str()' returns the matching part of the haystack.
+let dates: Vec<&str> = re.find_iter(hay).map(|m| m.as_str()).collect();
+assert_eq!(dates, vec![
+    "1865-04-14",
+    "1881-07-02",
+    "1901-09-06",
+    "1963-11-22",
+]);
+```
+
+我们也可以遍历捕获值（`Captures`）而不是匹配值（`Match`），这样就可以通过捕获组访问日期的每个组件：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?<y>[0-9]{4})-(?<m>[0-9]{2})-(?<d>[0-9]{2})").unwrap();
+let hay = "What do 1865-04-14, 1881-07-02, 1901-09-06 and 1963-11-22 have in common?";
+// 'm' is a 'Match', and 'as_str()' returns the matching part of the haystack.
+let dates: Vec<(&str, &str, &str)> = re.captures_iter(hay).map(|caps| {
+    // The unwraps are okay because every capture group must match if the whole
+    // regex matches, and in this context, we know we have a match.
+    //
+    // Note that we use `caps.name("y").unwrap().as_str()` instead of
+    // `&caps["y"]` because the lifetime of the former is the same as the
+    // lifetime of `hay` above, but the lifetime of the latter is tied to the
+    // lifetime of `caps` due to how the `Index` trait is defined.
+    let year = caps.name("y").unwrap().as_str();
+    let month = caps.name("m").unwrap().as_str();
+    let day = caps.name("d").unwrap().as_str();
+    (year, month, day)
+}).collect();
+assert_eq!(dates, vec![
+    ("1865", "04", "14"),
+    ("1881", "07", "02"),
+    ("1901", "09", "06"),
+    ("1963", "11", "22"),
+]);
+```
 
 [原地址][https://docs.rs/regex/latest/regex/ ]
 
@@ -139,3 +262,7 @@ The name is: Murphy
   - `adj.` 常规的，无聊的
 - `subsequent`：
   - `adj.`随后的，后来的
+- `wildcard`:
+  - `n.`通配符
+- `tweak`
+  - 
