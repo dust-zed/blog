@@ -48,7 +48,7 @@ assert_eq!(results, vec![
 
 * [Usage](#Usage)展示了如何在Rust工程中添加`regex`。
 * [Examples](#Examples)提供了有限的正则表达式示例。
-* [Performance][]提供了如何优化正则搜索速度的简单总结。
+* [Performance](#Performance)提供了如何优化正则搜索速度的简单总结。
 * [Unicode][]讨论了对non-ASCII的支持。
 * [Syntax][]列举了本库明确支持的正则表达式语法。
 * [Untrusted input][]讨论了本库如何处理不受信任的regex或haystack。
@@ -223,6 +223,15 @@ assert_eq!(dates, vec![
 我们也可以遍历捕获值（`Captures`）而不是匹配值（`Match`），这样就可以通过捕获组访问日期的每个组件：
 
 ```rust
+(?<name>pattern)
+ │ │    │       │
+ │ │    │       └─ 捕获组的模式
+ │ │    └─────────── 捕获组的名称
+ │ └─────────────────── 命名语法的开始
+ └────────────────────── 捕获组的开始
+```
+
+```rust
 use regex::Regex;
 
 let re = Regex::new(r"(?<y>[0-9]{4})-(?<m>[0-9]{2})-(?<d>[0-9]{2})").unwrap();
@@ -249,6 +258,104 @@ assert_eq!(dates, vec![
 ]);
 ```
 
+##### Example: simpler capture group extraction
+
+--------
+
+可以使用` Captures::extract` 将前一个示例中的代码简化一些：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"([0-9]{4})-([0-9]{2})-([0-9]{2})").unwrap();
+let hay = "What do 1865-04-14, 1881-07-02, 1901-09-06 and 1963-11-22 have in common?";
+let dates: Vec<(&str, &str, &str)> = re.captures_iter(hay).map(|caps| {
+    let (_, [year, month, day]) = caps.extract();
+    (year, month, day)
+}).collect();
+assert_eq!(dates, vec![
+    ("1865", "04", "14"),
+    ("1881", "07", "02"),
+    ("1901", "09", "06"),
+    ("1963", "11", "22"),
+]);
+```
+
+`Captures::extract` 通过确保匹配的组数与通过 `[year, month, day] `语法请求的组数匹配来工作。如果它们匹配，那么每个对应捕获组的子字符串将自动以适当大小的数组返回。Rust 的数组模式匹配语法负责其余部分。
+
+##### replacement with named capture groups
+
+--------
+
+在之前的例子基础上，也许我们想重新排列日期格式。可以通过找到每个匹配项并用不同的内容替换它来实现。`Regex::replace_all` 这个函数提供了一种方便的方法来完成这个任务，包括支持在替换字符串中引用命名组：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?<y>\d{4})-(?<m>\d{2})-(?<d>\d{2})").unwrap();
+let before = "1973-01-05, 1975-08-25 and 1980-10-18";
+let after = re.replace_all(before, "$m/$d/$y");
+assert_eq!(after, "01/05/1973, 08/25/1975 and 10/18/1980");
+```
+
+替换方法实际上在替换中是多态的，这提供了比这里看到的更多的灵活性。（有关 `Regex::replace` 的更多详细信息，请参阅文档。）
+
+##### Example: verbose mode
+
+-------
+
+当你的正则表达式变得复杂时，你可能需要考虑使用其他工具，而不是正则表达式。但是，如果你坚持使用正则表达式，你可以使用 `x` 标志启用不显着的空白模式或“详细模式”。在这种模式下，空白被视为不显着，可以编写注释。这可能会使你的模式更易于理解。
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?x)
+  (?P<y>\d{4}) # the year, including all Unicode digits
+  -
+  (?P<m>\d{2}) # the month, including all Unicode digits
+  -
+  (?P<d>\d{2}) # the day, including all Unicode digits
+").unwrap();
+
+let before = "1973-01-05, 1975-08-25 and 1980-10-18";
+let after = re.replace_all(before, "$m/$d/$y");
+assert_eq!(after, "01/05/1973, 08/25/1975 and 10/18/1980");
+```
+
+如果你希望在这种模式下匹配空白字符，仍然可以使用 `\s`, `\n`, `\t` 等。要转义单个空格字符，可以直接使用 `\`，使用其十六进制字符代码 `\x20` 或暂时禁用` x` 标志，例如，`(?-x: )`。
+
+##### Example: match multiple regular expressions simultaneously
+
+这展示了如何使用 `RegexSet` 在一次扫描中匹配多个（可能重叠的）正则表达式：
+
+```rust
+use regex::RegexSet;
+
+let set = RegexSet::new(&[
+    r"\w+",
+    r"\d+",
+    r"\pL+",
+    r"foo",
+    r"bar",
+    r"barfoo",
+    r"foobar",
+]).unwrap();
+
+// Iterate over and collect all of the matches. Each match corresponds to the
+// ID of the matching pattern.
+let matches: Vec<_> = set.matches("foobar").into_iter().collect();
+assert_eq!(matches, vec![0, 2, 3, 4, 6]);
+
+// You can also test whether a particular regex matched:
+let matches = set.matches("foobar");
+assert!(!matches.matched(5));
+assert!(matches.matched(6));
+```
+
+#### Performance
+
+
+
 [原地址][https://docs.rs/regex/latest/regex/ ]
 
 ---------
@@ -265,4 +372,15 @@ assert_eq!(dates, vec![
 - `wildcard`:
   - `n.`通配符
 - `tweak`
-  - 
+  - `adj.`稍微调整，拧，扯
+- `polymorphic`
+  - `adj.`多态的
+- `insignificant`
+  - `adj.`微不足道的；无足轻重的；无意义的
+- `comprehend`
+  - `vt.`理解，领悟，包含
+- `simultaneously`
+  - `adv.`同时地，同步地
+- `overlap`
+  - `vt.`与...重叠；有重叠
+  - `n.`重叠部分
