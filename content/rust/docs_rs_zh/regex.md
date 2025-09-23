@@ -354,6 +354,120 @@ assert!(matches.matched(6));
 
 #### Performance
 
+--------
+
+本节简要讨论了正则表达式在速度和资源使用方面的几个问题。
+
+##### Only ask for what you need
+
+------
+
+在使用正则表达式进行搜索时，通常可以请求三种不同类型的信息：
+
+1. 正则表达式在haystack中匹配吗？
+2. 正则表达式在haystack匹配的位置？
+3. 每个捕获组在haystack中匹配的位置在哪里？
+
+一般来说，这个库可以提供一个函数来回答#3，这会自动包含#1和#2。然而，计算捕获组匹配位置可能会显著更昂贵，所以如果你不需要的话最好不要这样做。
+
+因此，只需要请求你需要的内容。例如，如果你只需要测试正则表达式是否匹配一个字符串，不要使用`Regex::find`。而是使用`Regex::is_match`。
+
+##### Unicode can impact usage and search speed
+
+-------
+
+这个crate对Unicode有一级支持并默认启用。在许多情况下，为了支持它所需的额外内存可以忽略不计，并且通常不会影响搜索速度。但在某些情况下，它可能会有影响。
+
+在内存使用方面，Unicode的主要影响主要通过Unicode字符类体现。Unicode字符类通常相当大。例如，默认情况下，\w匹配大约14万个不同的代码点。这需要额外的内存，并且通常会减慢正则表达式编译的速度。虽然这里偶尔使用一个\w通常不会被注意到，但写\w{100}会默认生成一个相当大的正则表达式。实际上，\w比其仅限ASCII的版本大得多，因此如果您的需求仅限于ASCII，那么使用ASCII类可能是一个好主意。仅限ASCII的\w可以以多种方式拼写。以下所有内容都是等价的：
+
+* `[0-9A-Za-z_]`
+* `(?-u:\w)`
+* `[[:word:]]`
+* `[\w&&\p{ascii}]`
+
+在搜索速度方面，Unicode通常能够很好地处理，即使在使用大型Unicode字符类时也是如此。然而，一些更快的内部正则表达式引擎无法处理Unicode感知的单词边界断言。因此，如果你不需要Unicode感知的单词边界断言，可以考虑使用(?-u:\b)代替\b，其中前者使用ASCII-only的单词字符定义。
+
+##### Literals might accelerate searches
+
+------
+
+这个crate在识别正则表达式模式中的字面量并使用它们加速搜索方面通常表现良好。如果可能的话，在你的模式中包含某种字面量可能会使搜索显著加快。例如，在正则表达式 \w+@\w+ 中，引擎会查找 @ 的出现，然后尝试反向匹配 \w+ 来找到起始位置。
+
+##### Avoid re-compiling regexes, especially in a loop
+
+------
+
+在循环中编译相同的模式是一种反模式，因为正则表达式编译通常很昂贵。（编译时间取决于模式的大小，可能从几微秒到几毫秒不等。）不仅编译本身昂贵，而且这还会阻止正则表达式引擎内部重用分配的优化。
+
+在 Rust 中，如果正则表达式在辅助函数内部使用，传递它们可能会有些麻烦。相反，我们建议使用 `std::sync::LazyLock` 或 `once_cell` crate，如果你不能使用标准库。
+
+这个示例展示了如何使用 `std::sync::LazyLock`：
+
+```rust
+use std::sync::LazyLock;
+
+use regex::Regex;
+
+fn some_helper_function(haystack: &str) -> bool {
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"...").unwrap());
+    RE.is_match(haystack)
+}
+
+fn main() {
+    assert!(some_helper_function("abc"));
+    assert!(!some_helper_function("ac"));
+}
+```
+
+具体来说，在这个例子中，正则表达式会在第一次使用时进行编译。在后续使用中，它会重用之前构建的正则表达式。注意如何将正则表达式定义为特定函数的局部变量。
+
+##### Sharing a regex across threads can resule in contention
+
+----
+
+虽然单个正则表达式可以同时从多个线程自由使用，但必须支付一定的同步成本。通常情况下，除非每个线程的主要任务是使用正则表达式进行搜索，并且大多数搜索都在较短的字符串中进行，否则不会观察到这种情况。在这种情况下，共享资源的内部竞争可能会激增，增加延迟，从而可能减慢每个单独的搜索。
+
+可以通过在发送到另一个线程之前克隆每个正则表达式来解决这个问题。克隆的正则表达式仍然会共享其编译状态的相同内部只读部分（它是引用计数的），但每个线程将获得对运行搜索时使用的可变空间的优化访问。通常情况下，这样做不会增加额外的内存成本。唯一的成本是需要显式克隆正则表达式所增加的代码复杂性。（如果你在多个线程之间共享同一个正则表达式，每个线程仍然会获得自己的可变空间，但访问该空间会更慢。）
+
+#### Unicode
+
+-----
+
+本节讨论了该正则表达式库对Unicode的支持情况。在展示一些示例之前，我们先总结一下相关要点：
+
+* 这个 crate 几乎完全实现了 Unicode 技术标准 #18 中规定的“基本 Unicode 支持”（级别 1）。支持的详细信息在 regex crate 仓库的根目录下的 UNICODE.md 文件中有详细说明。几乎不支持 Unicode 技术标准 #18 中规定的“扩展 Unicode 支持”（级别 2）。
+* 顶级正则表达式像迭代遍历haystack中的每个代码点一样运行搜索。也就是说，匹配的基本原子是一个单一的代码点。
+* `bytes::Regex` 在所有情况下都允许禁用 Unicode 模式，对整个模式或部分模式进行禁用。当 Unicode 模式被禁用时，搜索会像遍历 haystack 中的每个字节一样进行。也就是说，匹配的基本单元是一个字节。（顶级 Regex 也允许禁用 Unicode，从而像逐字节匹配一样进行匹配，但仅在这样做不会允许匹配无效的 UTF-8 时。）
+* 当Unicode模式启用（默认情况下）时，`.`将匹配一个完整的Unicode标量值，即使它使用多个字节进行编码。当Unicode模式禁用（例如，(?-u:.））时，`.`将始终匹配一个字节。
+* 字符类 `\w`, `\d` 和 `\s` 默认是 Unicode 感知的。使用` (?-u:\w)`, `(?-u:\d) `和 `(?-u:\s)` 可以获取它们的 ASCII 仅定义。
+* 同样，`\b` 和 `\B` 使用 Unicode 定义的“单词”字符。要获取仅限 ASCII 的单词边界，可以使用 `(?-u:\b)` 和 `(?-u:\B)`。这也适用于特殊的单词边界断言。（即 `\b{start}`，`\b{end}`，`\b{start-half}`，`\b{end-half}`。）
+* 在多行模式下，`^ `和` $` 不是 Unicode 感知的。也就是说，它们只识别` \n`（假设未启用 CRLF 模式），而不识别 Unicode 定义的其他任何行终止符。
+* 不区分大小写的搜索是Unicode感知的，并使用简单的大小写折叠。
+* Unicode通用类别、脚本和许多布尔属性可以通过默认的\p{属性名称}语法访问。
+* 在所有情况下，匹配都是使用字节偏移量报告的。更精确地说，是使用UTF-8代码单元偏移量。这允许对haystack进行常数时间的索引和切片。
+
+模式本身仅被解释为Unicode标量值的序列。这意味着你可以在你的模式中直接使用Unicode字符：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?i)Δ+").unwrap();
+let m = re.find("ΔδΔ").unwrap();
+assert_eq!((0, 6), (m.start(), m.end()));
+// alternatively:
+assert_eq!(0..6, m.range());
+```
+
+如上所述，Unicode通用类别、脚本、脚本扩展、版本以及一些布尔属性都可以作为字符类使用。例如，你可以匹配一串数字、希腊字母或 Cherokee 字母：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"[\pN\p{Greek}\p{Cherokee}]+").unwrap();
+let m = re.find("abcΔᎠβⅠᏴγδⅡxyz").unwrap();
+assert_eq!(3..23, m.range());
+```
+
 
 
 [原地址][https://docs.rs/regex/latest/regex/ ]
@@ -384,3 +498,8 @@ assert!(matches.matched(6));
 - `overlap`
   - `vt.`与...重叠；有重叠
   - `n.`重叠部分
+- `concern`
+  - `n.`关心，担心
+  - `vt.`使担心，涉及
+- `contention`
+  - 
