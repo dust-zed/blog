@@ -468,6 +468,41 @@ let m = re.find("abcΔᎠβⅠᏴγδⅡxyz").unwrap();
 assert_eq!(3..23, m.range());
 ```
 
+##### Opt out of Unicode support
+
+-------
+
+`bytes::Regex`类型可以搜索`&[u8]`haystack。默认情况下，haystacks 通常像主 `Regex` 类型一样被当作 UTF-8 处理。然而，可以通过关闭`u`标志来禁用此行为，即使这样做可能会导致匹配无效的UTF-8。例如，当关闭`u`标志时，`.`将匹配任何字节而不是任何Unicode标量值。
+
+禁用 `u` 标志也可以使用标准的 `&str` 基于的 Regex 类型，但仅在维护 UTF-8 不变性的情况下允许。例如，`(?-u:\w)` 是一个仅包含 ASCII 字符的 \w 字符类，并且在 `&str` 基于的 Regex 中是合法的，但 `(?-u:\W)`将尝试匹配不在` (?-u:\w) `中的任何字节，这反过来包括无效的 UTF-8 字节。同样，`(?-u:\xFF)`将尝试匹配原始字节 `\xFF`（而不是 U+00FF），这是无效的 UTF-8，因此在 `&str` 基于的正则表达式中是非法的。
+
+最后，由于Unicode支持需要打包大型Unicode数据表，该crate提供了控制台开关来禁用这些数据表的编译，这在缩小二进制文件大小和减少编译时间方面可能很有用。有关如何实现这一点的详细信息，请参阅crate功能部分。
+
+#### Syntax
+
+-----
+
+本库支持的语法如下。
+
+注意，正则表达式解析器和抽象语法在单独的 crate `regex-syntax` 中暴露。
+
+##### Matching one character
+
+```tcl
+.             除了换行符（包括带有 s 标志的换行符）
+[0-9]         任何 ASCII 数字
+\d            数字 (\p{Nd})
+\D            非数字
+\pX           由一个字母名称标识的Unicode字符类
+\p{Greek}     Unicode字符类（通用类别或脚本）
+\PX           由一个字母名称标识的否定Unicode字符类
+\P{Greek}     否定的Unicode字符类（通用类别或脚本）
+```
+
+##### Character classes
+
+-----
+
 
 
 [原地址][https://docs.rs/regex/latest/regex/ ]
