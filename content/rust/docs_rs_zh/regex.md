@@ -503,7 +503,90 @@ assert_eq!(3..23, m.range());
 
 -----
 
+```rust
+[xyz]         A character class matching either x, y or z (union).
+[^xyz]        A character class matching any character except x, y and z.
+[a-z]         A character class matching any character in range a-z.
+[[:alpha:]]   ASCII character class ([A-Za-z])
+[[:^alpha:]]  Negated ASCII character class ([^A-Za-z])
+[x[^xyz]]     Nested/grouping character class (matching any character except y and z)
+[a-y&&xyz]    Intersection (matching x or y)
+[0-9&&[^4]]   Subtraction using intersection and negation (matching 0-9 except 4)
+[0-9--4]      Direct subtraction (matching 0-9 except 4)
+[a-g~~b-h]    Symmetric difference (matching `a` and `h` only)
+[\[\]]        Escaping in character classes (matching [ or ])
+[a&&b]        An empty character class matching nothing
+```
 
+任何命名字符类都可以出现在方括号` [... ]` 字符类中。例如，`[\p{Greek}[:digit:]]` 匹配任何 ASCII 数字或希腊字母表中的任何代码点。`[\p{Greek}&&\pL]` 匹配希腊字母。
+
+字符类中的优先级，从最绑定到最不绑定：
+
+1. 范围：`[a-cd]` == `[[a-c]d]`
+
+2. 并集：`[ab&&bc]` == `[[ab]&&[bc]]`
+
+3. 交集、差集、对称差集。这三种运算符具有相同的优先级，并按从左到右的顺序进行计算。例如，`[\pL--\p{Greek}&&\p{Uppercase}]` == `[[\pL--\p{Greek}]&&\p{Uppercase}]`。
+
+4. 否定：`[^a-z&&b]` == `[^[a-z&&b]]`
+
+##### Composites
+
+-------------
+
+```rust
+xy    concatenation (x followed by y)
+x|y   alternation (x or y, prefer x)
+```
+
+```rust
+use regex::Regex;
+
+let haystack = "samwise";
+// If 'samwise' comes first in our alternation, then it is
+// preferred as a match, even if the regex engine could
+// technically detect that 'sam' led to a match earlier.
+let re = Regex::new(r"samwise|sam").unwrap();
+assert_eq!("samwise", re.find(haystack).unwrap().as_str());
+// But if 'sam' comes first, then it will match instead.
+// In this case, it is impossible for 'samwise' to match
+// because 'sam' is a prefix of it.
+let re = Regex::new(r"sam|samwise").unwrap();
+assert_eq!("sam", re.find(haystack).unwrap().as_str());
+```
+
+##### Repetitions
+
+----------
+
+```rust
+x*        zero or more of x (greedy)
+x+        one or more of x (greedy)
+x?        zero or one of x (greedy)
+x*?       zero or more of x (ungreedy/lazy)
+x+?       one or more of x (ungreedy/lazy)
+x??       zero or one of x (ungreedy/lazy)
+x{n,m}    at least n x and at most m x (greedy)
+x{n,}     at least n x (greedy)
+x{n}      exactly n x
+x{n,m}?   at least n x and at most m x (ungreedy/lazy)
+x{n,}?    at least n x (ungreedy/lazy)
+x{n}?     exactly n x
+```
+
+空正则表达式是有效的，并且匹配空字符串。例如，空正则表达式在位置0、1、2和3处匹配abc。在使用顶级`Regex`对`&str` haystacks进行匹配时，空匹配会分割代码点，因此永远不会返回。然而，在使用`bytes::Regex`时，允许这样的匹配。例如：
+
+```rust
+let re = regex::Regex::new(r"").unwrap();
+let ranges: Vec<_> = re.find_iter("💩").map(|m| m.range()).collect();
+assert_eq!(ranges, vec![0..0, 4..4]);
+
+let re = regex::bytes::Regex::new(r"").unwrap();
+let ranges: Vec<_> = re.find_iter("💩".as_bytes()).map(|m| m.range()).collect();
+assert_eq!(ranges, vec![0..0, 1..1, 2..2, 3..3, 4..4]);
+```
+
+注意，空正则表达式与永远无法匹配的正则表达式是不同的。例如，正则表达式 [a&&b] 是一个字符类，表示 a 和 b 的交集。这个交集是空的，这意味着字符类是空的。由于空集中没有东西，[a&&b] 不匹配任何东西，甚至不匹配空字符串。
 
 [原地址][https://docs.rs/regex/latest/regex/ ]
 
@@ -538,3 +621,5 @@ assert_eq!(3..23, m.range());
   - `vt.`使担心，涉及
 - `contention`
   - 
+
+[^a-z&&b]: 
