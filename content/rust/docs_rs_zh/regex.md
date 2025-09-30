@@ -574,6 +574,10 @@ x{n,}?    at least n x (ungreedy/lazy)
 x{n}?     exactly n x
 ```
 
+##### Empty Matches
+
+-----------
+
 空正则表达式是有效的，并且匹配空字符串。例如，空正则表达式在位置0、1、2和3处匹配abc。在使用顶级`Regex`对`&str` haystacks进行匹配时，空匹配会分割代码点，因此永远不会返回。然而，在使用`bytes::Regex`时，允许这样的匹配。例如：
 
 ```rust
@@ -587,6 +591,158 @@ assert_eq!(ranges, vec![0..0, 1..1, 2..2, 3..3, 4..4]);
 ```
 
 注意，空正则表达式与永远无法匹配的正则表达式是不同的。例如，正则表达式 [a&&b] 是一个字符类，表示 a 和 b 的交集。这个交集是空的，这意味着字符类是空的。由于空集中没有东西，[a&&b] 不匹配任何东西，甚至不匹配空字符串。
+
+##### Grouping and flags
+
+```rust
+(exp)          编号捕获组（按打开括号索引）
+(?P<name>exp)  命名（也可编号）捕获组（名称必须为字母数字）
+(?<name>exp)   命名（也可编号）捕获组（名称必须为字母数字）
+(?:exp)        非捕获组
+(?flags)       在当前组内设置标志
+(?flags:exp)   设置exp的标志（非捕获）
+```
+
+捕获组名称必须是任何由字母、数字和 Unicode 代码点组成的序列，此外还可以包含 `.`、`_`、`[` 和` ]`。名称必须以 `_` 或字母代码点开头。字母码点对应于字母Unicode属性，而数字码点对应于十进制数字、字母数字和其他数字通用类别的并集。
+
+标志是单个字符。例如，`(?x)` 设置标志 `x`，`(?-x)` 清除标志 `x`。可以同时设置或清除多个标志：`(?xy)` 同时设置标志 `x` 和 `y`，`(?x-y)` 设置标志 `x` 并清除标志 `y`。
+
+所有标志默认情况下是禁用的，除非另有说明。它们是：
+
+```rust
+i     不区分大小写：字母匹配大小写
+m     多行模式：^ 和 $ 匹配行的开始/结束
+s     允许 . 匹配 \n
+R     启用CRLF模式：当启用多行模式时，使用\r\n
+U     交换 x* 和 x*? 的含义
+u     Unicode 支持（默认启用）
+x     详细模式，忽略空白字符并允许行注释（以 `#` 开始）
+```
+
+在详细模式下，空白字符在任何地方都会被忽略，包括在字符类中。要插入空白字符，可以使用其转义形式或十六进制字面量。例如，`\ ` 或 `\x20` 用于表示 ASCII 空格。
+
+在模式中可以切换标志。以下是一个示例，前半部分不区分大小写，后半部分区分大小写：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new("r(?i)a+(?-i)b+").unwrap();
+let m = re.find("AaAaAabbBBBb").unwrap();
+assert_eq!(m.as_str(), "AaAaAabb");
+```
+
+注意，`a+` 匹配`a` 或`A`，但 `b+` 只匹配 `b`。
+
+多行模式意味着 ^ 和 $ 不再仅匹配输入的开始/结束位置，还匹配行的开始/结束位置：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?m)^line \d+").unwrap();
+let m = re.find("line one\nline 2\n").unwrap();
+assert_eq!(m.as_str(), "line 2");
+```
+
+注意 ^ 匹配在新行之后，即使在输入的末尾也是如此：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?m)^").unwrap();
+let m = re.find_iter("test\n").last().unwrap();
+assert_eq!((m.start(), m.end()), (5, 5));
+```
+
+当同时启用CRLF模式和多行模式时，`^`和`$`将匹配`\r`或`\n`，但永远不会在`\r\n`中间：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?mR)^foo$").unwrap();
+let m = re.find("\r\nfoo\r\n").unwrap();
+assert_eq!(m.as_str(), "foo");
+```
+
+Unicode模式也可以选择性地禁用，尽管只有在结果不会匹配无效的UTF-8时才这样做。一个很好的例子是使用ASCII单词边界而不是Unicode单词边界，这可能会使某些正则表达式搜索运行得更快：
+
+```rust
+use regex::Regex;
+
+let re = Regex::new(r"(?-u:\b).+(?-u:\b)").unwrap();
+let m = re.find("$$abc$$").unwrap();
+assert_eq!(m.as_str(), "abc");
+```
+
+##### Escape sequences
+
+---------
+
+```rust
+\*              literal *, applies to all ASCII except [0-9A-Za-z<>]
+\a              bell (\x07)
+\f              form feed (\x0C)
+\t              horizontal tab
+\n              new line
+\r              carriage return
+\v              vertical tab (\x0B)
+\A              matches at the beginning of a haystack
+\z              matches at the end of a haystack
+\b              word boundary assertion
+\B              negated word boundary assertion
+\b{start}, \<   start-of-word boundary assertion
+\b{end}, \>     end-of-word boundary assertion
+\b{start-half}  half of a start-of-word boundary assertion
+\b{end-half}    half of a end-of-word boundary assertion
+\123            octal character code, up to three digits (when enabled)
+\x7F            hex character code (exactly two digits)
+\x{10FFFF}      any hex character code corresponding to a Unicode code point
+\u007F          hex character code (exactly four digits)
+\u{7F}          any hex character code corresponding to a Unicode code point
+\U0000007F      hex character code (exactly eight digits)
+\U{7F}          any hex character code corresponding to a Unicode code point
+\p{Letter}      Unicode character class
+\P{Letter}      negated Unicode character class
+\d, \s, \w      Perl character class
+\D, \S, \W      negated Perl character class
+```
+
+##### Perl character classes (Unicode friendly)
+
+--------
+
+这些类基于UTS#18中提供的定义：
+
+```rust
+\d     digit (\p{Nd})
+\D     not digit
+\s     whitespace (\p{White_Space})
+\S     not whitespace
+\w     word character (\p{Alphabetic} + \p{M} + \d + \p{Pc} + \p{Join_Control})
+\W     not word character
+```
+
+##### ASCII character classes
+
+--------
+
+```rust
+[[:alnum:]]    alphanumeric ([0-9A-Za-z])
+[[:alpha:]]    alphabetic ([A-Za-z])
+[[:ascii:]]    ASCII ([\x00-\x7F])
+[[:blank:]]    blank ([\t ])
+[[:cntrl:]]    control ([\x00-\x1F\x7F])
+[[:digit:]]    digits ([0-9])
+[[:graph:]]    graphical ([!-~])
+[[:lower:]]    lower case ([a-z])
+[[:print:]]    printable ([ -~])
+[[:punct:]]    punctuation ([!-/:-@\[-`{-~])
+[[:space:]]    whitespace ([\t\n\v\f\r ])
+[[:upper:]]    upper case ([A-Z])
+[[:word:]]     word characters ([0-9A-Za-z_])
+[[:xdigit:]]   hex digit ([0-9A-Fa-f])
+```
+
+
 
 [原地址][https://docs.rs/regex/latest/regex/ ]
 
