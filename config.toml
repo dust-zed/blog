@@ -58,6 +58,16 @@ reviews = "reviews/:slug"
     url = "/rust/docs_rs_zh"
     weight = 1
 
+[[menu.main]]
+  name = "android-develop"
+  url = "/android-develop"
+  weight = 2
+  
+  [[menu.main.children]]
+    name = "jni-rust"
+    url = "/android-develop/jni-rust"
+    weight = 1
+
 [params]
 text_color = ""
 favicon = ""
