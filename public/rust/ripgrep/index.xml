@@ -6,7 +6,236 @@
         <description>Recent content in ripgrep on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Wed, 27 Aug 2025 10:28:07 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sun, 12 Oct 2025 15:03:56 +0800</lastBuildDate><atom:link href="http://localhost:1313/rust/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Glob语法</title>
+        <link>http://localhost:1313/rust/ripgrep/glob%E8%AF%AD%E6%B3%95/</link>
+        <pubDate>Sun, 12 Oct 2025 15:03:56 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/glob%E8%AF%AD%E6%B3%95/</guid>
+        <description>&lt;h4 id=&#34;核心通配符&#34;&gt;核心通配符
+&lt;/h4&gt;&lt;h5 id=&#34;1----匹配任意字符不含斜杠&#34;&gt;1. &lt;code&gt;*&lt;/code&gt; - 匹配任意字符(不含斜杠)
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.txt           &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, readme.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: dir/file.txt (因为有斜杠)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file*.log       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file1.log, file_backup.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: myfile.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*test*          &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: mytest.txt, test_file.log, unittest.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;2----匹配任意路径包括斜杠&#34;&gt;2. &lt;code&gt;**&lt;/code&gt; - 匹配任意路径（包括斜杠）
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;**/*.rs         &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: main.rs, src/lib.rs, src/deep/nested/file.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 任意深度的 .rs 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;src/**          &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: src/ 目录下的所有内容(递归)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# src/a.txt, src/dir/b.txt, src/x/y/z.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;**/test.txt     &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test.txt, dir/test.txt, a/b/c/test.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 任意位置的 test.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;记忆要点&lt;/strong&gt;：&lt;code&gt;**&lt;/code&gt;可以匹配0个或多个目录层级&lt;/p&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;3----匹配单个字符&#34;&gt;3. &lt;code&gt;?&lt;/code&gt; - 匹配单个字符
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;?.txt           &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, 1.txt, _.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: ab.txt (两个字符)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test?.log       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test1.log, testA.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: test.log, test12.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file???.rs      &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file123.rs, fileabc.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 恰好 3 个字符&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;记忆要点&lt;/strong&gt;：一个&lt;code&gt;?&lt;/code&gt;代表恰好一个字符，不多不少&lt;/p&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;4-方括号-匹配字符集中的一个&#34;&gt;4. 方括号&lt;code&gt;[...]&lt;/code&gt;-匹配字符集中的一个
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;abc&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, b.txt, c.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: d.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.log   &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test0.log, test5.log, test9.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 数字范围&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;a-zA-Z&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.rs &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: filea.rs, fileZ.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 大小写字母&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;][&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: 01.txt, 99.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 两位数字&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;常用范围&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;[0-9]&lt;/code&gt; - 数字&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[a-z]&lt;/code&gt; - 小写字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[A-Z]&lt;/code&gt; - 大写字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[a-zA-Z]&lt;/code&gt; - 所有字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[0-9a-f]&lt;/code&gt; - 十六进制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;5-否定字符集---不匹配这些字符&#34;&gt;5. 否定字符集&lt;code&gt;[!...]&lt;/code&gt; - 不匹配这些字符
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt      &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, _.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: 1.txt (不是数字)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!.&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;*.txt       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, readme.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: .hidden.txt (不以点开头)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!abc&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.log  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: testd.log, test1.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: testa.log, testb.log, testc.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;6-花括号a-b-c---匹配其中任意一个&#34;&gt;6. 花括号&lt;code&gt;{a, b, c}&lt;/code&gt; - 匹配其中任意一个
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;js,ts&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: app.js, main.ts&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: style.css&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file.&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;txt,log,tmp&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, file.log, file.tmp&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;foo,bar&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;/*.rs  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: foo/main.rs, bar/lib.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# foo/ 或 bar/ 目录下的 .rs 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;1,2,3&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;.txt &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test1.txt, test2.txt, test3.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;7-前导斜杠---锚定到根目录&#34;&gt;7. 前导斜杠&lt;code&gt;/&lt;/code&gt; - 锚定到根目录
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/config.json    &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 项目根目录的 config.json&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: src/config.json (子目录的)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/*.txt          &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 根目录下的 .txt 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: dir/file.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/src/*.rs       &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 根目录下 src/ 中的 .rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: other/src/main.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;8-结尾斜杠---只匹配目录&#34;&gt;8. 结尾斜杠&lt;code&gt;/&lt;/code&gt; - 只匹配目录
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;temp/           &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配名为 temp 的目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配名为 temp 的文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;node_modules/   &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配 node_modules 目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;build/          &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配 build 目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;9-感叹号---取消忽略---gitignore特有&#34;&gt;9. 感叹号&lt;code&gt;!&lt;/code&gt; - 取消忽略 - gitignore特有
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 先忽略所有 .log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 但不忽略 important.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;!important.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 结果: 除了 important.log 外,所有 .log 都被忽略&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+</description>
+        </item>
+        <item>
+        <title>WalkParallel的学习</title>
+        <link>http://localhost:1313/rust/ripgrep/walkparallel%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
+        <pubDate>Sat, 11 Oct 2025 11:56:55 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/walkparallel%E7%9A%84%E5%AD%A6%E4%B9%A0/</guid>
+        <description>&lt;p&gt;&lt;code&gt;WalkParallel&lt;/code&gt;实现的功能是对目标文件并行遍历，采用的是&lt;strong&gt;生产者-消费者模型&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;类说明&#34;&gt;类说明
+&lt;/h4&gt;&lt;h5 id=&#34;walkstate&#34;&gt;WalkState
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;WalkState&lt;/code&gt;用于控制目录遍历的行为，特别适用于并行文件系统遍历的场景。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Continue,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Skip,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Quit,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;Continue&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;默认状态，继续正常遍历&lt;/li&gt;
+&lt;li&gt;如果是目录，会递归进入该目录&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Skip&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;仅当当前条目是目录时有效&lt;/li&gt;
+&lt;li&gt;跳过该目录，不进入遍历&lt;/li&gt;
+&lt;li&gt;对文件条目无影响&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Quit&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;请求终止整个遍历过程&lt;/li&gt;
+&lt;li&gt;由于并行遍历的特性，可能还会有一些条目被处理&lt;/li&gt;
+&lt;li&gt;通常用于找到目标后提前退出&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;visitor相关&#34;&gt;Visitor相关
+&lt;/h5&gt;&lt;p&gt;和&lt;code&gt;Visitor&lt;/code&gt;相关的类用于定义对文件系统条目的具体处理行为。逐步拆解每个相关类。&lt;/p&gt;
+&lt;h6 id=&#34;parallelvistor-trait&#34;&gt;ParallelVistor Trait
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; ParallelVisitor: Send {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;visit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, entry: Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;这是一个访问者接口，定义了如何处理每个文件/目录条目&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;visit&lt;/code&gt;方法接收一个&lt;code&gt;DirEntry&lt;/code&gt;或错误，返回&lt;code&gt;WalkState&lt;/code&gt;来控制遍历行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h6 id=&#34;parallelvisitorbuilders&#34;&gt;ParallelVisitorBuilder&amp;lt;&amp;rsquo;s&amp;gt;
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; ParallelVistorBuilder&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;build&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; ParallelVisitor &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;, P: &lt;span style=&#34;color:#a6e22e&#34;&gt;ParallelVisitorBuilder&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; ParallelVisitorBuilder&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; P
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;build&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt;Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; ParallelVisitor &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#f92672&#34;&gt;**&lt;/span&gt;self).build()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;ParallelVisitorBuilder&lt;/code&gt;定义了如何构造&lt;code&gt;visitor&lt;/code&gt;，这里主要是涉及到了常见的Rust模式，称为&lt;strong&gt;reference implementation&lt;/strong&gt;.这样就可以不转移&lt;code&gt;Builder&lt;/code&gt;的所有权了，在需要多次调用&lt;code&gt;build()&lt;/code&gt;时，可以避免所有权问题。&lt;/p&gt;
+&lt;h5 id=&#34;fnvisitor&#34;&gt;FnVisitor
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;FnVisitor&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; FnMut(Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; Send &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;这是一个可调用对象类型别名，用于简化闭包的存储&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Send&lt;/code&gt;和&lt;code&gt;&#39;s&lt;/code&gt;都是修饰闭包的，&lt;code&gt;Send&lt;/code&gt;保证可以安全的在线程间传递，&lt;code&gt;&#39;s&lt;/code&gt;确保闭包不会比它捕获的引用活的更久&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;fnvisitorimp&#34;&gt;FnVisitorImp
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;FnVisitImp&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  visitor: &lt;span style=&#34;color:#a6e22e&#34;&gt;FnVisitor&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; ParallelVisitor &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; FnVisitImp&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;visit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, entry: Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        (self.visitor)(entry)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;包装了&lt;code&gt;FnVisitor&lt;/code&gt;，实现了&lt;code&gt;ParallelVisitor&lt;/code&gt;trait&lt;/li&gt;
+&lt;li&gt;将&lt;code&gt;visit&lt;/code&gt;调用委托给内部的闭包&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>简单版ripgrep实现总结</title>
+        <link>http://localhost:1313/rust/ripgrep/%E7%AE%80%E5%8D%95%E7%89%88ripgrep%E5%AE%9E%E7%8E%B0%E6%80%BB%E7%BB%93/</link>
+        <pubDate>Fri, 10 Oct 2025 15:43:59 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/%E7%AE%80%E5%8D%95%E7%89%88ripgrep%E5%AE%9E%E7%8E%B0%E6%80%BB%E7%BB%93/</guid>
+        <description>&lt;h4 id=&#34;概述&#34;&gt;概述
+&lt;/h4&gt;&lt;p&gt;依据对&lt;code&gt;ripgrep&lt;/code&gt;的学习，实现简单的个人版本的&lt;code&gt;tbt_ripgrep&lt;/code&gt;，简单的有以下功能&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 基本搜索&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 添加选项（忽略大小写，行号）&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 彩色输出&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 支持递归搜索目录&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 支持正则表达式&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 显示上下文&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 性能优化（加多线程，优化大文件处理，做性能对比）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;功能实现&#34;&gt;功能实现
+&lt;/h4&gt;&lt;p&gt;命令行参数解析使用的&lt;code&gt;clap&lt;/code&gt;库，彩色输出也是用的&lt;code&gt;colored&lt;/code&gt;库，正则匹配也是用的&lt;code&gt;regex&lt;/code&gt;库,基于上述三个库提供的功能，功能实现的主要难点主要在&lt;strong&gt;上下文显示&lt;/strong&gt;与&lt;strong&gt;递归搜索目录&lt;/strong&gt;。其中递归搜索目录也是基于&lt;code&gt;walkdir&lt;/code&gt;库实现的，但是主要是想学习&lt;code&gt;ripgrep&lt;/code&gt;的目录发现思路。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;程序对比&#34;&gt;程序对比
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;ripgrep&lt;/code&gt;的职责分离做的很好，以&lt;code&gt;Searcher&lt;/code&gt;为例，如果以我自己的想法的话，是会把&lt;code&gt;Path&lt;/code&gt;放进&lt;code&gt;Searcher&lt;/code&gt;中的，但是这样会这样，&lt;code&gt;search&lt;/code&gt;方法就需要处理文件系统问题，包括但不限于以下内容，但那些都不是搜索的核心逻辑：
+&lt;ul&gt;
+&lt;li&gt;需要处理文件系统错误&lt;/li&gt;
+&lt;li&gt;需要处理符号链接&lt;/li&gt;
+&lt;li&gt;需要处理文件类型判断&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;基于以上的差异，本质上是我没有做好&lt;strong&gt;职责分离&lt;/strong&gt;，我是基于“是什么”去实现功能的，但是&lt;code&gt;ripgrep&lt;/code&gt;是基于“做什么”去实现代码的，做好&lt;strong&gt;职责分离&lt;/strong&gt;,感觉也算是&lt;strong&gt;面向抽象编程&lt;/strong&gt;的殊途同归了吧。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;显示上下文&lt;/strong&gt;虽然功能是实现了，但是设计的不是很优雅，单个文件的搜索结果都会存储下来，然后统一打印出来，单个匹配文件过多的时候，效率低下的缺点就会放大了，目前对&lt;code&gt;ripgrep&lt;/code&gt;的实现还不是很清楚，但是很好奇是如何实现的。&lt;code&gt;ripgrep&lt;/code&gt;是如何做到流式处理 + 上下文功能处理的呢？&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ripgrep&lt;/code&gt;的&lt;code&gt;walk&lt;/code&gt;实现也是很值得学习的，我原本的实现也就是对&lt;code&gt;walkdir&lt;/code&gt;返回的迭代器进行遍历就行，但是&lt;code&gt;ripgrep&lt;/code&gt;对文件遍历进行了功能处理，&lt;code&gt;WalkBuilder&lt;/code&gt;,&lt;code&gt;WalkEventIter&lt;/code&gt;和&lt;code&gt;Walk&lt;/code&gt;都是，我觉得这些都是很值得学习的&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;p&gt;优先考虑&lt;strong&gt;做什么&lt;/strong&gt;而不是&lt;strong&gt;是什么&lt;/strong&gt;去实现功能，&lt;strong&gt;面向行为编程&lt;/strong&gt;优于&lt;strong&gt;面向对象编程&lt;/strong&gt;，做好职责分离。&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>ripgrep的完整架构</title>
         <link>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84%E5%AE%8C%E6%95%B4%E6%9E%B6%E6%9E%84/</link>
         <pubDate>Wed, 27 Aug 2025 10:28:07 +0800</pubDate>

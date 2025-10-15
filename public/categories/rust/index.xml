@@ -6,7 +6,414 @@
         <description>Recent content in Rust on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Mon, 22 Sep 2025 12:19:53 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 13 Oct 2025 10:33:08 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/rust/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Benchmark学习</title>
+        <link>http://localhost:1313/rust/benchmark%E5%AD%A6%E4%B9%A0/</link>
+        <pubDate>Mon, 13 Oct 2025 10:33:08 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/benchmark%E5%AD%A6%E4%B9%A0/</guid>
+        <description>&lt;h4 id=&#34;benchmark核心&#34;&gt;benchmark核心
+&lt;/h4&gt;&lt;p&gt;所有语言的&lt;strong&gt;Benchmark&lt;/strong&gt;都在做：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;计时 - 测量执行时间&lt;/li&gt;
+&lt;li&gt;重复 - 多次运行取平均&lt;/li&gt;
+&lt;li&gt;统计 - 计算均值、标准差&lt;/li&gt;
+&lt;li&gt;对比 - 比较不同实现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;通用流程&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;预热 → 测量 → 统计 → 报告 （防优化）
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;预热&lt;/strong&gt;: 跳过缓存未命中的初测&lt;/p&gt;
+&lt;h4 id=&#34;criterion&#34;&gt;Criterion
+&lt;/h4&gt;&lt;p&gt;&lt;code&gt;Criterion&lt;/code&gt;是rust中最现代化的benchmark库，接下来跟着例子一步步深入了benchmark。&lt;/p&gt;
+&lt;h4 id=&#34;入门&#34;&gt;入门
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#![allow(unused)]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; criterion::{black_box, criterion_group, criterion_main, Criterion};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; mycrate::fibonacci;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_benchmark&lt;/span&gt;(c: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;mut&lt;/span&gt; Criterion) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    c.bench_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fib 20&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;b&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; b.iter(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; fibonacci(black_box(&lt;span style=&#34;color:#ae81ff&#34;&gt;20&lt;/span&gt;))));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_group!&lt;/span&gt;(benches, criterion_benchmark);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_main!&lt;/span&gt;(benches);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;1-bench_function方法&#34;&gt;1. &lt;code&gt;bench_function&lt;/code&gt;方法
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c.bench_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fib 20&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;b&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; b.iter(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; fibonacci(black_box(&lt;span style=&#34;color:#ae81ff&#34;&gt;20&lt;/span&gt;))));
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;作用&lt;/strong&gt;：定义一个基准测试用例&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;fib 20&lt;/code&gt;： 测试用例的名称（用于结果报告）&lt;/li&gt;
+&lt;li&gt;闭包函数：包含实际的测试逻辑&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;闭包内部&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;b&lt;/code&gt;:   &lt;code&gt;Bencher&lt;/code&gt;对象(自动传入)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;b.iter(|| ...)&lt;/code&gt;：运行被测代码多次并测量时间&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;black_box(20)&lt;/code&gt;：阻止编译器优化(确保真实计算)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fibonacci(20)&lt;/code&gt;：实际被测函数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;2-criterion_group宏&#34;&gt;2. &lt;code&gt;criterion_group!&lt;/code&gt;宏
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_group!&lt;/span&gt;(benches, criterion_benchmark);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;作用&lt;/strong&gt;：创建基准测试组&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;benches&lt;/code&gt;：组名称（自定义标识符）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;criterion_benchmark&lt;/code&gt;：包含测试的函数名（本例中的基准函数）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;特性&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;将多个基准测试组织成组&lt;/li&gt;
+&lt;li&gt;支持添加多个测试函数&lt;/li&gt;
+&lt;li&gt;生成对应的 &lt;code&gt;bench_&lt;/code&gt; 开头的函数（如&lt;code&gt;benches_benchmark&lt;/code&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;3-criterion_main宏&#34;&gt;3. &lt;code&gt;criterion_main!&lt;/code&gt;宏
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_main!&lt;/span&gt;(benches);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;作用&lt;/strong&gt;：生成基准测试的入口函数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;参数&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;benches&lt;/code&gt;：前面定义的测试组名&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;功能&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;自动生成&lt;code&gt;main()&lt;/code&gt;函数&lt;/li&gt;
+&lt;li&gt;配置并运行所有指定的测试组&lt;/li&gt;
+&lt;li&gt;处理命令行参数（如 &lt;code&gt;--filter&lt;/code&gt;, &lt;code&gt;--savebaseline&lt;/code&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;4-benches的来源&#34;&gt;4. &lt;code&gt;benches&lt;/code&gt;的来源
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_group!&lt;/span&gt;(benches, &lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;.);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;//             ^^^^^^ 这里定义
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;criterion_main!&lt;/span&gt;(benches);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;//             ^^^^^^ 这里使用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;benches&lt;/code&gt; 是由 &lt;code&gt;criterion_group!&lt;/code&gt; &lt;strong&gt;宏创建的自定义标识符&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;在 &lt;code&gt;criterion_main!&lt;/code&gt; 中引用时：
+&lt;ol&gt;
+&lt;li&gt;查找同名测试组&lt;/li&gt;
+&lt;li&gt;将组内测试函数添加到执行队列&lt;/li&gt;
+&lt;li&gt;生成报告和图表&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;进阶&#34;&gt;进阶
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 使用 benchmark_group 组织测试
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; group &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; c.benchmark_group(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;data_structures&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.sample_size(&lt;span style=&#34;color:#ae81ff&#34;&gt;100&lt;/span&gt;);  &lt;span style=&#34;color:#75715e&#34;&gt;// 配置采样
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;group.measurement_time(Duration::from_secs(&lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ... 多个相关测试
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.finish();
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;benchmark_group方法&#34;&gt;&lt;code&gt;benchmark_group&lt;/code&gt;方法
+&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;作用： 创建共享配置的容器，作为多个相关测试的配置载体&lt;/li&gt;
+&lt;li&gt;必须被包含在 &lt;code&gt;criterion_group!&lt;/code&gt; 注册的测试函数中，并由其调度执行。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;理解统计输出&#34;&gt;理解统计输出
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;time:   &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;123.45 µs 125.67 µs 128.90 µs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        ↑          ↑          ↑
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      下界      中位数       上界
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;change: &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;-5.23% +2.34% +10.23%&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        ↑        ↑       ↑
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      最好    预期变化  最坏
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Found &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; outliers among &lt;span style=&#34;color:#ae81ff&#34;&gt;100&lt;/span&gt; measurements
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; high mild    ← 稍微偏高
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; high severe  ← 严重偏高
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;例子&#34;&gt;例子
+&lt;/h4&gt;&lt;h5 id=&#34;1-参数化测试&#34;&gt;1. 参数化测试
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 测试不同输入大小
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; group &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; c.benchmark_group(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fibonacci&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; i &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; [&lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;15&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;20&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;25&lt;/span&gt;].iter() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    group.bench_with_input(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        BenchmarkId::from_parameter(i),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        i,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;b, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;i&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; b.iter(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; fibonacci(black_box(i)))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    );
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.finish();
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;2-对比多个实现&#34;&gt;2. 对比多个实现
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; group &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; c.benchmark_group(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;sum&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.bench_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;for_loop&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;b&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    b.iter(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; sum_for_loop(black_box(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;data)))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.bench_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;iterator&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;b&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    b.iter(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; sum_iterator(black_box(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;data)))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.finish();
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;吞吐量测量&#34;&gt;吞吐量测量
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; group &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; c.benchmark_group(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;throughput&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 设置吞吐量单位
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;group.throughput(Throughput::Bytes(data.len() &lt;span style=&#34;color:#66d9ef&#34;&gt;as&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;u64&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.bench_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;process&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;b&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    b.iter(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; process(black_box(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;data)))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;});
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 报告会显示 MB/s
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;自定义配置&#34;&gt;自定义配置
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;group.sample_size(&lt;span style=&#34;color:#ae81ff&#34;&gt;1000&lt;/span&gt;);              &lt;span style=&#34;color:#75715e&#34;&gt;// 样本数
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;group.warm_up_time(Duration::from_secs(&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;));  &lt;span style=&#34;color:#75715e&#34;&gt;// 预热时间
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;group.measurement_time(Duration::from_secs(&lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt;)); &lt;span style=&#34;color:#75715e&#34;&gt;// 测量时间
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;group.noise_threshold(&lt;span style=&#34;color:#ae81ff&#34;&gt;0.05&lt;/span&gt;);          &lt;span style=&#34;color:#75715e&#34;&gt;// 噪音阈值
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        </item>
+        <item>
+        <title>Glob语法</title>
+        <link>http://localhost:1313/rust/ripgrep/glob%E8%AF%AD%E6%B3%95/</link>
+        <pubDate>Sun, 12 Oct 2025 15:03:56 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/glob%E8%AF%AD%E6%B3%95/</guid>
+        <description>&lt;h4 id=&#34;核心通配符&#34;&gt;核心通配符
+&lt;/h4&gt;&lt;h5 id=&#34;1----匹配任意字符不含斜杠&#34;&gt;1. &lt;code&gt;*&lt;/code&gt; - 匹配任意字符(不含斜杠)
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.txt           &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, readme.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: dir/file.txt (因为有斜杠)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file*.log       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file1.log, file_backup.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: myfile.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*test*          &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: mytest.txt, test_file.log, unittest.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;2----匹配任意路径包括斜杠&#34;&gt;2. &lt;code&gt;**&lt;/code&gt; - 匹配任意路径（包括斜杠）
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;**/*.rs         &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: main.rs, src/lib.rs, src/deep/nested/file.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 任意深度的 .rs 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;src/**          &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: src/ 目录下的所有内容(递归)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# src/a.txt, src/dir/b.txt, src/x/y/z.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;**/test.txt     &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test.txt, dir/test.txt, a/b/c/test.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 任意位置的 test.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;记忆要点&lt;/strong&gt;：&lt;code&gt;**&lt;/code&gt;可以匹配0个或多个目录层级&lt;/p&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;3----匹配单个字符&#34;&gt;3. &lt;code&gt;?&lt;/code&gt; - 匹配单个字符
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;?.txt           &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, 1.txt, _.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: ab.txt (两个字符)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test?.log       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test1.log, testA.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: test.log, test12.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file???.rs      &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file123.rs, fileabc.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 恰好 3 个字符&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;记忆要点&lt;/strong&gt;：一个&lt;code&gt;?&lt;/code&gt;代表恰好一个字符，不多不少&lt;/p&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;4-方括号-匹配字符集中的一个&#34;&gt;4. 方括号&lt;code&gt;[...]&lt;/code&gt;-匹配字符集中的一个
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;abc&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, b.txt, c.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: d.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.log   &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test0.log, test5.log, test9.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 数字范围&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;a-zA-Z&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.rs &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: filea.rs, fileZ.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 大小写字母&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;][&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: 01.txt, 99.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 两位数字&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;常用范围&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;[0-9]&lt;/code&gt; - 数字&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[a-z]&lt;/code&gt; - 小写字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[A-Z]&lt;/code&gt; - 大写字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[a-zA-Z]&lt;/code&gt; - 所有字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[0-9a-f]&lt;/code&gt; - 十六进制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;5-否定字符集---不匹配这些字符&#34;&gt;5. 否定字符集&lt;code&gt;[!...]&lt;/code&gt; - 不匹配这些字符
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt      &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, _.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: 1.txt (不是数字)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!.&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;*.txt       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, readme.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: .hidden.txt (不以点开头)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!abc&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.log  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: testd.log, test1.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: testa.log, testb.log, testc.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;6-花括号a-b-c---匹配其中任意一个&#34;&gt;6. 花括号&lt;code&gt;{a, b, c}&lt;/code&gt; - 匹配其中任意一个
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;js,ts&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: app.js, main.ts&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: style.css&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file.&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;txt,log,tmp&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, file.log, file.tmp&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;foo,bar&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;/*.rs  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: foo/main.rs, bar/lib.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# foo/ 或 bar/ 目录下的 .rs 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;1,2,3&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;.txt &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test1.txt, test2.txt, test3.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;7-前导斜杠---锚定到根目录&#34;&gt;7. 前导斜杠&lt;code&gt;/&lt;/code&gt; - 锚定到根目录
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/config.json    &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 项目根目录的 config.json&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: src/config.json (子目录的)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/*.txt          &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 根目录下的 .txt 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: dir/file.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/src/*.rs       &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 根目录下 src/ 中的 .rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: other/src/main.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;8-结尾斜杠---只匹配目录&#34;&gt;8. 结尾斜杠&lt;code&gt;/&lt;/code&gt; - 只匹配目录
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;temp/           &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配名为 temp 的目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配名为 temp 的文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;node_modules/   &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配 node_modules 目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;build/          &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配 build 目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;9-感叹号---取消忽略---gitignore特有&#34;&gt;9. 感叹号&lt;code&gt;!&lt;/code&gt; - 取消忽略 - gitignore特有
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 先忽略所有 .log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 但不忽略 important.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;!important.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 结果: 除了 important.log 外,所有 .log 都被忽略&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+</description>
+        </item>
+        <item>
+        <title>Rust中经典实现</title>
+        <link>http://localhost:1313/rust/rust%E4%B8%AD%E7%BB%8F%E5%85%B8%E5%AE%9E%E7%8E%B0/</link>
+        <pubDate>Sat, 11 Oct 2025 23:40:18 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/rust%E4%B8%AD%E7%BB%8F%E5%85%B8%E5%AE%9E%E7%8E%B0/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>WalkParallel的学习</title>
+        <link>http://localhost:1313/rust/ripgrep/walkparallel%E7%9A%84%E5%AD%A6%E4%B9%A0/</link>
+        <pubDate>Sat, 11 Oct 2025 11:56:55 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/walkparallel%E7%9A%84%E5%AD%A6%E4%B9%A0/</guid>
+        <description>&lt;p&gt;&lt;code&gt;WalkParallel&lt;/code&gt;实现的功能是对目标文件并行遍历，采用的是&lt;strong&gt;生产者-消费者模型&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;类说明&#34;&gt;类说明
+&lt;/h4&gt;&lt;h5 id=&#34;walkstate&#34;&gt;WalkState
+&lt;/h5&gt;&lt;p&gt;&lt;code&gt;WalkState&lt;/code&gt;用于控制目录遍历的行为，特别适用于并行文件系统遍历的场景。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Continue,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Skip,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Quit,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;Continue&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;默认状态，继续正常遍历&lt;/li&gt;
+&lt;li&gt;如果是目录，会递归进入该目录&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Skip&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;仅当当前条目是目录时有效&lt;/li&gt;
+&lt;li&gt;跳过该目录，不进入遍历&lt;/li&gt;
+&lt;li&gt;对文件条目无影响&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Quit&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;请求终止整个遍历过程&lt;/li&gt;
+&lt;li&gt;由于并行遍历的特性，可能还会有一些条目被处理&lt;/li&gt;
+&lt;li&gt;通常用于找到目标后提前退出&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;visitor相关&#34;&gt;Visitor相关
+&lt;/h5&gt;&lt;p&gt;和&lt;code&gt;Visitor&lt;/code&gt;相关的类用于定义对文件系统条目的具体处理行为。逐步拆解每个相关类。&lt;/p&gt;
+&lt;h6 id=&#34;parallelvistor-trait&#34;&gt;ParallelVistor Trait
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; ParallelVisitor: Send {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;visit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, entry: Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;这是一个访问者接口，定义了如何处理每个文件/目录条目&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;visit&lt;/code&gt;方法接收一个&lt;code&gt;DirEntry&lt;/code&gt;或错误，返回&lt;code&gt;WalkState&lt;/code&gt;来控制遍历行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h6 id=&#34;parallelvisitorbuilders&#34;&gt;ParallelVisitorBuilder&amp;lt;&amp;rsquo;s&amp;gt;
+&lt;/h6&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;trait&lt;/span&gt; ParallelVistorBuilder&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;build&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt; Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; ParallelVisitor &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;, P: &lt;span style=&#34;color:#a6e22e&#34;&gt;ParallelVisitorBuilder&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&amp;gt;&lt;/span&gt; ParallelVisitorBuilder&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;a&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; P
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;build&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self) -&amp;gt;Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; ParallelVisitor &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#f92672&#34;&gt;**&lt;/span&gt;self).build()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;ParallelVisitorBuilder&lt;/code&gt;定义了如何构造&lt;code&gt;visitor&lt;/code&gt;，这里主要是涉及到了常见的Rust模式，称为&lt;strong&gt;reference implementation&lt;/strong&gt;.这样就可以不转移&lt;code&gt;Builder&lt;/code&gt;的所有权了，在需要多次调用&lt;code&gt;build()&lt;/code&gt;时，可以避免所有权问题。&lt;/p&gt;
+&lt;h5 id=&#34;fnvisitor&#34;&gt;FnVisitor
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;FnVisitor&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		Box&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;dyn&lt;/span&gt; FnMut(Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; Send &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;这是一个可调用对象类型别名，用于简化闭包的存储&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Send&lt;/code&gt;和&lt;code&gt;&#39;s&lt;/code&gt;都是修饰闭包的，&lt;code&gt;Send&lt;/code&gt;保证可以安全的在线程间传递，&lt;code&gt;&#39;s&lt;/code&gt;确保闭包不会比它捕获的引用活的更久&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;fnvisitorimp&#34;&gt;FnVisitorImp
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;FnVisitImp&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  visitor: &lt;span style=&#34;color:#a6e22e&#34;&gt;FnVisitor&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;impl&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; ParallelVisitor &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; FnVisitImp&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;&amp;#39;s&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;visit&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;mut&lt;/span&gt; self, entry: Result&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;DirEntry, Error&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;WalkState&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        (self.visitor)(entry)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;包装了&lt;code&gt;FnVisitor&lt;/code&gt;，实现了&lt;code&gt;ParallelVisitor&lt;/code&gt;trait&lt;/li&gt;
+&lt;li&gt;将&lt;code&gt;visit&lt;/code&gt;调用委托给内部的闭包&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>简单版ripgrep实现总结</title>
+        <link>http://localhost:1313/rust/ripgrep/%E7%AE%80%E5%8D%95%E7%89%88ripgrep%E5%AE%9E%E7%8E%B0%E6%80%BB%E7%BB%93/</link>
+        <pubDate>Fri, 10 Oct 2025 15:43:59 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/%E7%AE%80%E5%8D%95%E7%89%88ripgrep%E5%AE%9E%E7%8E%B0%E6%80%BB%E7%BB%93/</guid>
+        <description>&lt;h4 id=&#34;概述&#34;&gt;概述
+&lt;/h4&gt;&lt;p&gt;依据对&lt;code&gt;ripgrep&lt;/code&gt;的学习，实现简单的个人版本的&lt;code&gt;tbt_ripgrep&lt;/code&gt;，简单的有以下功能&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 基本搜索&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 添加选项（忽略大小写，行号）&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 彩色输出&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 支持递归搜索目录&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 支持正则表达式&lt;/li&gt;
+&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 显示上下文&lt;/li&gt;
+&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt; 性能优化（加多线程，优化大文件处理，做性能对比）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;功能实现&#34;&gt;功能实现
+&lt;/h4&gt;&lt;p&gt;命令行参数解析使用的&lt;code&gt;clap&lt;/code&gt;库，彩色输出也是用的&lt;code&gt;colored&lt;/code&gt;库，正则匹配也是用的&lt;code&gt;regex&lt;/code&gt;库,基于上述三个库提供的功能，功能实现的主要难点主要在&lt;strong&gt;上下文显示&lt;/strong&gt;与&lt;strong&gt;递归搜索目录&lt;/strong&gt;。其中递归搜索目录也是基于&lt;code&gt;walkdir&lt;/code&gt;库实现的，但是主要是想学习&lt;code&gt;ripgrep&lt;/code&gt;的目录发现思路。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h4 id=&#34;程序对比&#34;&gt;程序对比
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;ripgrep&lt;/code&gt;的职责分离做的很好，以&lt;code&gt;Searcher&lt;/code&gt;为例，如果以我自己的想法的话，是会把&lt;code&gt;Path&lt;/code&gt;放进&lt;code&gt;Searcher&lt;/code&gt;中的，但是这样会这样，&lt;code&gt;search&lt;/code&gt;方法就需要处理文件系统问题，包括但不限于以下内容，但那些都不是搜索的核心逻辑：
+&lt;ul&gt;
+&lt;li&gt;需要处理文件系统错误&lt;/li&gt;
+&lt;li&gt;需要处理符号链接&lt;/li&gt;
+&lt;li&gt;需要处理文件类型判断&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;基于以上的差异，本质上是我没有做好&lt;strong&gt;职责分离&lt;/strong&gt;，我是基于“是什么”去实现功能的，但是&lt;code&gt;ripgrep&lt;/code&gt;是基于“做什么”去实现代码的，做好&lt;strong&gt;职责分离&lt;/strong&gt;,感觉也算是&lt;strong&gt;面向抽象编程&lt;/strong&gt;的殊途同归了吧。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;显示上下文&lt;/strong&gt;虽然功能是实现了，但是设计的不是很优雅，单个文件的搜索结果都会存储下来，然后统一打印出来，单个匹配文件过多的时候，效率低下的缺点就会放大了，目前对&lt;code&gt;ripgrep&lt;/code&gt;的实现还不是很清楚，但是很好奇是如何实现的。&lt;code&gt;ripgrep&lt;/code&gt;是如何做到流式处理 + 上下文功能处理的呢？&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ripgrep&lt;/code&gt;的&lt;code&gt;walk&lt;/code&gt;实现也是很值得学习的，我原本的实现也就是对&lt;code&gt;walkdir&lt;/code&gt;返回的迭代器进行遍历就行，但是&lt;code&gt;ripgrep&lt;/code&gt;对文件遍历进行了功能处理，&lt;code&gt;WalkBuilder&lt;/code&gt;,&lt;code&gt;WalkEventIter&lt;/code&gt;和&lt;code&gt;Walk&lt;/code&gt;都是，我觉得这些都是很值得学习的&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;p&gt;优先考虑&lt;strong&gt;做什么&lt;/strong&gt;而不是&lt;strong&gt;是什么&lt;/strong&gt;去实现功能，&lt;strong&gt;面向行为编程&lt;/strong&gt;优于&lt;strong&gt;面向对象编程&lt;/strong&gt;，做好职责分离。&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>Regex</title>
         <link>http://localhost:1313/rust/docs_rs_zh/regex/</link>
         <pubDate>Mon, 22 Sep 2025 12:19:53 +0800</pubDate>
@@ -46,7 +453,7 @@
 &lt;ul&gt;
 &lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;#Usage&#34; &gt;Usage&lt;/a&gt;展示了如何在Rust工程中添加&lt;code&gt;regex&lt;/code&gt;。&lt;/li&gt;
 &lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;#Examples&#34; &gt;Examples&lt;/a&gt;提供了有限的正则表达式示例。&lt;/li&gt;
-&lt;li&gt;[Performance][]提供了如何优化正则搜索速度的简单总结。&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;#Performance&#34; &gt;Performance&lt;/a&gt;提供了如何优化正则搜索速度的简单总结。&lt;/li&gt;
 &lt;li&gt;[Unicode][]讨论了对non-ASCII的支持。&lt;/li&gt;
 &lt;li&gt;[Syntax][]列举了本库明确支持的正则表达式语法。&lt;/li&gt;
 &lt;li&gt;[Untrusted input][]讨论了本库如何处理不受信任的regex或haystack。&lt;/li&gt;
@@ -85,7 +492,7 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;The name is: Murphy
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;程序第一次运行将展示更多输出，如上所示。但是后续运行不需要重新编译依赖项。、&lt;/p&gt;
 &lt;h4 id=&#34;examples&#34;&gt;Examples
-&lt;/h4&gt;&lt;p&gt;+++++++++++&lt;/p&gt;
+&lt;/h4&gt;&lt;hr&gt;
 &lt;p&gt;本节提供了一些示例，以教程风格展示如何使用正则表达式在haystack中进行搜索。API文档中还有更多示例。&lt;/p&gt;
 &lt;p&gt;在开始之前，有必要定义一些术语：&lt;/p&gt;
 &lt;ul&gt;
@@ -95,9 +502,443 @@
 &lt;/ul&gt;
 &lt;p&gt;有时候“regex”和“pattern”这两个词会被互换使用。&lt;/p&gt;
 &lt;p&gt;在这个crate中，常规表达式的一般使用方法是将一个模式编译成一个正则表达式，然后使用该正则表达式来搜索、分割或替换字符串的一部分。&lt;/p&gt;
-&lt;p&gt;++++++&lt;/p&gt;
-&lt;p&gt;[原地址][https://docs.rs/regex/latest/regex/ ]&lt;/p&gt;
-&lt;p&gt;++++++&lt;/p&gt;
+&lt;h5 id=&#34;example-find-a-middle-intial&#34;&gt;Example: find a middle intial
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;我们从一个非常简单的例子开始：一个正则表达式，用于查找特定的名称，但使用通配符来匹配中间名。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// We use &amp;#39;unwrap()&amp;#39; here because it would be a bug in our program if the
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// pattern failed to compile to a regex. Panicking in the presence of a bug
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// is okay.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Homer (.)\. Simpson&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; hay &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Homer J. Simpson&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(caps) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.captures(hay) &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; { &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; };
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;J&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;caps[&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在第一个例子有些值得注意的地方：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;.&lt;/code&gt; 是一个特殊的模式元字符，表示“匹配任何单个字符，除了换行符。”（更精确地说，在这个 crate 中，表示“匹配任何 UTF-8 编码的任何 Unicode 标量值，除了 \n。”）&lt;/li&gt;
+&lt;li&gt;我们可以用转义字符来匹配实际的点号，即&lt;code&gt; \.&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;我们使用 Rust 的原始字符串来避免在正则表达式模式语法和 Rust 的字符串字面量语法中处理转义序列。如果我们不使用原始字符串，我们需要使用&lt;code&gt;\\.&lt;/code&gt;去匹配字符&lt;code&gt;.&lt;/code&gt;。&lt;code&gt;r&amp;quot;\.&amp;quot;&lt;/code&gt;和&lt;code&gt;\\.&lt;/code&gt;是等效的模式。&lt;/li&gt;
+&lt;li&gt;我们将通配符&lt;code&gt; \.&lt;/code&gt; 指令放在括号中。这些括号具有特殊含义，表示“将 haystack 中与这些括号匹配的部分作为捕获组可用”。找到匹配后，我们使用 &amp;amp;caps[1] 访问此捕获组。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;否则，我们使用 &lt;code&gt;re.captures(hay) &lt;/code&gt;执行搜索，并在没有匹配时从我们的函数中返回。然后，我们通过询问与捕获组索引为&lt;code&gt;1&lt;/code&gt;的部分匹配的haystack的那一部分来引用中间名。（索引为0的捕获组是隐式的，总是对应整个匹配。在这种情况下，那就是&lt;code&gt;Homer J. Simpson&lt;/code&gt;。）&lt;/p&gt;
+&lt;h5 id=&#34;example-named-capture-groups&#34;&gt;Example: named capture groups
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;在我们上面的中间初始示例中，我们可以稍微调整一下模式，给匹配中间初始的组命名：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Note that (?P&amp;lt;middle&amp;gt;.) is a different way to spell the same thing.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Homer (?&amp;lt;middle&amp;gt;.)\. Simpson&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; hay &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Homer J. Simpson&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; Some(caps) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.captures(hay) &lt;span style=&#34;color:#66d9ef&#34;&gt;else&lt;/span&gt; {&lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;};
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;J&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;caps[&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;middle&amp;#34;&lt;/span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;给一组命名在模式中有多个组时很有用。它使引用这些组的代码更容易理解。&lt;/p&gt;
+&lt;h5 id=&#34;example-validating-a-particular-date-format&#34;&gt;Example: validating a particular date format
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;这个示例展示了如何确认一个字符串（haystack）是否完全匹配某个特定的日期格式：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;^\d{4}-\d{2}-\d{2}$&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert!&lt;/span&gt;(re.is_match(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2010-03-14&amp;#34;&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;注意 &lt;code&gt;^&lt;/code&gt; 和 &lt;code&gt;$&lt;/code&gt; 锚点的使用。在这个crate中，每个正则表达式搜索都会在其模式的开头隐式地加上&lt;code&gt;(?s:.)*?&lt;/code&gt;，这使得正则表达式可以在haystack的任何位置进行匹配。正如上面所提到的，锚点可以用来确保整个haystack匹配一个模式。&lt;/p&gt;
+&lt;p&gt;这个 crate 默认是 Unicode 感知的，这意味着 &lt;code&gt;\d &lt;/code&gt;可能会匹配你可能预期的更多内容。例如：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;^\d{4}-\d{2}-\d{2}$&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert!&lt;/span&gt;(re.is_match(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;𝟚𝟘𝟙𝟘-𝟘𝟛-𝟙𝟜&amp;#34;&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;要仅匹配ASCII十进制数字，以下所有内容都是等效的：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;[0-9]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[?-u:\d]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[[:digit:]]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[\d&amp;amp;&amp;amp;\p{ascii}]&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;example-find-dates-in-a-haystack&#34;&gt;Example: find dates in a haystack
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;在之前的例子中，我们展示了如何验证整个haystack是否对应于特定的日期格式。但是，如果我们想要从一大堆数据中提取出特定格式看起来像日期的所有东西，该怎么办？要实现这一点，我们可以使用一个迭代器API来查找所有匹配项（请注意，我们已经移除了锚点并切换到查找仅包含ASCII字符的数字）：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;[0-9]{4}-[0-9]{2}-[0-9]{2}&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; hay &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;What do 1865-04-14, 1881-07-02, 1901-09-06 and 1963-11-22 have in common?&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// &amp;#39;m&amp;#39; is a &amp;#39;Match&amp;#39;, and &amp;#39;as_str()&amp;#39; returns the matching part of the haystack.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; dates: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find_iter(hay).map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;m&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; m.as_str()).collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(dates, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1865-04-14&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1881-07-02&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1901-09-06&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1963-11-22&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们也可以遍历捕获值（&lt;code&gt;Captures&lt;/code&gt;）而不是匹配值（&lt;code&gt;Match&lt;/code&gt;），这样就可以通过捕获组访问日期的每个组件：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;?&amp;lt;&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;pattern)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;    &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;       &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;    &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;       &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└─&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;捕获组的模式&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;    &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└───────────&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;捕获组的名称&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└───────────────────&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;命名语法的开始&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──────────────────────&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;捕获组的开始&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?&amp;lt;y&amp;gt;[0-9]{4})-(?&amp;lt;m&amp;gt;[0-9]{2})-(?&amp;lt;d&amp;gt;[0-9]{2})&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; hay &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;What do 1865-04-14, 1881-07-02, 1901-09-06 and 1963-11-22 have in common?&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// &amp;#39;m&amp;#39; is a &amp;#39;Match&amp;#39;, and &amp;#39;as_str()&amp;#39; returns the matching part of the haystack.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; dates: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;)&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.captures_iter(hay).map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;caps&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// The unwraps are okay because every capture group must match if the whole
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// regex matches, and in this context, we know we have a match.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;//
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// Note that we use `caps.name(&amp;#34;y&amp;#34;).unwrap().as_str()` instead of
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// `&amp;amp;caps[&amp;#34;y&amp;#34;]` because the lifetime of the former is the same as the
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// lifetime of `hay` above, but the lifetime of the latter is tied to the
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// lifetime of `caps` due to how the `Index` trait is defined.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; year &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; caps.name(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;y&amp;#34;&lt;/span&gt;).unwrap().as_str();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; month &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; caps.name(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;m&amp;#34;&lt;/span&gt;).unwrap().as_str();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; day &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; caps.name(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;d&amp;#34;&lt;/span&gt;).unwrap().as_str();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (year, month, day)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}).collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(dates, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1865&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;04&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;14&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1881&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;07&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;02&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1901&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;09&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;06&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1963&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;11&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;22&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;example-simpler-capture-group-extraction&#34;&gt;Example: simpler capture group extraction
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;可以使用&lt;code&gt; Captures::extract&lt;/code&gt; 将前一个示例中的代码简化一些：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;([0-9]{4})-([0-9]{2})-([0-9]{2})&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; hay &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;What do 1865-04-14, 1881-07-02, 1901-09-06 and 1963-11-22 have in common?&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; dates: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;)&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.captures_iter(hay).map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;caps&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; (_, [year, month, day]) &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; caps.extract();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (year, month, day)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}).collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(dates, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1865&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;04&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;14&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1881&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;07&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;02&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1901&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;09&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;06&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    (&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1963&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;11&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;22&amp;#34;&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;Captures::extract&lt;/code&gt; 通过确保匹配的组数与通过 &lt;code&gt;[year, month, day] &lt;/code&gt;语法请求的组数匹配来工作。如果它们匹配，那么每个对应捕获组的子字符串将自动以适当大小的数组返回。Rust 的数组模式匹配语法负责其余部分。&lt;/p&gt;
+&lt;h5 id=&#34;replacement-with-named-capture-groups&#34;&gt;replacement with named capture groups
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;在之前的例子基础上，也许我们想重新排列日期格式。可以通过找到每个匹配项并用不同的内容替换它来实现。&lt;code&gt;Regex::replace_all&lt;/code&gt; 这个函数提供了一种方便的方法来完成这个任务，包括支持在替换字符串中引用命名组：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?&amp;lt;y&amp;gt;\d{4})-(?&amp;lt;m&amp;gt;\d{2})-(?&amp;lt;d&amp;gt;\d{2})&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; before &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1973-01-05, 1975-08-25 and 1980-10-18&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; after &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.replace_all(before, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;$m/$d/$y&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(after, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;01/05/1973, 08/25/1975 and 10/18/1980&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;替换方法实际上在替换中是多态的，这提供了比这里看到的更多的灵活性。（有关 &lt;code&gt;Regex::replace&lt;/code&gt; 的更多详细信息，请参阅文档。）&lt;/p&gt;
+&lt;h5 id=&#34;example-verbose-mode&#34;&gt;Example: verbose mode
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;当你的正则表达式变得复杂时，你可能需要考虑使用其他工具，而不是正则表达式。但是，如果你坚持使用正则表达式，你可以使用 &lt;code&gt;x&lt;/code&gt; 标志启用不显着的空白模式或“详细模式”。在这种模式下，空白被视为不显着，可以编写注释。这可能会使你的模式更易于理解。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?x)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;  (?P&amp;lt;y&amp;gt;\d{4}) # the year, including all Unicode digits
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;  -
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;  (?P&amp;lt;m&amp;gt;\d{2}) # the month, including all Unicode digits
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;  -
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;  (?P&amp;lt;d&amp;gt;\d{2}) # the day, including all Unicode digits
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; before &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1973-01-05, 1975-08-25 and 1980-10-18&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; after &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.replace_all(before, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;$m/$d/$y&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(after, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;01/05/1973, 08/25/1975 and 10/18/1980&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;如果你希望在这种模式下匹配空白字符，仍然可以使用 &lt;code&gt;\s&lt;/code&gt;, &lt;code&gt;\n&lt;/code&gt;, &lt;code&gt;\t&lt;/code&gt; 等。要转义单个空格字符，可以直接使用 &lt;code&gt;\&lt;/code&gt;，使用其十六进制字符代码 &lt;code&gt;\x20&lt;/code&gt; 或暂时禁用&lt;code&gt; x&lt;/code&gt; 标志，例如，&lt;code&gt;(?-x: )&lt;/code&gt;。&lt;/p&gt;
+&lt;h5 id=&#34;example-match-multiple-regular-expressions-simultaneously&#34;&gt;Example: match multiple regular expressions simultaneously
+&lt;/h5&gt;&lt;p&gt;这展示了如何使用 &lt;code&gt;RegexSet&lt;/code&gt; 在一次扫描中匹配多个（可能重叠的）正则表达式：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::RegexSet;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; set &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; RegexSet::new(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;\w+&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;\d+&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;\pL+&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;foo&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;bar&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;barfoo&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;foobar&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Iterate over and collect all of the matches. Each match corresponds to the
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ID of the matching pattern.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; matches: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; set.matches(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;foobar&amp;#34;&lt;/span&gt;).into_iter().collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(matches, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// You can also test whether a particular regex matched:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; matches &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; set.matches(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;foobar&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert!&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;matches.matched(&lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert!&lt;/span&gt;(matches.matched(&lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;performance&#34;&gt;Performance
+&lt;/h4&gt;&lt;hr&gt;
+&lt;p&gt;本节简要讨论了正则表达式在速度和资源使用方面的几个问题。&lt;/p&gt;
+&lt;h5 id=&#34;only-ask-for-what-you-need&#34;&gt;Only ask for what you need
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;在使用正则表达式进行搜索时，通常可以请求三种不同类型的信息：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;正则表达式在haystack中匹配吗？&lt;/li&gt;
+&lt;li&gt;正则表达式在haystack匹配的位置？&lt;/li&gt;
+&lt;li&gt;每个捕获组在haystack中匹配的位置在哪里？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;一般来说，这个库可以提供一个函数来回答#3，这会自动包含#1和#2。然而，计算捕获组匹配位置可能会显著更昂贵，所以如果你不需要的话最好不要这样做。&lt;/p&gt;
+&lt;p&gt;因此，只需要请求你需要的内容。例如，如果你只需要测试正则表达式是否匹配一个字符串，不要使用&lt;code&gt;Regex::find&lt;/code&gt;。而是使用&lt;code&gt;Regex::is_match&lt;/code&gt;。&lt;/p&gt;
+&lt;h5 id=&#34;unicode-can-impact-usage-and-search-speed&#34;&gt;Unicode can impact usage and search speed
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;这个crate对Unicode有一级支持并默认启用。在许多情况下，为了支持它所需的额外内存可以忽略不计，并且通常不会影响搜索速度。但在某些情况下，它可能会有影响。&lt;/p&gt;
+&lt;p&gt;在内存使用方面，Unicode的主要影响主要通过Unicode字符类体现。Unicode字符类通常相当大。例如，默认情况下，\w匹配大约14万个不同的代码点。这需要额外的内存，并且通常会减慢正则表达式编译的速度。虽然这里偶尔使用一个\w通常不会被注意到，但写\w{100}会默认生成一个相当大的正则表达式。实际上，\w比其仅限ASCII的版本大得多，因此如果您的需求仅限于ASCII，那么使用ASCII类可能是一个好主意。仅限ASCII的\w可以以多种方式拼写。以下所有内容都是等价的：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;[0-9A-Za-z_]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;(?-u:\w)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[[:word:]]&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[\w&amp;amp;&amp;amp;\p{ascii}]&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在搜索速度方面，Unicode通常能够很好地处理，即使在使用大型Unicode字符类时也是如此。然而，一些更快的内部正则表达式引擎无法处理Unicode感知的单词边界断言。因此，如果你不需要Unicode感知的单词边界断言，可以考虑使用(?-u:\b)代替\b，其中前者使用ASCII-only的单词字符定义。&lt;/p&gt;
+&lt;h5 id=&#34;literals-might-accelerate-searches&#34;&gt;Literals might accelerate searches
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;这个crate在识别正则表达式模式中的字面量并使用它们加速搜索方面通常表现良好。如果可能的话，在你的模式中包含某种字面量可能会使搜索显著加快。例如，在正则表达式 \w+@\w+ 中，引擎会查找 @ 的出现，然后尝试反向匹配 \w+ 来找到起始位置。&lt;/p&gt;
+&lt;h5 id=&#34;avoid-re-compiling-regexes-especially-in-a-loop&#34;&gt;Avoid re-compiling regexes, especially in a loop
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;在循环中编译相同的模式是一种反模式，因为正则表达式编译通常很昂贵。（编译时间取决于模式的大小，可能从几微秒到几毫秒不等。）不仅编译本身昂贵，而且这还会阻止正则表达式引擎内部重用分配的优化。&lt;/p&gt;
+&lt;p&gt;在 Rust 中，如果正则表达式在辅助函数内部使用，传递它们可能会有些麻烦。相反，我们建议使用 &lt;code&gt;std::sync::LazyLock&lt;/code&gt; 或 &lt;code&gt;once_cell&lt;/code&gt; crate，如果你不能使用标准库。&lt;/p&gt;
+&lt;p&gt;这个示例展示了如何使用 &lt;code&gt;std::sync::LazyLock&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; std::sync::LazyLock;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;some_helper_function&lt;/span&gt;(haystack: &lt;span style=&#34;color:#66d9ef&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;str&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;RE&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;LazyLock&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;Regex&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; LazyLock::new(&lt;span style=&#34;color:#f92672&#34;&gt;||&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;...&amp;#34;&lt;/span&gt;).unwrap());
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;RE&lt;/span&gt;.is_match(haystack)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;assert!&lt;/span&gt;(some_helper_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;abc&amp;#34;&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;assert!&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;some_helper_function(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;ac&amp;#34;&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;具体来说，在这个例子中，正则表达式会在第一次使用时进行编译。在后续使用中，它会重用之前构建的正则表达式。注意如何将正则表达式定义为特定函数的局部变量。&lt;/p&gt;
+&lt;h5 id=&#34;sharing-a-regex-across-threads-can-resule-in-contention&#34;&gt;Sharing a regex across threads can resule in contention
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;虽然单个正则表达式可以同时从多个线程自由使用，但必须支付一定的同步成本。通常情况下，除非每个线程的主要任务是使用正则表达式进行搜索，并且大多数搜索都在较短的字符串中进行，否则不会观察到这种情况。在这种情况下，共享资源的内部竞争可能会激增，增加延迟，从而可能减慢每个单独的搜索。&lt;/p&gt;
+&lt;p&gt;可以通过在发送到另一个线程之前克隆每个正则表达式来解决这个问题。克隆的正则表达式仍然会共享其编译状态的相同内部只读部分（它是引用计数的），但每个线程将获得对运行搜索时使用的可变空间的优化访问。通常情况下，这样做不会增加额外的内存成本。唯一的成本是需要显式克隆正则表达式所增加的代码复杂性。（如果你在多个线程之间共享同一个正则表达式，每个线程仍然会获得自己的可变空间，但访问该空间会更慢。）&lt;/p&gt;
+&lt;h4 id=&#34;unicode&#34;&gt;Unicode
+&lt;/h4&gt;&lt;hr&gt;
+&lt;p&gt;本节讨论了该正则表达式库对Unicode的支持情况。在展示一些示例之前，我们先总结一下相关要点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这个 crate 几乎完全实现了 Unicode 技术标准 #18 中规定的“基本 Unicode 支持”（级别 1）。支持的详细信息在 regex crate 仓库的根目录下的 UNICODE.md 文件中有详细说明。几乎不支持 Unicode 技术标准 #18 中规定的“扩展 Unicode 支持”（级别 2）。&lt;/li&gt;
+&lt;li&gt;顶级正则表达式像迭代遍历haystack中的每个代码点一样运行搜索。也就是说，匹配的基本原子是一个单一的代码点。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;bytes::Regex&lt;/code&gt; 在所有情况下都允许禁用 Unicode 模式，对整个模式或部分模式进行禁用。当 Unicode 模式被禁用时，搜索会像遍历 haystack 中的每个字节一样进行。也就是说，匹配的基本单元是一个字节。（顶级 Regex 也允许禁用 Unicode，从而像逐字节匹配一样进行匹配，但仅在这样做不会允许匹配无效的 UTF-8 时。）&lt;/li&gt;
+&lt;li&gt;当Unicode模式启用（默认情况下）时，&lt;code&gt;.&lt;/code&gt;将匹配一个完整的Unicode标量值，即使它使用多个字节进行编码。当Unicode模式禁用（例如，(?-u:.））时，&lt;code&gt;.&lt;/code&gt;将始终匹配一个字节。&lt;/li&gt;
+&lt;li&gt;字符类 &lt;code&gt;\w&lt;/code&gt;, &lt;code&gt;\d&lt;/code&gt; 和 &lt;code&gt;\s&lt;/code&gt; 默认是 Unicode 感知的。使用&lt;code&gt; (?-u:\w)&lt;/code&gt;, &lt;code&gt;(?-u:\d) &lt;/code&gt;和 &lt;code&gt;(?-u:\s)&lt;/code&gt; 可以获取它们的 ASCII 仅定义。&lt;/li&gt;
+&lt;li&gt;同样，&lt;code&gt;\b&lt;/code&gt; 和 &lt;code&gt;\B&lt;/code&gt; 使用 Unicode 定义的“单词”字符。要获取仅限 ASCII 的单词边界，可以使用 &lt;code&gt;(?-u:\b)&lt;/code&gt; 和 &lt;code&gt;(?-u:\B)&lt;/code&gt;。这也适用于特殊的单词边界断言。（即 &lt;code&gt;\b{start}&lt;/code&gt;，&lt;code&gt;\b{end}&lt;/code&gt;，&lt;code&gt;\b{start-half}&lt;/code&gt;，&lt;code&gt;\b{end-half}&lt;/code&gt;。）&lt;/li&gt;
+&lt;li&gt;在多行模式下，&lt;code&gt;^ &lt;/code&gt;和&lt;code&gt; $&lt;/code&gt; 不是 Unicode 感知的。也就是说，它们只识别&lt;code&gt; \n&lt;/code&gt;（假设未启用 CRLF 模式），而不识别 Unicode 定义的其他任何行终止符。&lt;/li&gt;
+&lt;li&gt;不区分大小写的搜索是Unicode感知的，并使用简单的大小写折叠。&lt;/li&gt;
+&lt;li&gt;Unicode通用类别、脚本和许多布尔属性可以通过默认的\p{属性名称}语法访问。&lt;/li&gt;
+&lt;li&gt;在所有情况下，匹配都是使用字节偏移量报告的。更精确地说，是使用UTF-8代码单元偏移量。这允许对haystack进行常数时间的索引和切片。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;模式本身仅被解释为Unicode标量值的序列。这意味着你可以在你的模式中直接使用Unicode字符：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?i)Δ+&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;ΔδΔ&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;((&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;), (m.start(), m.end()));
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// alternatively:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;, m.range());
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;如上所述，Unicode通用类别、脚本、脚本扩展、版本以及一些布尔属性都可以作为字符类使用。例如，你可以匹配一串数字、希腊字母或 Cherokee 字母：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;[\pN\p{Greek}\p{Cherokee}]+&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;abcΔᎠβⅠᏴγδⅡxyz&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;23&lt;/span&gt;, m.range());
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;opt-out-of-unicode-support&#34;&gt;Opt out of Unicode support
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;&lt;code&gt;bytes::Regex&lt;/code&gt;类型可以搜索&lt;code&gt;&amp;amp;[u8]&lt;/code&gt;haystack。默认情况下，haystacks 通常像主 &lt;code&gt;Regex&lt;/code&gt; 类型一样被当作 UTF-8 处理。然而，可以通过关闭&lt;code&gt;u&lt;/code&gt;标志来禁用此行为，即使这样做可能会导致匹配无效的UTF-8。例如，当关闭&lt;code&gt;u&lt;/code&gt;标志时，&lt;code&gt;.&lt;/code&gt;将匹配任何字节而不是任何Unicode标量值。&lt;/p&gt;
+&lt;p&gt;禁用 &lt;code&gt;u&lt;/code&gt; 标志也可以使用标准的 &lt;code&gt;&amp;amp;str&lt;/code&gt; 基于的 Regex 类型，但仅在维护 UTF-8 不变性的情况下允许。例如，&lt;code&gt;(?-u:\w)&lt;/code&gt; 是一个仅包含 ASCII 字符的 \w 字符类，并且在 &lt;code&gt;&amp;amp;str&lt;/code&gt; 基于的 Regex 中是合法的，但 &lt;code&gt;(?-u:\W)&lt;/code&gt;将尝试匹配不在&lt;code&gt;(?-u:\w)&lt;/code&gt;中的任何字节，这反过来包括无效的 UTF-8 字节。同样，&lt;code&gt;(?-u:\xFF)&lt;/code&gt;将尝试匹配原始字节 &lt;code&gt;\xFF&lt;/code&gt;（而不是 U+00FF），这是无效的 UTF-8，因此在 &lt;code&gt;&amp;amp;str&lt;/code&gt; 基于的正则表达式中是非法的。&lt;/p&gt;
+&lt;p&gt;最后，由于Unicode支持需要打包大型Unicode数据表，该crate提供了控制台开关来禁用这些数据表的编译，这在缩小二进制文件大小和减少编译时间方面可能很有用。有关如何实现这一点的详细信息，请参阅crate功能部分。&lt;/p&gt;
+&lt;h4 id=&#34;syntax&#34;&gt;Syntax
+&lt;/h4&gt;&lt;hr&gt;
+&lt;p&gt;本库支持的语法如下。&lt;/p&gt;
+&lt;p&gt;注意，正则表达式解析器和抽象语法在单独的 crate &lt;code&gt;regex-syntax&lt;/code&gt; 中暴露。&lt;/p&gt;
+&lt;h5 id=&#34;matching-one-character&#34;&gt;Matching one character
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-tcl&#34; data-lang=&#34;tcl&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;.             除了换行符&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;（&lt;/span&gt;包括带有 s 标志的换行符&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#66d9ef&#34;&gt;]&lt;/span&gt;         任何 ASCII 数字
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;d            数字 &lt;span style=&#34;color:#66d9ef&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p&lt;span style=&#34;color:#66d9ef&#34;&gt;{&lt;/span&gt;Nd&lt;span style=&#34;color:#66d9ef&#34;&gt;})&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;D            非数字
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;pX           由一个字母名称标识的Unicode字符类
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p&lt;span style=&#34;color:#66d9ef&#34;&gt;{&lt;/span&gt;Greek&lt;span style=&#34;color:#66d9ef&#34;&gt;}&lt;/span&gt;     Unicode字符类&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;（&lt;/span&gt;通用类别或脚本&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;PX           由一个字母名称标识的否定Unicode字符类
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;P&lt;span style=&#34;color:#66d9ef&#34;&gt;{&lt;/span&gt;Greek&lt;span style=&#34;color:#66d9ef&#34;&gt;}&lt;/span&gt;     否定的Unicode字符类&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;（&lt;/span&gt;通用类别或脚本&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;character-classes&#34;&gt;Character classes
+&lt;/h5&gt;&lt;hr&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[xyz]         A character class matching either x, y or z (&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt;).
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt;xyz]        A character class matching any character except x, y and z.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[a&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z]         A character class matching any character &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; range a&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;alpha&lt;/span&gt;:]]   &lt;span style=&#34;color:#66d9ef&#34;&gt;ASCII&lt;/span&gt; character class ([A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Za&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt;alpha:]]  Negated &lt;span style=&#34;color:#66d9ef&#34;&gt;ASCII&lt;/span&gt; character class ([&lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt;A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Za&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[x[&lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt;xyz]]     Nested&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;grouping character class (matching any character except y and z)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[a&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;y&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt;xyz]    Intersection (matching x or y)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt;[&lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;]]   Subtraction using intersection and negation (matching &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt; except &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;--&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;]      Direct subtraction (matching &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt; except &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[a&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;g&lt;span style=&#34;color:#f92672&#34;&gt;~~&lt;/span&gt;b&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;h]    Symmetric difference (matching &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt;a&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt; and &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt;h&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt; only)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;[&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;]]        Escaping &lt;span style=&#34;color:#66d9ef&#34;&gt;in&lt;/span&gt; character classes (matching [ or ])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[a&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt;b]        An empty character class matching nothing
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;任何命名字符类都可以出现在方括号&lt;code&gt; [... ]&lt;/code&gt; 字符类中。例如，&lt;code&gt;[\p{Greek}[:digit:]]&lt;/code&gt; 匹配任何 ASCII 数字或希腊字母表中的任何代码点。&lt;code&gt;[\p{Greek}&amp;amp;&amp;amp;\pL]&lt;/code&gt; 匹配希腊字母。&lt;/p&gt;
+&lt;p&gt;字符类中的优先级，从最绑定到最不绑定：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;范围：&lt;code&gt;[a-cd]&lt;/code&gt; == &lt;code&gt;[[a-c]d]&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;并集：&lt;code&gt;[ab&amp;amp;&amp;amp;bc]&lt;/code&gt; == &lt;code&gt;[[ab]&amp;amp;&amp;amp;[bc]]&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;交集、差集、对称差集。这三种运算符具有相同的优先级，并按从左到右的顺序进行计算。例如，&lt;code&gt;[\pL--\p{Greek}&amp;amp;&amp;amp;\p{Uppercase}]&lt;/code&gt; == &lt;code&gt;[[\pL--\p{Greek}]&amp;amp;&amp;amp;\p{Uppercase}]&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;否定：&lt;code&gt;[^a-z&amp;amp;&amp;amp;b]&lt;/code&gt; == &lt;code&gt;[^[a-z&amp;amp;&amp;amp;b]]&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;composites&#34;&gt;Composites
+&lt;/h5&gt;&lt;hr&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;xy    concatenation (x followed by y)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;y   alternation (x or y, prefer x)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; haystack &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;samwise&amp;#34;&lt;/span&gt;;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// If &amp;#39;samwise&amp;#39; comes first in our alternation, then it is
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// preferred as a match, even if the regex engine could
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// technically detect that &amp;#39;sam&amp;#39; led to a match earlier.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;samwise|sam&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;samwise&amp;#34;&lt;/span&gt;, re.find(haystack).unwrap().as_str());
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// But if &amp;#39;sam&amp;#39; comes first, then it will match instead.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// In this case, it is impossible for &amp;#39;samwise&amp;#39; to match
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// because &amp;#39;sam&amp;#39; is a prefix of it.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;sam|samwise&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;sam&amp;#34;&lt;/span&gt;, re.find(haystack).unwrap().as_str());
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;repetitions&#34;&gt;Repetitions
+&lt;/h5&gt;&lt;hr&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;        zero or more of x (greedy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt;        one or more of x (greedy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;        zero or one of x (greedy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;*?&lt;/span&gt;       zero or more of x (ungreedy&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;lazy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;+?&lt;/span&gt;       one or more of x (ungreedy&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;lazy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x&lt;span style=&#34;color:#f92672&#34;&gt;??&lt;/span&gt;       zero or one of x (ungreedy&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;lazy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x{n,m}    at least n x and at most m x (greedy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x{n,}     at least n x (greedy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x{n}      exactly n x
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x{n,m}&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;   at least n x and at most m x (ungreedy&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;lazy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x{n,}&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;    at least n x (ungreedy&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;lazy)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x{n}&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;     exactly n x
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;empty-matches&#34;&gt;Empty Matches
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;空正则表达式是有效的，并且匹配空字符串。例如，空正则表达式在位置0、1、2和3处匹配abc。在使用顶级&lt;code&gt;Regex&lt;/code&gt;对&lt;code&gt;&amp;amp;str&lt;/code&gt; haystacks进行匹配时，空匹配会分割代码点，因此永远不会返回。然而，在使用&lt;code&gt;bytes::Regex&lt;/code&gt;时，允许这样的匹配。例如：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; regex::Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ranges: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find_iter(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;💩&amp;#34;&lt;/span&gt;).map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;m&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; m.range()).collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(ranges, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; regex::bytes::Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; ranges: Vec&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;_&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find_iter(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;💩&amp;#34;&lt;/span&gt;.as_bytes()).map(&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt;m&lt;span style=&#34;color:#f92672&#34;&gt;|&lt;/span&gt; m.range()).collect();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(ranges, &lt;span style=&#34;color:#a6e22e&#34;&gt;vec!&lt;/span&gt;[&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;..&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;]);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;注意，空正则表达式与永远无法匹配的正则表达式是不同的。例如，正则表达式 [a&amp;amp;&amp;amp;b] 是一个字符类，表示 a 和 b 的交集。这个交集是空的，这意味着字符类是空的。由于空集中没有东西，[a&amp;amp;&amp;amp;b] 不匹配任何东西，甚至不匹配空字符串。&lt;/p&gt;
+&lt;h5 id=&#34;grouping-and-flags&#34;&gt;Grouping and flags
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(exp)          &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编号捕获组（按打开括号索引）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;P&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;exp)  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;命名（也可编号）捕获组（名称必须为字母数字）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;?&amp;lt;&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;exp)   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;命名（也可编号）捕获组（名称必须为字母数字）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;:&lt;span style=&#34;color:#a6e22e&#34;&gt;exp&lt;/span&gt;)        &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;非捕获组&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;flags)       &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;在当前组内设置标志&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;?&lt;/span&gt;flags:&lt;span style=&#34;color:#a6e22e&#34;&gt;exp&lt;/span&gt;)   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;设置&lt;/span&gt;exp的标志&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;（非捕获）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;捕获组名称必须是任何由字母、数字和 Unicode 代码点组成的序列，此外还可以包含 &lt;code&gt;.&lt;/code&gt;、&lt;code&gt;_&lt;/code&gt;、&lt;code&gt;[&lt;/code&gt; 和&lt;code&gt; ]&lt;/code&gt;。名称必须以 &lt;code&gt;_&lt;/code&gt; 或字母代码点开头。字母码点对应于字母Unicode属性，而数字码点对应于十进制数字、字母数字和其他数字通用类别的并集。&lt;/p&gt;
+&lt;p&gt;标志是单个字符。例如，&lt;code&gt;(?x)&lt;/code&gt; 设置标志 &lt;code&gt;x&lt;/code&gt;，&lt;code&gt;(?-x)&lt;/code&gt; 清除标志 &lt;code&gt;x&lt;/code&gt;。可以同时设置或清除多个标志：&lt;code&gt;(?xy)&lt;/code&gt; 同时设置标志 &lt;code&gt;x&lt;/code&gt; 和 &lt;code&gt;y&lt;/code&gt;，&lt;code&gt;(?x-y)&lt;/code&gt; 设置标志 &lt;code&gt;x&lt;/code&gt; 并清除标志 &lt;code&gt;y&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;所有标志默认情况下是禁用的，除非另有说明。它们是：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;i     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;不区分大小写：字母匹配大小写&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;m     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;多行模式：&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;^&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;和&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;$&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;匹配行的开始&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;结束&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;s     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;允许&lt;/span&gt; . &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;匹配&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;n
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;R     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;启用&lt;/span&gt;CRLF模式&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;：当启用多行模式时，使用\&lt;/span&gt;r&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;n
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;U     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;交换&lt;/span&gt; x&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;和&lt;/span&gt; x&lt;span style=&#34;color:#f92672&#34;&gt;*?&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;的含义&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;u     Unicode &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;支持（默认启用）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;详细模式，忽略空白字符并允许行注释（以&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt;#&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;开始）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在详细模式下，空白字符在任何地方都会被忽略，包括在字符类中。要插入空白字符，可以使用其转义形式或十六进制字面量。例如，&lt;code&gt;\ &lt;/code&gt; 或 &lt;code&gt;\x20&lt;/code&gt; 用于表示 ASCII 空格。&lt;/p&gt;
+&lt;p&gt;在模式中可以切换标志。以下是一个示例，前半部分不区分大小写，后半部分区分大小写：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;r(?i)a+(?-i)b+&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;AaAaAabbBBBb&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(m.as_str(), &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;AaAaAabb&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;注意，&lt;code&gt;a+&lt;/code&gt; 匹配&lt;code&gt;a&lt;/code&gt; 或&lt;code&gt;A&lt;/code&gt;，但 &lt;code&gt;b+&lt;/code&gt; 只匹配 &lt;code&gt;b&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;多行模式意味着 ^ 和 $ 不再仅匹配输入的开始/结束位置，还匹配行的开始/结束位置：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?m)^line \d+&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;line one&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;line 2&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(m.as_str(), &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;line 2&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;注意 ^ 匹配在新行之后，即使在输入的末尾也是如此：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?m)^&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find_iter(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;test&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;).last().unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;((m.start(), m.end()), (&lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt;));
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;当同时启用CRLF模式和多行模式时，&lt;code&gt;^&lt;/code&gt;和&lt;code&gt;$&lt;/code&gt;将匹配&lt;code&gt;\r&lt;/code&gt;或&lt;code&gt;\n&lt;/code&gt;，但永远不会在&lt;code&gt;\r\n&lt;/code&gt;中间：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?mR)^foo$&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\r\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;foo&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\r\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(m.as_str(), &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;foo&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Unicode模式也可以选择性地禁用，尽管只有在结果不会匹配无效的UTF-8时才这样做。一个很好的例子是使用ASCII单词边界而不是Unicode单词边界，这可能会使某些正则表达式搜索运行得更快：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;use&lt;/span&gt; regex::Regex;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; re &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Regex::new(&lt;span style=&#34;color:#e6db74&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;(?-u:\b).+(?-u:\b)&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;let&lt;/span&gt; m &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; re.find(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;$$abc$$&amp;#34;&lt;/span&gt;).unwrap();
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;assert_eq!&lt;/span&gt;(m.as_str(), &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;abc&amp;#34;&lt;/span&gt;);
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;escape-sequences&#34;&gt;Escape sequences
+&lt;/h5&gt;&lt;hr&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;              literal &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;, applies to all &lt;span style=&#34;color:#66d9ef&#34;&gt;ASCII&lt;/span&gt; except [&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Za&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&amp;gt;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;a              bell (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x07)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;f              form feed (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x0C)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;t              horizontal tab
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;n              new line
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;r              carriage &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;v              vertical tab (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x0B)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;A              matches at the beginning of a haystack
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;z              matches at the end of a haystack
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;b              word boundary assertion
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;B              negated word boundary assertion
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;b{start}, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;&lt;/span&gt;   start&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;of&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;word boundary assertion
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;b{end}, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;gt;&lt;/span&gt;     end&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;of&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;word boundary assertion
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;b{start&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;half}  half of a start&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;of&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;word boundary assertion
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;b{end&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;half}    half of a end&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;of&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;word boundary assertion
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;123&lt;/span&gt;            octal character code, up to three digits (when enabled)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x7F            hex character code (exactly two digits)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x{&lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt;FFFF}      any hex character code corresponding to a Unicode code point
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;u007F          hex character code (exactly four digits)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;u{&lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt;F}          any hex character code corresponding to a Unicode code point
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;U0000007F&lt;/span&gt;      hex character code (exactly eight digits)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;U{&lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt;F}          any hex character code corresponding to a Unicode code point
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{Letter}      Unicode character class
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;P{Letter}      negated Unicode character class
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;d, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;s, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;w      Perl character class
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;D, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;S, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;W      negated Perl character class
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;perl-character-classes-unicode-friendly&#34;&gt;Perl character classes (Unicode friendly)
+&lt;/h5&gt;&lt;hr&gt;
+&lt;p&gt;这些类基于UTS#18中提供的定义：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;d     digit (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{Nd})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;D     not digit
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;s     whitespace (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{White_Space})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;S     not whitespace
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;w     word character (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{Alphabetic} &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{M} &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;d &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{Pc} &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;p{Join_Control})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;W     not word character
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;ascii-character-classes&#34;&gt;ASCII character classes
+&lt;/h5&gt;&lt;hr&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;alnum&lt;/span&gt;:]]    alphanumeric ([&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Za&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;alpha&lt;/span&gt;:]]    alphabetic ([A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Za&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;ascii&lt;/span&gt;:]]    &lt;span style=&#34;color:#66d9ef&#34;&gt;ASCII&lt;/span&gt; ([&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x00&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x7F])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;blank&lt;/span&gt;:]]    blank ([&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;t ])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;cntrl&lt;/span&gt;:]]    control ([&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x00&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x1F&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;x7F])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;digit&lt;/span&gt;:]]    digits ([&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;graph&lt;/span&gt;:]]    graphical ([&lt;span style=&#34;color:#f92672&#34;&gt;!-~&lt;/span&gt;])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;lower&lt;/span&gt;:]]    lower case ([a&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;print&lt;/span&gt;:]]    printable ([ &lt;span style=&#34;color:#f92672&#34;&gt;-~&lt;/span&gt;])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;punct&lt;/span&gt;:]]    punctuation ([&lt;span style=&#34;color:#f92672&#34;&gt;!-/&lt;/span&gt;:&lt;span style=&#34;color:#f92672&#34;&gt;-@&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;[&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;`&lt;/span&gt;{&lt;span style=&#34;color:#f92672&#34;&gt;-~&lt;/span&gt;])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;space&lt;/span&gt;:]]    whitespace ([&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;t&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;n&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;v&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;f&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;r ])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;upper&lt;/span&gt;:]]    upper case ([A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Z])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;word&lt;/span&gt;:]]     word characters ([&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Za&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;z_])
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[[:&lt;span style=&#34;color:#a6e22e&#34;&gt;xdigit&lt;/span&gt;:]]   hex digit ([&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;A&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;Fa&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;f])
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;[原地址][https://docs.rs/regex/latest/regex/ ]&lt;/p&gt;
+&lt;hr&gt;
 &lt;h4 id=&#34;单词&#34;&gt;单词
 &lt;/h4&gt;&lt;ul&gt;
 &lt;li&gt;&lt;code&gt;verbose&lt;/code&gt;:
@@ -116,6 +957,51 @@
 &lt;li&gt;&lt;code&gt;adj.&lt;/code&gt;随后的，后来的&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
+&lt;li&gt;&lt;code&gt;wildcard&lt;/code&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;n.&lt;/code&gt;通配符&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tweak&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;adj.&lt;/code&gt;稍微调整，拧，扯&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;polymorphic&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;adj.&lt;/code&gt;多态的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;insignificant&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;adj.&lt;/code&gt;微不足道的；无足轻重的；无意义的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;comprehend&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;vt.&lt;/code&gt;理解，领悟，包含&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;simultaneously&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;adv.&lt;/code&gt;同时地，同步地&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;overlap&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;vt.&lt;/code&gt;与&amp;hellip;重叠；有重叠&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;n.&lt;/code&gt;重叠部分&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;concern&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;n.&lt;/code&gt;关心，担心&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vt.&lt;/code&gt;使担心，涉及&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;h2 id=&#34;contention&#34;&gt;&lt;code&gt;contention&lt;/code&gt;
+&lt;/h2&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
         </item>
@@ -2930,12 +3816,15 @@
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#39;a : &#39;b&lt;/code&gt;表示 &lt;code&gt;&#39;a&lt;/code&gt;  &amp;gt;= &lt;code&gt;&#39;b&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
 &lt;p&gt;&lt;code&gt;T: &#39;static&lt;/code&gt;:表示类型&lt;strong&gt;T内部字段&lt;/strong&gt;要么没有引用，要么引用都是&lt;code&gt;&#39;static&lt;/code&gt;的&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;trait My Trait: &#39;static&lt;/code&gt;或&lt;code&gt;Box&amp;lt;dyn MyTrait + &#39;static&amp;gt;&lt;/code&gt;&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;实现类型&lt;/strong&gt;必须满足：&lt;code&gt;Self: &#39;static&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;实现类型&lt;/strong&gt;必须满足：&lt;code&gt;Self: &#39;static&lt;/code&gt;或者没有引用&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;

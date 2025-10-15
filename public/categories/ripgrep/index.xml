@@ -6,7 +6,116 @@
         <description>Recent content in Ripgrep on zed的博客</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
-        <lastBuildDate>Wed, 27 Aug 2025 10:28:07 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sun, 12 Oct 2025 15:03:56 +0800</lastBuildDate><atom:link href="http://localhost:1313/categories/ripgrep/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Glob语法</title>
+        <link>http://localhost:1313/rust/ripgrep/glob%E8%AF%AD%E6%B3%95/</link>
+        <pubDate>Sun, 12 Oct 2025 15:03:56 +0800</pubDate>
+        
+        <guid>http://localhost:1313/rust/ripgrep/glob%E8%AF%AD%E6%B3%95/</guid>
+        <description>&lt;h4 id=&#34;核心通配符&#34;&gt;核心通配符
+&lt;/h4&gt;&lt;h5 id=&#34;1----匹配任意字符不含斜杠&#34;&gt;1. &lt;code&gt;*&lt;/code&gt; - 匹配任意字符(不含斜杠)
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.txt           &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, readme.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: dir/file.txt (因为有斜杠)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file*.log       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file1.log, file_backup.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: myfile.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*test*          &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: mytest.txt, test_file.log, unittest.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;2----匹配任意路径包括斜杠&#34;&gt;2. &lt;code&gt;**&lt;/code&gt; - 匹配任意路径（包括斜杠）
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;**/*.rs         &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: main.rs, src/lib.rs, src/deep/nested/file.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 任意深度的 .rs 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;src/**          &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: src/ 目录下的所有内容(递归)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# src/a.txt, src/dir/b.txt, src/x/y/z.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;**/test.txt     &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test.txt, dir/test.txt, a/b/c/test.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 任意位置的 test.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;记忆要点&lt;/strong&gt;：&lt;code&gt;**&lt;/code&gt;可以匹配0个或多个目录层级&lt;/p&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;3----匹配单个字符&#34;&gt;3. &lt;code&gt;?&lt;/code&gt; - 匹配单个字符
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;?.txt           &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, 1.txt, _.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: ab.txt (两个字符)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test?.log       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test1.log, testA.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: test.log, test12.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file???.rs      &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file123.rs, fileabc.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 恰好 3 个字符&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;记忆要点&lt;/strong&gt;：一个&lt;code&gt;?&lt;/code&gt;代表恰好一个字符，不多不少&lt;/p&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;4-方括号-匹配字符集中的一个&#34;&gt;4. 方括号&lt;code&gt;[...]&lt;/code&gt;-匹配字符集中的一个
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;abc&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, b.txt, c.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: d.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.log   &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test0.log, test5.log, test9.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 数字范围&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;a-zA-Z&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.rs &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: filea.rs, fileZ.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 大小写字母&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;][&lt;/span&gt;0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: 01.txt, 99.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 两位数字&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;常用范围&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;[0-9]&lt;/code&gt; - 数字&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[a-z]&lt;/code&gt; - 小写字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[A-Z]&lt;/code&gt; - 大写字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[a-zA-Z]&lt;/code&gt; - 所有字母&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[0-9a-f]&lt;/code&gt; - 十六进制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h5 id=&#34;5-否定字符集---不匹配这些字符&#34;&gt;5. 否定字符集&lt;code&gt;[!...]&lt;/code&gt; - 不匹配这些字符
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!0-9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.txt      &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: a.txt, _.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: 1.txt (不是数字)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!.&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;*.txt       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, readme.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: .hidden.txt (不以点开头)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;!abc&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;.log  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: testd.log, test1.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: testa.log, testb.log, testc.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;6-花括号a-b-c---匹配其中任意一个&#34;&gt;6. 花括号&lt;code&gt;{a, b, c}&lt;/code&gt; - 匹配其中任意一个
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;js,ts&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;       &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: app.js, main.ts&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: style.css&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;file.&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;txt,log,tmp&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: file.txt, file.log, file.tmp&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;foo,bar&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;/*.rs  &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: foo/main.rs, bar/lib.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# foo/ 或 bar/ 目录下的 .rs 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;test&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;1,2,3&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;.txt &lt;span style=&#34;color:#75715e&#34;&gt;# 匹配: test1.txt, test2.txt, test3.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;7-前导斜杠---锚定到根目录&#34;&gt;7. 前导斜杠&lt;code&gt;/&lt;/code&gt; - 锚定到根目录
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/config.json    &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 项目根目录的 config.json&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: src/config.json (子目录的)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/*.txt          &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 根目录下的 .txt 文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: dir/file.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/src/*.rs       &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配: 根目录下 src/ 中的 .rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配: other/src/main.rs&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;8-结尾斜杠---只匹配目录&#34;&gt;8. 结尾斜杠&lt;code&gt;/&lt;/code&gt; - 只匹配目录
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;temp/           &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配名为 temp 的目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#75715e&#34;&gt;# 不匹配名为 temp 的文件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;node_modules/   &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配 node_modules 目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;build/          &lt;span style=&#34;color:#75715e&#34;&gt;# 只匹配 build 目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h5 id=&#34;9-感叹号---取消忽略---gitignore特有&#34;&gt;9. 感叹号&lt;code&gt;!&lt;/code&gt; - 取消忽略 - gitignore特有
+&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 先忽略所有 .log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;*.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 但不忽略 important.log&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;!important.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 结果: 除了 important.log 外,所有 .log 都被忽略&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+</description>
+        </item>
+        <item>
         <title>ripgrep的完整架构</title>
         <link>http://localhost:1313/rust/ripgrep/ripgrep%E7%9A%84%E5%AE%8C%E6%95%B4%E6%9E%B6%E6%9E%84/</link>
         <pubDate>Wed, 27 Aug 2025 10:28:07 +0800</pubDate>
