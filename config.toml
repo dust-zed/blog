@@ -67,6 +67,11 @@ reviews = "reviews/:slug"
     name = "jni-rust"
     url = "/android-develop/jni-rust"
     weight = 1
+  
+  [[menu.main.children]]
+    name = "base"
+    url = "/android-develop/base"
+    weight = 1
 
 [params]
 text_color = ""
