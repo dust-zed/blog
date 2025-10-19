@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>base on zed的博客</title>
+        <link>http://localhost:1313/android-develop/base/</link>
+        <description>Recent content in base on zed的博客</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <lastBuildDate>Fri, 17 Oct 2025 09:28:07 +0800</lastBuildDate><atom:link href="http://localhost:1313/android-develop/base/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Android项目组织结构</title>
+        <link>http://localhost:1313/android-develop/android%E9%A1%B9%E7%9B%AE%E7%BB%84%E7%BB%87%E7%BB%93%E6%9E%84/</link>
+        <pubDate>Fri, 17 Oct 2025 09:28:07 +0800</pubDate>
+        
+        <guid>http://localhost:1313/android-develop/android%E9%A1%B9%E7%9B%AE%E7%BB%84%E7%BB%87%E7%BB%93%E6%9E%84/</guid>
+        <description>&lt;h4 id=&#34;项目结构说明&#34;&gt;项目结构说明
+&lt;/h4&gt;&lt;h5 id=&#34;完整目录结构&#34;&gt;完整目录结构
+&lt;/h5&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;project/
+├── gradle/
+│   └── libs.versions.toml          # Version Catalog
+├── app/
+│   ├── build.gradle.kts
+│   └── src/
+│       └── main/
+│           ├── AndroidManifest.xml
+│           ├── java/com/example/myapp/
+│           │   └── MainActivity.kt
+│           └── res/
+├── build.gradle.kts                # 根目录
+├── settings.gradle.kts
+└── gradle.properties
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;核心原则&#34;&gt;核心原则
+&lt;/h5&gt;&lt;p&gt;&lt;strong&gt;必需库(2个)&lt;/strong&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;androidx.core:core-ktx&lt;/code&gt; - Kotlin扩展&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;androidx.appcompat:appcompat&lt;/code&gt; - 兼容性支持&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;UI方案(二选一)&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;传统View: Material + ConstraintLayout&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Jetpack Compose&lt;/strong&gt;: Compose BOM + Material3&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;可选扩展：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;架构组件：ViewModel/LiveData (MVVM模式需要)&lt;/li&gt;
+&lt;li&gt;协程：异步操作 （网络操作、数据库操作需要）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 id=&#34;使用建议&#34;&gt;使用建议
+&lt;/h5&gt;&lt;ol&gt;
+&lt;li&gt;最小项目：只用 core-ktx + appcompat + 一种UI&lt;/li&gt;
+&lt;li&gt;需要架构：添加lifecycle bundle&lt;/li&gt;
+&lt;li&gt;需要网络/数据库：添加coroutines&lt;/li&gt;
+&lt;li&gt;库 vs 插件
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;android.application&lt;/code&gt; / &lt;code&gt;kotlin.android&lt;/code&gt; - 必需插件&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;kotlin.compose&lt;/code&gt; - 仅Compose项目需要的插件&lt;/li&gt;
+&lt;li&gt;其他都是库依赖&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h5 id=&#34;常见误区&#34;&gt;常见误区
+&lt;/h5&gt;&lt;p&gt;不是必须的库&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Activity/Fragment库 （appcompat已包含）&lt;/li&gt;
+&lt;li&gt;RecyclerView （除非确定要用列表）&lt;/li&gt;
+&lt;li&gt;Navigation组件 （简单项目不需要）&lt;/li&gt;
+&lt;li&gt;Room/Retrofit （有需求再加）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;libsversionstoml-例子&#34;&gt;libs.versions.toml 例子
+&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-toml&#34; data-lang=&#34;toml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;versions&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 核心版本&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;agp&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;8.7.3&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;kotlin&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2.1.0&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;compileSdk&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;35&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;minSdk&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;24&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;targetSdk&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;35&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# AndroidX 核心库（必需）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;core-ktx&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.15.0&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;appcompat&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.7.0&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可选：UI 库（根据需要选择）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;material&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.12.0&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 注：Compose 和传统 View 二选一&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;compose-bom&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2024.12.01&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 或者使用 ConstraintLayout（传统 View）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;constraintlayout&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2.2.0&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可选：生命周期（如需 ViewModel/LiveData）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;lifecycle&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2.8.7&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可选：协程（如需异步操作）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;coroutines&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.10.1&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;libraries&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# === 核心库（必需）===&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-core-ktx&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.core:core-ktx&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;core-ktx&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-appcompat&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.appcompat:appcompat&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;appcompat&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# === UI 库（二选一或都不要）===&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 方案 A: Material Components（传统 View）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;material&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;com.google.android.material:material&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;material&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-constraintlayout&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.constraintlayout:constraintlayout&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;constraintlayout&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 方案 B: Jetpack Compose（现代声明式 UI）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-compose-bom&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.compose:compose-bom&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;compose-bom&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-compose-ui&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.compose.ui:ui&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-compose-material3&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.compose.material3:material3&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-compose-ui-tooling-preview&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.compose.ui:ui-tooling-preview&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-activity-compose&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.activity:activity-compose&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.9.3&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# === 可选：架构组件 ===&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# ViewModel（如需 MVVM 架构）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-lifecycle-viewmodel-ktx&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.lifecycle:lifecycle-viewmodel-ktx&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;lifecycle&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# LiveData（如需响应式数据，Compose 项目可不用）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;androidx-lifecycle-livedata-ktx&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx.lifecycle:lifecycle-livedata-ktx&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;lifecycle&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# === 可选：协程（如需异步操作）===&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;kotlinx-coroutines-android&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;module&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;org.jetbrains.kotlinx:kotlinx-coroutines-android&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;coroutines&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;plugins&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 必需插件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;android-application&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;id&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;com.android.application&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;agp&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;kotlin-android&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;id&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;org.jetbrains.kotlin.android&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kotlin&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可选：Compose 编译器插件（仅 Compose 项目需要）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;kotlin-compose&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;id&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;org.jetbrains.kotlin.plugin.compose&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kotlin&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可选：如需多模块或库模块&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;android-library&lt;/span&gt; = { &lt;span style=&#34;color:#a6e22e&#34;&gt;id&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;com.android.library&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;ref&lt;/span&gt; = &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;agp&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[&lt;span style=&#34;color:#a6e22e&#34;&gt;bundles&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可选：组合常用库&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 传统 View UI 套件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;traditional-ui&lt;/span&gt; = [&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-core-ktx&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-appcompat&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;material&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-constraintlayout&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# Compose UI 套件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;compose-ui&lt;/span&gt; = [&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-compose-ui&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-compose-material3&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-compose-ui-tooling-preview&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-activity-compose&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# MVVM 架构套件&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;lifecycle&lt;/span&gt; = [&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-lifecycle-viewmodel-ktx&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;androidx-lifecycle-livedata-ktx&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;疑问解答&#34;&gt;疑问解答
+&lt;/h4&gt;&lt;h5 id=&#34;为什么项目级要用apply-false&#34;&gt;为什么项目级要用&lt;code&gt;apply false&lt;/code&gt;？
+&lt;/h5&gt;&lt;p&gt;在项目根目录的&lt;code&gt;build.gradle.kts&lt;/code&gt;中使用&lt;code&gt;apply false&lt;/code&gt;是为了：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;声明插件版本，但不应用到根项目&lt;/li&gt;
+&lt;li&gt;让子模块可以复用这些插件定义&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-kotlin&#34; data-lang=&#34;kotlin&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ❌ 项目根目录如果不加 apply false
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;plugins {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    alias(libs.plugins.android.application)  &lt;span style=&#34;color:#75715e&#34;&gt;// 会应用到根项目
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 问题：根项目不是 Android 应用，会报错！
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ✅ 正确做法
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;plugins {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    alias(libs.plugins.android.application) apply &lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;// 只声明，不应用
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;类比理解&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;把根项目想象成插件仓库：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;apply false&lt;/code&gt; = 把插件放在仓库货架上&lt;/li&gt;
+&lt;li&gt;子模块&lt;code&gt;alias()&lt;/code&gt; = 从货架取用插件&lt;/li&gt;
+&lt;li&gt;货架管理员（根项目）不需要用这些工具（插件）&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

@@ -18,122 +18,122 @@
 &lt;p&gt;NDK 是 Android 提供的工具集,让你能用 &lt;strong&gt;C/C++/Rust&lt;/strong&gt; 等原生语言开发 Android 应用的一部分&lt;/p&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;android应用的两种开发方式&#34;&gt;Android应用的两种开发方式
-&lt;/h4&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌─────────────────────────────────────────┐&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;         Android &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;应用&lt;/span&gt;                     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├─────────────────────────────────────────┤&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;                                         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;方式&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;Java&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;Kotlin (Android &lt;span style=&#34;color:#66d9ef&#34;&gt;SDK&lt;/span&gt;)      &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌──────────────────────────────────┐&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  Kotlin&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;Java &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;代码&lt;/span&gt;                &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;                               &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译为&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;DEX&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;字节码&lt;/span&gt;               &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;                               &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;在&lt;/span&gt; Dalvik&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;ART&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;虚拟机运行&lt;/span&gt;        &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──────────────────────────────────┘&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;                                         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;方式&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;C&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;C&lt;span style=&#34;color:#f92672&#34;&gt;++/&lt;/span&gt;Rust (Android &lt;span style=&#34;color:#66d9ef&#34;&gt;NDK&lt;/span&gt;)       &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌──────────────────────────────────┐&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  C&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;C&lt;span style=&#34;color:#f92672&#34;&gt;++/&lt;/span&gt;Rust &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;代码&lt;/span&gt;                 &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;                               &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译为&lt;/span&gt; .so &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;文件&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;机器码&lt;/span&gt;)        &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;                               &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;直接在&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;CPU&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;上运行&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;无虚拟机&lt;/span&gt;)    &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──────────────────────────────────┘&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;                                         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;  &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;两者通过&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;JNI&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;桥接&lt;/span&gt;                      &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└─────────────────────────────────────────┘&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;为什么需要ndk&#34;&gt;为什么需要NDK？
+&lt;/h4&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;┌─────────────────────────────────────────┐
+│         Android 应用                     │
+├─────────────────────────────────────────┤
+│                                         │
+│  方式 1: Java/Kotlin (Android SDK)      │
+│  ┌──────────────────────────────────┐  │
+│  │  Kotlin/Java 代码                │  │
+│  │  ↓                               │  │
+│  │  编译为 DEX 字节码               │  │
+│  │  ↓                               │  │
+│  │  在 Dalvik/ART 虚拟机运行        │  │
+│  └──────────────────────────────────┘  │
+│                                         │
+│  方式 2: C/C++/Rust (Android NDK)       │
+│  ┌──────────────────────────────────┐  │
+│  │  C/C++/Rust 代码                 │  │
+│  │  ↓                               │  │
+│  │  编译为 .so 文件 (机器码)        │  │
+│  │  ↓                               │  │
+│  │  直接在 CPU 上运行 (无虚拟机)    │  │
+│  └──────────────────────────────────┘  │
+│                                         │
+│  两者通过 JNI 桥接                      │
+└─────────────────────────────────────────┘
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;为什么需要ndk&#34;&gt;为什么需要NDK？
 &lt;/h4&gt;&lt;h5 id=&#34;对比理解&#34;&gt;对比理解
 &lt;/h5&gt;&lt;p&gt;纯 &lt;strong&gt;Java/Kotlin(SDK):&lt;/strong&gt;&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;优点&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;开发简单&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;跨设备兼容好&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;调试方便&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;缺点&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;❌&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;性能有限&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;虚拟机开销&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;❌&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;某些功能无法实现&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;❌&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;无法复用&lt;/span&gt; C&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;C&lt;span style=&#34;color:#f92672&#34;&gt;++&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;库&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;NDK(C/C++/Rust)&lt;/strong&gt;&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;优点&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;性能极高&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;接近机器码&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;可以复用现有&lt;/span&gt; C&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;C&lt;span style=&#34;color:#f92672&#34;&gt;++&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;库&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;直接访问硬件&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;✅&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;跨平台代码复用&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;缺点&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;❌&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;开发复杂&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;❌&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;调试困难&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;❌&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;需要为不同&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;CPU&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;优点:
+✅ 开发简单
+✅ 跨设备兼容好
+✅ 调试方便
+
+缺点:
+❌ 性能有限 (虚拟机开销)
+❌ 某些功能无法实现
+❌ 无法复用 C/C++ 库
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;NDK(C/C++/Rust)&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;优点:
+✅ 性能极高 (接近机器码)
+✅ 可以复用现有 C/C++ 库
+✅ 直接访问硬件
+✅ 跨平台代码复用
+
+缺点:
+❌ 开发复杂
+❌ 调试困难
+❌ 需要为不同 CPU 编译
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
 &lt;h4 id=&#34;ndk工作原理&#34;&gt;NDK工作原理
 &lt;/h4&gt;&lt;h5 id=&#34;完整流程&#34;&gt;完整流程
-&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;第&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;步&lt;/span&gt;: &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;写&lt;/span&gt; Rust &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;代码&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌────────────────────────┐&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;// Rust 代码           │
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;pub&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;fn&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;add&lt;/span&gt;(a: &lt;span style=&#34;color:#66d9ef&#34;&gt;i32&lt;/span&gt;, b: &lt;span style=&#34;color:#66d9ef&#34;&gt;i32&lt;/span&gt;) -&amp;gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;i32&lt;/span&gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;     a &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; b              &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; }                      &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└────────────────────────┘&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;第&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;步&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;NDK&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌────────────────────────┐&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;NDK&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;工具链编译&lt;/span&gt;          &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;交叉编译&lt;/span&gt;              &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;针对&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;ARM&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;x86 &lt;span style=&#34;color:#66d9ef&#34;&gt;CPU&lt;/span&gt;     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└────────────────────────┘&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;第&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;步&lt;/span&gt;: &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;生成&lt;/span&gt; .so &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;文件&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌────────────────────────┐&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; librust_lib.so          &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;机器码&lt;/span&gt;,&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;可直接运行&lt;/span&gt;)     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└────────────────────────┘&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;第&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;步&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;Android&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;加载&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌────────────────────────┐&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; System.loadLibrary(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;rust_lib&amp;#34;&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;                        &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; external fun add(a: &lt;span style=&#34;color:#a6e22e&#34;&gt;Int&lt;/span&gt;, b: &lt;span style=&#34;color:#a6e22e&#34;&gt;Int&lt;/span&gt;): &lt;span style=&#34;color:#a6e22e&#34;&gt;Int&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└────────────────────────┘&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;第&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;步&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;JNI&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;调用&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;┌────────────────────────┐&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; Kotlin &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;→&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;JNI&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;→&lt;/span&gt; Rust    &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; val result &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; add(&lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;) &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;// result = 8          │
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└────────────────────────┘&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;/h5&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;第 1 步: 写 Rust 代码
+┌────────────────────────┐
+│ // Rust 代码           │
+│ pub fn add(a: i32, b: i32) -&amp;gt; i32 {
+│     a + b              │
+│ }                      │
+└────────────────────────┘
+         ↓
+第 2 步: NDK 编译
+┌────────────────────────┐
+│ NDK 工具链编译          │
+│ - 交叉编译              │
+│ - 针对 ARM/x86 CPU     │
+└────────────────────────┘
+         ↓
+第 3 步: 生成 .so 文件
+┌────────────────────────┐
+│ librust_lib.so          │
+│ (机器码,可直接运行)     │
+└────────────────────────┘
+         ↓
+第 4 步: Android 加载
+┌────────────────────────┐
+│ System.loadLibrary(&amp;#34;rust_lib&amp;#34;)
+│                        │
+│ external fun add(a: Int, b: Int): Int
+└────────────────────────┘
+         ↓
+第 5 步: JNI 调用
+┌────────────────────────┐
+│ Kotlin → JNI → Rust    │
+│ val result = add(5, 3) │
+│ // result = 8          │
+└────────────────────────┘
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
 &lt;h4 id=&#34;ndk包含什么&#34;&gt;NDK包含什么？
 &lt;/h4&gt;&lt;h5 id=&#34;ndk工具集&#34;&gt;NDK工具集
-&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;$ANDROID_NDK_HOME&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; build&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;              # &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;构建脚本&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; toolchains&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;         # &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译器工具链&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; aarch64&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;linux&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;android&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;  # &lt;span style=&#34;color:#66d9ef&#34;&gt;ARM64&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译器&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; arm&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;linux&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;androideabi&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;  # &lt;span style=&#34;color:#66d9ef&#34;&gt;ARM32&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译器&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; x86&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;                    # x86 &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译器&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;│&lt;/span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──&lt;/span&gt; x86_64&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;                 # x86_64 &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;编译器&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; platforms&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;          # Android &lt;span style=&#34;color:#66d9ef&#34;&gt;API&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;级别的头文件&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;├──&lt;/span&gt; sources&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;           # &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;示例代码&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;└──&lt;/span&gt; sysroot&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;           # &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;系统库&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;编译器&#34;&gt;编译器
-&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;NDK&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;提供了针对不同&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;CPU&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;架构的编译器&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;ARM64&lt;/span&gt; (arm64&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;v8a):     &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;现代手机&lt;/span&gt; (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;主流&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;ARM32&lt;/span&gt; (armeabi&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;v7a):   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;老手机&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x86:                   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;模拟器&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;x86_64:                &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;模拟器&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;/h5&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;$ANDROID_NDK_HOME/
+├── build/              # 构建脚本
+├── toolchains/         # 编译器工具链
+│   ├── aarch64-linux-android/  # ARM64 编译器
+│   ├── arm-linux-androideabi/  # ARM32 编译器
+│   ├── x86/                    # x86 编译器
+│   └── x86_64/                 # x86_64 编译器
+├── platforms/          # Android API 级别的头文件
+├── sources/           # 示例代码
+└── sysroot/           # 系统库
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;编译器&#34;&gt;编译器
+&lt;/h5&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;NDK 提供了针对不同 CPU 架构的编译器:
+
+ARM64 (arm64-v8a):     现代手机 (主流)
+ARM32 (armeabi-v7a):   老手机
+x86:                   模拟器
+x86_64:                模拟器
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
 &lt;h4 id=&#34;so文件是什么&#34;&gt;.so文件是什么？
 &lt;/h4&gt;&lt;h5 id=&#34;理解so文件&#34;&gt;理解.so文件
-&lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;.so &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Shared Object (&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;共享对象&lt;/span&gt;)
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;类似于&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; Windows &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;的&lt;/span&gt; .dll &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;文件&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; macOS &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;的&lt;/span&gt; .dylib &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;文件&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;作用&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;包含编译后的机器码&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;可以被多个程序共享使用&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;so文件示例&#34;&gt;.so文件示例
+&lt;/h5&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;.so = Shared Object (共享对象)
+类似于:
+- Windows 的 .dll 文件
+- macOS 的 .dylib 文件
+
+作用:
+- 包含编译后的机器码
+- 可以被多个程序共享使用
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;so文件示例&#34;&gt;.so文件示例
 &lt;/h5&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 查看 .so 文件&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ls android/app/src/main/jniLibs/arm64-v8a/
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# librust_lib.so  ← 这就是编译后的 Rust 代码&lt;/span&gt;
@@ -193,14 +193,14 @@ Kotlin String   ↔  Rust String
 Kotlin IntArray ↔  Rust &amp;amp;[i32]
 &lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;交叉编译&#34;&gt;交叉编译
 &lt;/h5&gt;&lt;p&gt;什么是交叉编译?&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;你在&lt;/span&gt; x86_64 &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;电脑上开发&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;但手机是&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;ARM64&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;架构&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;需要&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;交叉编译&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;在&lt;/span&gt; x86_64 &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;上编译出&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;ARM64&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;代码&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;↓&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;NDK&lt;/span&gt; &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;提供了交叉编译工具链&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;abiapplication-binary-interface&#34;&gt;ABI(Application Binary Interface)
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;你在 x86_64 电脑上开发
+   ↓
+但手机是 ARM64 架构
+   ↓
+需要&amp;#34;交叉编译&amp;#34;: 在 x86_64 上编译出 ARM64 代码
+   ↓
+NDK 提供了交叉编译工具链
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;abiapplication-binary-interface&#34;&gt;ABI(Application Binary Interface)
 &lt;/h5&gt;&lt;p&gt;不同&lt;strong&gt;CPU&lt;/strong&gt;需要不同的**.so**文件:&lt;/p&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;arm64-v8a/libmylib.so    → ARM64 手机
 armeabi-v7a/libmylib.so  → ARM32 手机
