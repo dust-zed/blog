@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="什么是Window Insets？ Window Insets = 系统UI占用的屏幕区域信息\n想象你的应用是一张画布，但有些区域被系统UI“侵占”了：\n顶部的状态栏(时间、电量、信号) 底部的导航栏(返回、Home、多任务) 刘海屏的凹口(notch) 折叠屏的折痕(hinge) 软键盘(IME)弹出时 Window Insets就是告诉你这些区域的位置和大小，让你决定如何处理\n系统默认处理 // 默认情况（大多数应用） setContentView(R.layout.activity_main) // 系统自动做了这些： // 1. 内容自动避开状态栏 // 2. 内容自动避开导航栏 // 3. 感觉不到 Insets 的存在 什么时候必须关心Insets？ 全屏沉浸式体验 内容延伸到状态栏/导航栏下方（如视频播放器） 透明状态栏/导航栏 自定义边距处理 FAB按钮要避开导航栏 底部导航栏要贴合屏幕底部 内容要避开刘海屏凹口 键盘处理 聊天界面，输入框跟随键盘上移 登录表单，避免被键盘遮挡 特殊设备适配 折叠屏、刘海屏、挖孔屏 Insets的类型 1. System Bars Insets (系统栏) ┌─────────────────────┐ │ 状态栏 (24dp) │ ← Status Bar ├─────────────────────┤ │ │ │ │ │ 你的内容区域 │ │ │ │ │ ├─────────────────────┤ │ 导航栏 (48dp) │ ← Navigation Bar └─────────────────────┘ 2. Display Cutout Insets (刘海/挖孔) ┌──┐ 刘海 ┌───┘ └─────────┐ │ │ │ 内容区域 │ │ │ └────────────────┘ 3. IME Insets(软键盘) ┌────────────────┐ │ 内容区域 │ ├────────────────┤ │ [输入框] │ ├────────────────┤ │ 软键盘 │ ← IME (Input Method Editor) └────────────────┘ 4. System Gestures Insets (手势区域) ┌────────────────┐ │ ← 边缘滑动手势 │ ← 左边缘 │ │ │ │ │ 边缘滑动手势 → │ ← 右边缘 └────────────────┘ 实战场景 场景1: 默认情况（不需要处理Insets） // activity_main.xml &lt;LinearLayout android:layout_width=&#34;match_parent&#34; android:layout_height=&#34;match_parent&#34;&gt; &lt;TextView android:text=&#34;Hello World&#34; android:layout_width=&#34;wrap_content&#34; android:layout_height=&#34;wrap_content&#34; /&gt; &lt;/LinearLayout&gt; // MainActivity.kt class MainActivity : AppCompatActivity() { override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) setContentView(R.layout.activity_main) // 系统自动处理，内容避开系统栏 ✅ } } 结果：\n">
+<title>Window Insets指南</title>
+
+<link rel='canonical' href='http://localhost:1313/android-develop/window-insets%E6%8C%87%E5%8D%97/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Window Insets指南">
+<meta property='og:description' content="什么是Window Insets？ Window Insets = 系统UI占用的屏幕区域信息\n想象你的应用是一张画布，但有些区域被系统UI“侵占”了：\n顶部的状态栏(时间、电量、信号) 底部的导航栏(返回、Home、多任务) 刘海屏的凹口(notch) 折叠屏的折痕(hinge) 软键盘(IME)弹出时 Window Insets就是告诉你这些区域的位置和大小，让你决定如何处理\n系统默认处理 // 默认情况（大多数应用） setContentView(R.layout.activity_main) // 系统自动做了这些： // 1. 内容自动避开状态栏 // 2. 内容自动避开导航栏 // 3. 感觉不到 Insets 的存在 什么时候必须关心Insets？ 全屏沉浸式体验 内容延伸到状态栏/导航栏下方（如视频播放器） 透明状态栏/导航栏 自定义边距处理 FAB按钮要避开导航栏 底部导航栏要贴合屏幕底部 内容要避开刘海屏凹口 键盘处理 聊天界面，输入框跟随键盘上移 登录表单，避免被键盘遮挡 特殊设备适配 折叠屏、刘海屏、挖孔屏 Insets的类型 1. System Bars Insets (系统栏) ┌─────────────────────┐ │ 状态栏 (24dp) │ ← Status Bar ├─────────────────────┤ │ │ │ │ │ 你的内容区域 │ │ │ │ │ ├─────────────────────┤ │ 导航栏 (48dp) │ ← Navigation Bar └─────────────────────┘ 2. Display Cutout Insets (刘海/挖孔) ┌──┐ 刘海 ┌───┘ └─────────┐ │ │ │ 内容区域 │ │ │ └────────────────┘ 3. IME Insets(软键盘) ┌────────────────┐ │ 内容区域 │ ├────────────────┤ │ [输入框] │ ├────────────────┤ │ 软键盘 │ ← IME (Input Method Editor) └────────────────┘ 4. System Gestures Insets (手势区域) ┌────────────────┐ │ ← 边缘滑动手势 │ ← 左边缘 │ │ │ │ │ 边缘滑动手势 → │ ← 右边缘 └────────────────┘ 实战场景 场景1: 默认情况（不需要处理Insets） // activity_main.xml &lt;LinearLayout android:layout_width=&#34;match_parent&#34; android:layout_height=&#34;match_parent&#34;&gt; &lt;TextView android:text=&#34;Hello World&#34; android:layout_width=&#34;wrap_content&#34; android:layout_height=&#34;wrap_content&#34; /&gt; &lt;/LinearLayout&gt; // MainActivity.kt class MainActivity : AppCompatActivity() { override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) setContentView(R.layout.activity_main) // 系统自动处理，内容避开系统栏 ✅ } } 结果：\n">
+<meta property='og:url' content='http://localhost:1313/android-develop/window-insets%E6%8C%87%E5%8D%97/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-10-17T12:07:34&#43;08:00'/><meta property='article:modified_time' content='2025-10-17T12:07:34&#43;08:00'/>
+<meta name="twitter:title" content="Window Insets指南">
+<meta name="twitter:description" content="什么是Window Insets？ Window Insets = 系统UI占用的屏幕区域信息\n想象你的应用是一张画布，但有些区域被系统UI“侵占”了：\n顶部的状态栏(时间、电量、信号) 底部的导航栏(返回、Home、多任务) 刘海屏的凹口(notch) 折叠屏的折痕(hinge) 软键盘(IME)弹出时 Window Insets就是告诉你这些区域的位置和大小，让你决定如何处理\n系统默认处理 // 默认情况（大多数应用） setContentView(R.layout.activity_main) // 系统自动做了这些： // 1. 内容自动避开状态栏 // 2. 内容自动避开导航栏 // 3. 感觉不到 Insets 的存在 什么时候必须关心Insets？ 全屏沉浸式体验 内容延伸到状态栏/导航栏下方（如视频播放器） 透明状态栏/导航栏 自定义边距处理 FAB按钮要避开导航栏 底部导航栏要贴合屏幕底部 内容要避开刘海屏凹口 键盘处理 聊天界面，输入框跟随键盘上移 登录表单，避免被键盘遮挡 特殊设备适配 折叠屏、刘海屏、挖孔屏 Insets的类型 1. System Bars Insets (系统栏) ┌─────────────────────┐ │ 状态栏 (24dp) │ ← Status Bar ├─────────────────────┤ │ │ │ │ │ 你的内容区域 │ │ │ │ │ ├─────────────────────┤ │ 导航栏 (48dp) │ ← Navigation Bar └─────────────────────┘ 2. Display Cutout Insets (刘海/挖孔) ┌──┐ 刘海 ┌───┘ └─────────┐ │ │ │ 内容区域 │ │ │ └────────────────┘ 3. IME Insets(软键盘) ┌────────────────┐ │ 内容区域 │ ├────────────────┤ │ [输入框] │ ├────────────────┤ │ 软键盘 │ ← IME (Input Method Editor) └────────────────┘ 4. System Gestures Insets (手势区域) ┌────────────────┐ │ ← 边缘滑动手势 │ ← 左边缘 │ │ │ │ │ 边缘滑动手势 → │ ← 右边缘 └────────────────┘ 实战场景 场景1: 默认情况（不需要处理Insets） // activity_main.xml &lt;LinearLayout android:layout_width=&#34;match_parent&#34; android:layout_height=&#34;match_parent&#34;&gt; &lt;TextView android:text=&#34;Hello World&#34; android:layout_width=&#34;wrap_content&#34; android:layout_height=&#34;wrap_content&#34; /&gt; &lt;/LinearLayout&gt; // MainActivity.kt class MainActivity : AppCompatActivity() { override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) setContentView(R.layout.activity_main) // 系统自动处理，内容避开系统栏 ✅ } } 结果：\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/android-develop' >
+                
+                
+                
+                <span>android-develop</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/learning-reflection/' >
+                
+                
+                
+                <span>Learning-Reflections</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/window-insets%E6%8C%87%E5%8D%97/">Window Insets指南</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Oct 17, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h4 id="什么是window-insets">什么是Window Insets？
+</h4><p><strong>Window Insets</strong> = 系统<strong>UI</strong>占用的屏幕区域信息</p>
+<p>想象你的应用是一张画布，但有些区域被系统UI“侵占”了：</p>
+<ul>
+<li>顶部的<strong>状态栏</strong>(时间、电量、信号)</li>
+<li>底部的<strong>导航栏</strong>(返回、Home、多任务)</li>
+<li>刘海屏的<strong>凹口</strong>(notch)</li>
+<li>折叠屏的<strong>折痕</strong>(hinge)</li>
+<li>软键盘(<strong>IME</strong>)弹出时</li>
+</ul>
+<p><strong>Window Insets</strong>就是告诉你这些区域的位置和大小，让你决定如何处理</p>
+<hr>
+<h4 id="系统默认处理">系统默认处理
+</h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 默认情况（大多数应用）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>setContentView(<span style="color:#a6e22e">R</span>.layout.activity_main)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 系统自动做了这些：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 1. 内容自动避开状态栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 2. 内容自动避开导航栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 3. 感觉不到 Insets 的存在
+</span></span></span></code></pre></div><h4 id="什么时候必须关心insets">什么时候必须关心Insets？
+</h4><ol>
+<li>全屏沉浸式体验
+<ul>
+<li>内容延伸到状态栏/导航栏下方（如视频播放器）</li>
+<li>透明状态栏/导航栏</li>
+</ul>
+</li>
+<li>自定义边距处理
+<ul>
+<li>FAB按钮要避开导航栏</li>
+<li>底部导航栏要贴合屏幕底部</li>
+<li>内容要避开刘海屏凹口</li>
+</ul>
+</li>
+<li>键盘处理
+<ul>
+<li>聊天界面，输入框跟随键盘上移</li>
+<li>登录表单，避免被键盘遮挡</li>
+</ul>
+</li>
+<li>特殊设备适配
+<ul>
+<li>折叠屏、刘海屏、挖孔屏</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h4 id="insets的类型">Insets的类型
+</h4><h5 id="1-system-bars-insets-系统栏">1. System Bars Insets (系统栏)
+</h5><pre tabindex="0"><code>┌─────────────────────┐
+│   状态栏 (24dp)      │ ← Status Bar
+├─────────────────────┤
+│                     │
+│                     │
+│   你的内容区域        │
+│                     │
+│                     │
+├─────────────────────┤
+│   导航栏 (48dp)      │ ← Navigation Bar
+└─────────────────────┘
+</code></pre><h5 id="2-display-cutout-insets-刘海挖孔">2. Display Cutout Insets (刘海/挖孔)
+</h5><pre tabindex="0"><code>		┌──┐  刘海
+┌───┘  └─────────┐
+│                │
+│   内容区域      │
+│                │
+└────────────────┘
+</code></pre><h5 id="3-ime-insets软键盘">3. IME Insets(软键盘)
+</h5><pre tabindex="0"><code>┌────────────────┐
+│   内容区域      │
+├────────────────┤
+│   [输入框]      │
+├────────────────┤
+│   软键盘        │ ← IME (Input Method Editor)
+└────────────────┘
+</code></pre><h5 id="4-system-gestures-insets-手势区域">4. System Gestures Insets (手势区域)
+</h5><pre tabindex="0"><code>┌────────────────┐
+│ ← 边缘滑动手势  │ ← 左边缘
+│                │
+│                │
+│  边缘滑动手势 → │ ← 右边缘
+└────────────────┘
+</code></pre><hr>
+<h4 id="实战场景">实战场景
+</h4><h5 id="场景1-默认情况不需要处理insets">场景1: 默认情况（不需要处理Insets）
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// activity_main.xml
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>&lt;LinearLayout
+</span></span><span style="display:flex;"><span>    android:layout_width=<span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>    android:layout_height=<span style="color:#e6db74">&#34;match_parent&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    &lt;TextView
+</span></span><span style="display:flex;"><span>        android:text=<span style="color:#e6db74">&#34;Hello World&#34;</span>
+</span></span><span style="display:flex;"><span>        android:layout_width=<span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>        android:layout_height=<span style="color:#e6db74">&#34;wrap_content&#34;</span> /&gt;
+</span></span><span style="display:flex;"><span>&lt;/LinearLayout&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// MainActivity.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_main)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 系统自动处理，内容避开系统栏 ✅
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>结果：</p>
+<pre tabindex="0"><code>┌─────────────────┐
+│ 状态栏 (自动避开) │
+├─────────────────┤
+│ Hello World     │ ← 内容从这里开始
+│                 │
+├─────────────────┤
+│ 导航栏 (自动避开) │
+└─────────────────┘
+</code></pre><hr>
+<h5 id="场景2-全屏沉浸式透明状态栏">场景2: 全屏沉浸式（透明状态栏）
+</h5><p>需求：状态栏透明，内容延伸到状态栏下方</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// MainActivity.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 启用 Edge-to-Edge（内容延伸到边缘）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_main)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 设置透明状态栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        window.statusBarColor = <span style="color:#a6e22e">Color</span>.TRANSPARENT
+</span></span><span style="display:flex;"><span>        window.navigationBarColor = <span style="color:#a6e22e">Color</span>.TRANSPARENT
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. 手动处理 Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(findViewById(<span style="color:#a6e22e">R</span>.id.root)) { view, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> systemBars = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.systemBars())
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 给根布局添加 padding，避开系统栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            view.updatePadding(
+</span></span><span style="display:flex;"><span>                top = systemBars.top,
+</span></span><span style="display:flex;"><span>                bottom = systemBars.bottom
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            insets
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- activity_main.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;LinearLayout</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/root&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:background=</span><span style="color:#e6db74">&#34;@drawable/gradient_background&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">&lt;!-- 内容会延伸到状态栏下方，但有 padding 避开 --&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;TextView</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:text=</span><span style="color:#e6db74">&#34;Hello World&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/LinearLayout&gt;</span>
+</span></span></code></pre></div><p>结果：</p>
+<pre tabindex="0"><code>┌─────────────────┐
+│ [透明状态栏]     │ ← 背景色透过状态栏可见
+│ Hello World     │ ← padding 避开了状态栏
+│                 │
+│                 │
+└─────────────────┘
+</code></pre><hr>
+<h5 id="场景3-底部按钮贴合导航栏">场景3: 底部按钮贴合导航栏
+</h5><p>需求：FAB按钮要在导航栏上方，不被遮挡</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- activity_main.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;androidx.coordinatorlayout.widget.CoordinatorLayout</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/root&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;match_parent&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;com.google.android.material.floatingactionbutton.FloatingActionButton</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/fab&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_gravity=</span><span style="color:#e6db74">&#34;bottom|end&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_margin=</span><span style="color:#e6db74">&#34;16dp&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/androidx.coordinatorlayout.widget.CoordinatorLayout&gt;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_main)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> fab = findViewById&lt;FloatingActionButton&gt;(<span style="color:#a6e22e">R</span>.id.fab)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(fab) { view, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> systemBars = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.systemBars())
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// FAB 的 bottom margin 要加上导航栏高度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">val</span> layoutParams = view.layoutParams <span style="color:#66d9ef">as</span> <span style="color:#a6e22e">ViewGroup</span>.MarginLayoutParams
+</span></span><span style="display:flex;"><span>            layoutParams.bottomMargin = <span style="color:#ae81ff">16.</span>dp + systemBars.bottom
+</span></span><span style="display:flex;"><span>            view.layoutParams = layoutParams
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            insets
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>结果：</p>
+<pre tabindex="0"><code>┌─────────────────┐
+│                 │
+│                 │
+│                 │
+│            [FAB]│ ← 自动避开导航栏
+├─────────────────┤
+│   导航栏         │
+└─────────────────┘
+</code></pre><hr>
+<h5 id="场景4-聊天界面跟随键盘">场景4: 聊天界面跟随键盘
+</h5><p>需求：输入框跟随键盘上移，不被遮挡</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- activity_chat.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;androidx.constraintlayout.widget.ConstraintLayout</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/root&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;match_parent&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;androidx.recyclerview.widget.RecyclerView</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/messages&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;0dp&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">app:layout_constraintTop_toTopOf=</span><span style="color:#e6db74">&#34;parent&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">app:layout_constraintBottom_toTopOf=</span><span style="color:#e6db74">&#34;@id/input_layout&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;LinearLayout</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/input_layout&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;match_parent&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:background=</span><span style="color:#e6db74">&#34;@color/surface&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">app:layout_constraintBottom_toBottomOf=</span><span style="color:#e6db74">&#34;parent&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;EditText</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/input&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;0dp&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:layout_weight=</span><span style="color:#e6db74">&#34;1&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:hint=</span><span style="color:#e6db74">&#34;输入消息...&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;ImageButton</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:id=</span><span style="color:#e6db74">&#34;@+id/send&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:layout_width=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:layout_height=</span><span style="color:#e6db74">&#34;wrap_content&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:src=</span><span style="color:#e6db74">&#34;@drawable/ic_send&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/LinearLayout&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/androidx.constraintlayout.widget.ConstraintLayout&gt;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ChatActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 关键：让窗口不自动调整大小
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_chat)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> inputLayout = findViewById&lt;LinearLayout&gt;(<span style="color:#a6e22e">R</span>.id.input_layout)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 监听 IME（键盘）Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(inputLayout) { view, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> imeInsets = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.ime())
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> systemBars = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.systemBars())
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 输入框跟随键盘上移
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            view.updatePadding(bottom = imeInsets.bottom.coerceAtLeast(systemBars.bottom))
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            insets
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>结果（键盘弹出时）：</p>
+<pre tabindex="0"><code>┌─────────────────┐
+│ 消息列表         │
+│ 自动滚动         │
+├─────────────────┤
+│ [输入框] [发送]  │ ← 跟随键盘上移
+├─────────────────┤
+│   软键盘         │
+└─────────────────┘
+</code></pre><hr>
+<h4 id="compose中的insets">Compose中的Insets
+</h4><p>Compose提供了更简单的API：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// build.gradle.kts
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>implementation(<span style="color:#e6db74">&#34;androidx.compose.foundation:foundation:1.7.5&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// MainActivity.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : ComponentActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 启用 Edge-to-Edge
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        setContent {
+</span></span><span style="display:flex;"><span>            MyAppTheme {
+</span></span><span style="display:flex;"><span>                ChatScreen()
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Composable</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">ChatScreen</span>() {
+</span></span><span style="display:flex;"><span>    Scaffold(
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 自动处理 Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        contentWindowInsets = <span style="color:#a6e22e">WindowInsets</span>.systemBars
+</span></span><span style="display:flex;"><span>    ) { paddingValues <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>        Column(
+</span></span><span style="display:flex;"><span>            modifier = Modifier
+</span></span><span style="display:flex;"><span>                .fillMaxSize()
+</span></span><span style="display:flex;"><span>                .padding(paddingValues) <span style="color:#75715e">// 自动避开系统栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        ) {
+</span></span><span style="display:flex;"><span>            MessageList(modifier = <span style="color:#a6e22e">Modifier</span>.weight(<span style="color:#ae81ff">1f</span>))
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            InputBar(
+</span></span><span style="display:flex;"><span>                modifier = Modifier
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 自动跟随键盘
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    .imePadding()
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Composable</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">InputBar</span>(modifier: Modifier = Modifier) {
+</span></span><span style="display:flex;"><span>    Row(
+</span></span><span style="display:flex;"><span>        modifier = modifier
+</span></span><span style="display:flex;"><span>            .fillMaxWidth()
+</span></span><span style="display:flex;"><span>            .background(<span style="color:#a6e22e">MaterialTheme</span>.colorScheme.surface)
+</span></span><span style="display:flex;"><span>            .padding(<span style="color:#ae81ff">8.</span>dp)
+</span></span><span style="display:flex;"><span>    ) {
+</span></span><span style="display:flex;"><span>        TextField(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">value</span> = <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>            onValueChange = {},
+</span></span><span style="display:flex;"><span>            modifier = <span style="color:#a6e22e">Modifier</span>.weight(<span style="color:#ae81ff">1f</span>)
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>        IconButton(onClick = {}) {
+</span></span><span style="display:flex;"><span>            Icon(<span style="color:#a6e22e">Icons</span>.<span style="color:#a6e22e">Default</span>.Send, contentDescription = <span style="color:#e6db74">&#34;发送&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="compose-insets-常用modifier">Compose Insets 常用Modifier
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 1. 避开系统栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Modifier</span>.systemBarsPadding()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 2. 只避开状态栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Modifier</span>.statusBarsPadding()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 3. 只避开导航栏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Modifier</span>.navigationBarsPadding()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 4. 跟随键盘
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Modifier</span>.imePadding()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 5. 避开刘海屏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Modifier</span>.displayCutoutPadding()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 6. 组合使用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>Modifier
+</span></span><span style="display:flex;"><span>    .statusBarsPadding()
+</span></span><span style="display:flex;"><span>    .navigationBarsPadding()
+</span></span><span style="display:flex;"><span>    .imePadding()
+</span></span></code></pre></div><hr>
+<h4 id="常见问题">常见问题
+</h4><h5 id="1-为什么我的内容被状态栏遮挡了">1. 为什么我的内容被状态栏遮挡了？
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// ❌ 错误：启用了 Edge-to-Edge 但没处理 Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 内容会延伸到状态栏下方，但没有 padding
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ✅ 正确：必须手动添加 padding
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(view) { v, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> systemBars = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.systemBars())
+</span></span><span style="display:flex;"><span>    v.updatePadding(top = systemBars.top)
+</span></span><span style="display:flex;"><span>    insets
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-为什么键盘弹出后界面没反应">2. 为什么键盘弹出后界面没反应？
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// ❌ 错误：没有监听 IME Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 或者 AndroidManifest.xml 中设置了：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>android:windowSoftInputMode=<span style="color:#e6db74">&#34;adjustResize&#34;</span>  <span style="color:#75715e">// 这个已过时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ✅ 正确：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(view) { v, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> ime = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.ime())
+</span></span><span style="display:flex;"><span>    v.updatePadding(bottom = ime.bottom)
+</span></span><span style="display:flex;"><span>    insets
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-我需要在每个view上设置insets-listener吗">3. 我需要在每个View上设置Insets Listener吗？
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// ❌ 不需要！Insets 会自动分发给子 View
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ✅ 通常只在根布局设置一次
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(rootView) { view, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 处理 Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    insets  <span style="color:#75715e">// 返回 insets，让子 View 也能收到
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><hr>
+<h4 id="设备适配示例">设备适配示例
+</h4><h5 id="刘海屏适配">刘海屏适配
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 获取刘海区域
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> cutout = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.displayCutout())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 头部 Banner 避开刘海
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>headerView.updatePadding(
+</span></span><span style="display:flex;"><span>    left = cutout.left,
+</span></span><span style="display:flex;"><span>    top = cutout.top,
+</span></span><span style="display:flex;"><span>    right = cutout.right
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h5 id="折叠屏适配">折叠屏适配
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 获取铰链区域（需要 Jetpack WindowManager）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>implementation(<span style="color:#e6db74">&#34;androidx.window:window:1.3.0&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WindowInfoTracker</span>.getOrCreate(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>    .windowLayoutInfo(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>    .collect { layoutInfo <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>        layoutInfo.displayFeatures.forEach { feature <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (feature <span style="color:#66d9ef">is</span> FoldingFeature) {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 处理折叠屏逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><hr>
+<h5 id="关键api速查">关键API速查
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 启用 Edge-to-Edge
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">WindowCompat</span>.setDecorFitsSystemWindows(window, <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 监听 Insets
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">ViewCompat</span>.setOnApplyWindowInsetsListener(view) { v, insets <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> systemBars = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.systemBars())
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> ime = insets.getInsets(<span style="color:#a6e22e">WindowInsetsCompat</span>.<span style="color:#a6e22e">Type</span>.ime())
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 处理...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    insets
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Compose
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Modifier</span>.systemBarsPadding()
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Modifier</span>.imePadding()
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

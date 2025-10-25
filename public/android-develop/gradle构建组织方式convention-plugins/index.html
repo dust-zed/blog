@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="核心思想 Convention Plugins是一种通过预配置的Gradle插件来标准化和复用构建逻辑的方法，核心理念是：\n约定优于配置 （Convention over Configuration） DRY原则（Don&rsquo;t Repeat Yourself） 构建逻辑集中管理 类型安全的配置 典型项目结构 project/ ├── build-logic/ # 构建逻辑模块 │ ├── settings.gradle.kts │ └── convention/ # 约定插件模块 │ ├── build.gradle.kts │ └── src/main/kotlin/ │ ├── AndroidApplicationConventionPlugin.kt │ ├── AndroidLibraryConventionPlugin.kt │ ├── AndroidFeatureConventionPlugin.kt │ └── KotlinLibraryConventionPlugin.kt ├── settings.gradle.kts ├── app/ ├── feature/ │ ├── feature-foryou/ │ └── feature-bookmarks/ └── core/ ├── core-ui/ └── core-data/ 解决的问题 如果不使用Convention Plugins会怎么样，项目中有10个feature模块（比如:feature:foryou,:feature:bookmarks,feature:settings等）。在传统的做法中，每个模块的build.gradle.kts文件都会包含大量相似的配置：\n// 在 :feature:foryou/build.gradle.kts 文件中 plugins { id(&#34;com.android.library&#34;) id(&#34;kotlin-android&#34;) id(&#34;dagger.hilt.android.plugin&#34;) // ...可能还有其他插件 } android { // ...大量通用的安卓配置 } dependencies { implementation(project(&#34;:core:designsystem&#34;)) implementation(project(&#34;:core:ui&#34;)) implementation(&#34;androidx.lifecycle:lifecycle-viewmodel-compose:...&#34;) // ...可能还有10个以上所有feature模块都需要的通用依赖 } 现在，如果你需要为所有feature模块添加一个新的通用依赖库，或者修改一个通用的编译选项，你就必须手动去修改10个不同的build.gradle.kts文件。这不仅繁琐，而且极易出错，非常难以维护。\n">
+<title>Gradle构建组织方式Convention Plugins</title>
+
+<link rel='canonical' href='http://localhost:1313/android-develop/gradle%E6%9E%84%E5%BB%BA%E7%BB%84%E7%BB%87%E6%96%B9%E5%BC%8Fconvention-plugins/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Gradle构建组织方式Convention Plugins">
+<meta property='og:description' content="核心思想 Convention Plugins是一种通过预配置的Gradle插件来标准化和复用构建逻辑的方法，核心理念是：\n约定优于配置 （Convention over Configuration） DRY原则（Don&rsquo;t Repeat Yourself） 构建逻辑集中管理 类型安全的配置 典型项目结构 project/ ├── build-logic/ # 构建逻辑模块 │ ├── settings.gradle.kts │ └── convention/ # 约定插件模块 │ ├── build.gradle.kts │ └── src/main/kotlin/ │ ├── AndroidApplicationConventionPlugin.kt │ ├── AndroidLibraryConventionPlugin.kt │ ├── AndroidFeatureConventionPlugin.kt │ └── KotlinLibraryConventionPlugin.kt ├── settings.gradle.kts ├── app/ ├── feature/ │ ├── feature-foryou/ │ └── feature-bookmarks/ └── core/ ├── core-ui/ └── core-data/ 解决的问题 如果不使用Convention Plugins会怎么样，项目中有10个feature模块（比如:feature:foryou,:feature:bookmarks,feature:settings等）。在传统的做法中，每个模块的build.gradle.kts文件都会包含大量相似的配置：\n// 在 :feature:foryou/build.gradle.kts 文件中 plugins { id(&#34;com.android.library&#34;) id(&#34;kotlin-android&#34;) id(&#34;dagger.hilt.android.plugin&#34;) // ...可能还有其他插件 } android { // ...大量通用的安卓配置 } dependencies { implementation(project(&#34;:core:designsystem&#34;)) implementation(project(&#34;:core:ui&#34;)) implementation(&#34;androidx.lifecycle:lifecycle-viewmodel-compose:...&#34;) // ...可能还有10个以上所有feature模块都需要的通用依赖 } 现在，如果你需要为所有feature模块添加一个新的通用依赖库，或者修改一个通用的编译选项，你就必须手动去修改10个不同的build.gradle.kts文件。这不仅繁琐，而且极易出错，非常难以维护。\n">
+<meta property='og:url' content='http://localhost:1313/android-develop/gradle%E6%9E%84%E5%BB%BA%E7%BB%84%E7%BB%87%E6%96%B9%E5%BC%8Fconvention-plugins/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-10-24T03:52:15&#43;08:00'/><meta property='article:modified_time' content='2025-10-24T03:52:15&#43;08:00'/>
+<meta name="twitter:title" content="Gradle构建组织方式Convention Plugins">
+<meta name="twitter:description" content="核心思想 Convention Plugins是一种通过预配置的Gradle插件来标准化和复用构建逻辑的方法，核心理念是：\n约定优于配置 （Convention over Configuration） DRY原则（Don&rsquo;t Repeat Yourself） 构建逻辑集中管理 类型安全的配置 典型项目结构 project/ ├── build-logic/ # 构建逻辑模块 │ ├── settings.gradle.kts │ └── convention/ # 约定插件模块 │ ├── build.gradle.kts │ └── src/main/kotlin/ │ ├── AndroidApplicationConventionPlugin.kt │ ├── AndroidLibraryConventionPlugin.kt │ ├── AndroidFeatureConventionPlugin.kt │ └── KotlinLibraryConventionPlugin.kt ├── settings.gradle.kts ├── app/ ├── feature/ │ ├── feature-foryou/ │ └── feature-bookmarks/ └── core/ ├── core-ui/ └── core-data/ 解决的问题 如果不使用Convention Plugins会怎么样，项目中有10个feature模块（比如:feature:foryou,:feature:bookmarks,feature:settings等）。在传统的做法中，每个模块的build.gradle.kts文件都会包含大量相似的配置：\n// 在 :feature:foryou/build.gradle.kts 文件中 plugins { id(&#34;com.android.library&#34;) id(&#34;kotlin-android&#34;) id(&#34;dagger.hilt.android.plugin&#34;) // ...可能还有其他插件 } android { // ...大量通用的安卓配置 } dependencies { implementation(project(&#34;:core:designsystem&#34;)) implementation(project(&#34;:core:ui&#34;)) implementation(&#34;androidx.lifecycle:lifecycle-viewmodel-compose:...&#34;) // ...可能还有10个以上所有feature模块都需要的通用依赖 } 现在，如果你需要为所有feature模块添加一个新的通用依赖库，或者修改一个通用的编译选项，你就必须手动去修改10个不同的build.gradle.kts文件。这不仅繁琐，而且极易出错，非常难以维护。\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/android-develop' >
+                
+                
+                
+                <span>android-develop</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/learning-reflection/' >
+                
+                
+                
+                <span>Learning-Reflections</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/gradle%E6%9E%84%E5%BB%BA%E7%BB%84%E7%BB%87%E6%96%B9%E5%BC%8Fconvention-plugins/">Gradle构建组织方式Convention Plugins</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Oct 24, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h4 id="核心思想">核心思想
+</h4><p>Convention Plugins是一种通过预配置的Gradle插件来<strong>标准化和复用构建逻辑</strong>的方法，核心理念是：</p>
+<ul>
+<li>约定优于配置 （Convention over Configuration）</li>
+<li><strong>DRY</strong>原则（Don&rsquo;t Repeat Yourself）</li>
+<li>构建逻辑集中管理</li>
+<li>类型安全的配置</li>
+</ul>
+<h4 id="典型项目结构">典型项目结构
+</h4><pre tabindex="0"><code>project/
+├── build-logic/                    # 构建逻辑模块
+│   ├── settings.gradle.kts
+│   └── convention/                 # 约定插件模块
+│       ├── build.gradle.kts
+│       └── src/main/kotlin/
+│           ├── AndroidApplicationConventionPlugin.kt
+│           ├── AndroidLibraryConventionPlugin.kt
+│           ├── AndroidFeatureConventionPlugin.kt
+│           └── KotlinLibraryConventionPlugin.kt
+├── settings.gradle.kts
+├── app/
+├── feature/
+│   ├── feature-foryou/
+│   └── feature-bookmarks/
+└── core/
+    ├── core-ui/
+    └── core-data/
+</code></pre><h4 id="解决的问题">解决的问题
+</h4><p>如果不使用Convention Plugins会怎么样，项目中有10个<code>feature</code>模块（比如<code>:feature:foryou</code>,<code>:feature:bookmarks</code>,<code>feature:settings</code>等）。在传统的做法中，每个模块的<code>build.gradle.kts</code>文件都会包含大量相似的配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 在 :feature:foryou/build.gradle.kts 文件中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>plugins {
+</span></span><span style="display:flex;"><span>    id(<span style="color:#e6db74">&#34;com.android.library&#34;</span>)
+</span></span><span style="display:flex;"><span>    id(<span style="color:#e6db74">&#34;kotlin-android&#34;</span>)
+</span></span><span style="display:flex;"><span>    id(<span style="color:#e6db74">&#34;dagger.hilt.android.plugin&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...可能还有其他插件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>android {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...大量通用的安卓配置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dependencies {
+</span></span><span style="display:flex;"><span>    implementation(project(<span style="color:#e6db74">&#34;:core:designsystem&#34;</span>))
+</span></span><span style="display:flex;"><span>    implementation(project(<span style="color:#e6db74">&#34;:core:ui&#34;</span>))
+</span></span><span style="display:flex;"><span>    implementation(<span style="color:#e6db74">&#34;androidx.lifecycle:lifecycle-viewmodel-compose:...&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...可能还有10个以上所有feature模块都需要的通用依赖
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><p>现在，如果你需要为所有<code>feature</code>模块添加一个新的通用依赖库，或者修改一个通用的编译选项，你就必须手动去修改10个不同的<code>build.gradle.kts</code>文件。这不仅繁琐，而且极易出错，非常难以维护。</p>
+<h4 id="实现方式">实现方式
+</h4><h5 id="1-设置build-logic模块">1. 设置build-logic模块
+</h5><p><strong>build-logic/settings.gradle.kts</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>pluginManagement {
+</span></span><span style="display:flex;"><span>    repositories {
+</span></span><span style="display:flex;"><span>        gradlePluginPortal()
+</span></span><span style="display:flex;"><span>        google()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dependencyResolutionManagement {
+</span></span><span style="display:flex;"><span>    repositories {
+</span></span><span style="display:flex;"><span>        google {
+</span></span><span style="display:flex;"><span>            content {
+</span></span><span style="display:flex;"><span>                includeGroupByRegex(<span style="color:#e6db74">&#34;com</span><span style="color:#ae81ff">\\</span><span style="color:#e6db74">.android.*&#34;</span>)
+</span></span><span style="display:flex;"><span>                includeGroupByRegex(<span style="color:#e6db74">&#34;com</span><span style="color:#ae81ff">\\</span><span style="color:#e6db74">.google.*&#34;</span>)
+</span></span><span style="display:flex;"><span>                includeGroupByRegex(<span style="color:#e6db74">&#34;androidx.*&#34;</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        mavenCentral()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    versionCatalogs {
+</span></span><span style="display:flex;"><span>        create(<span style="color:#e6db74">&#34;libs&#34;</span>) {
+</span></span><span style="display:flex;"><span>            from(files(<span style="color:#e6db74">&#34;../gradle/libs.versions.toml&#34;</span>))
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>rootProject.name = <span style="color:#e6db74">&#34;build-logic&#34;</span>
+</span></span><span style="display:flex;"><span>include(<span style="color:#e6db74">&#34;:convention&#34;</span>)
+</span></span></code></pre></div><p><strong>build-logic/convention/build.gradle.kts</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>plugins {
+</span></span><span style="display:flex;"><span>    <span style="color:#960050;background-color:#1e0010">`</span>kotlin-dsl<span style="color:#960050;background-color:#1e0010">`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dependencies {
+</span></span><span style="display:flex;"><span>    compileOnly(libs.android.gradlePlugin)
+</span></span><span style="display:flex;"><span>    compileOnly(libs.kotlin.gradlePlugin)
+</span></span><span style="display:flex;"><span>    compileOnly(libs.ksp.gradlePlugin)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gradlePlugin {
+</span></span><span style="display:flex;"><span>    plugins {
+</span></span><span style="display:flex;"><span>        register(<span style="color:#e6db74">&#34;androidApplicationCompose&#34;</span>) {
+</span></span><span style="display:flex;"><span>            id = libs.plugins.nowinandroid.android.application.compose.<span style="color:#66d9ef">get</span>().pluginId
+</span></span><span style="display:flex;"><span>            implementationClass = <span style="color:#e6db74">&#34;AndroidApplicationComposeConventionPlugin&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        register(<span style="color:#e6db74">&#34;androidApplication&#34;</span>) {
+</span></span><span style="display:flex;"><span>            id = libs.plugins.nowinandroid.android.application.asProvider().<span style="color:#66d9ef">get</span>().pluginId
+</span></span><span style="display:flex;"><span>            implementationClass = <span style="color:#e6db74">&#34;AndroidApplicationConventionPlugin&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        register(<span style="color:#e6db74">&#34;androidLibraryCompose&#34;</span>) {
+</span></span><span style="display:flex;"><span>            id = libs.plugins.nowinandroid.android.library.compose.<span style="color:#66d9ef">get</span>().pluginId
+</span></span><span style="display:flex;"><span>            implementationClass = <span style="color:#e6db74">&#34;AndroidLibraryComposeConventionPlugin&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        register(<span style="color:#e6db74">&#34;androidLibrary&#34;</span>) {
+</span></span><span style="display:flex;"><span>            id = libs.plugins.nowinandroid.android.library.asProvider().<span style="color:#66d9ef">get</span>().pluginId
+</span></span><span style="display:flex;"><span>            implementationClass = <span style="color:#e6db74">&#34;AndroidLibraryConventionPlugin&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        register(<span style="color:#e6db74">&#34;androidFeature&#34;</span>) {
+</span></span><span style="display:flex;"><span>            id = libs.plugins.nowinandroid.android.feature.<span style="color:#66d9ef">get</span>().pluginId
+</span></span><span style="display:flex;"><span>            implementationClass = <span style="color:#e6db74">&#34;AndroidFeatureConventionPlugin&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-创建约定插件">2. 创建约定插件
+</h5><p><strong>AndroidApplicationConventionPlugin.kt</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AndroidApplicationConventionPlugin</span> : Plugin&lt;Project&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">apply</span>(target: Project) {
+</span></span><span style="display:flex;"><span>        with(target) {
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;com.android.application&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;org.jetbrains.kotlin.android&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;nowinandroid.android.lint&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;com.dropbox.dependency-guard&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            extensions.configure&lt;ApplicationExtension&gt; {
+</span></span><span style="display:flex;"><span>                configureKotlinAndroid(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>                defaultConfig.targetSdk = <span style="color:#ae81ff">35</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">@Suppress</span>(<span style="color:#e6db74">&#34;UnstableApiUsage&#34;</span>)
+</span></span><span style="display:flex;"><span>                testOptions.animationsDisabled = <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>                configureGradleManagedDevices(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            extensions.configure&lt;ApplicationAndroidComponentsExtension&gt; {
+</span></span><span style="display:flex;"><span>                configurePrintApksTask(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>                configureBadgingTasks(extensions.getByType&lt;ApplicationExtension&gt;(), <span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>AndroidApplicationComposeConventionPlugin.kt</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AndroidApplicationComposeConventionPlugin</span> : Plugin&lt;Project&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">apply</span>(target: Project) {
+</span></span><span style="display:flex;"><span>        with(target) {
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;com.android.application&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;org.jetbrains.kotlin.plugin.compose&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> extension = extensions.getByType&lt;ApplicationExtension&gt;()
+</span></span><span style="display:flex;"><span>            configureAndroidCompose(extension)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>AndroidLibraryComposeConventionPlugin.kt</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AndroidLibraryComposeConventionPlugin</span> : Plugin&lt;Project&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">apply</span>(target: Project) {
+</span></span><span style="display:flex;"><span>        with(target) {
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;com.android.library&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;org.jetbrains.kotlin.plugin.compose&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> extension = extensions.getByType&lt;LibraryExtension&gt;()
+</span></span><span style="display:flex;"><span>            configureAndroidCompose(extension)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>AndroidLibraryConventionPlugin.kt</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AndroidLibraryConventionPlugin</span> : Plugin&lt;Project&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">apply</span>(target: Project) {
+</span></span><span style="display:flex;"><span>        with(target) {
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;com.android.library&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;org.jetbrains.kotlin.android&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;nowinandroid.android.lint&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            extensions.configure&lt;LibraryExtension&gt; {
+</span></span><span style="display:flex;"><span>                configureKotlinAndroid(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>                testOptions.targetSdk = <span style="color:#ae81ff">35</span>
+</span></span><span style="display:flex;"><span>                lint.targetSdk = <span style="color:#ae81ff">35</span>
+</span></span><span style="display:flex;"><span>                defaultConfig.testInstrumentationRunner = <span style="color:#e6db74">&#34;androidx.test.runner.AndroidJUnitRunner&#34;</span>
+</span></span><span style="display:flex;"><span>                testOptions.animationsDisabled = <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>                configureFlavors(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>                configureGradleManagedDevices(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// The resource prefix is derived from the module name,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#75715e">// so resources inside &#34;:core:module1&#34; must be prefixed with &#34;core_module1_&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                resourcePrefix =
+</span></span><span style="display:flex;"><span>                    path.split(<span style="color:#e6db74">&#34;&#34;&#34;\W&#34;&#34;&#34;</span>.toRegex()).drop(<span style="color:#ae81ff">1</span>).distinct().joinToString(separator = <span style="color:#e6db74">&#34;_&#34;</span>)
+</span></span><span style="display:flex;"><span>                        .lowercase() + <span style="color:#e6db74">&#34;_&#34;</span>
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            extensions.configure&lt;LibraryAndroidComponentsExtension&gt; {
+</span></span><span style="display:flex;"><span>                configurePrintApksTask(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>                disableUnnecessaryAndroidTests(target)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            dependencies {
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;androidTestImplementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;kotlin.test&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;testImplementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;kotlin.test&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.tracing.ktx&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>AndroidFeatureConvention.kt</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AndroidFeatureConventionPlugin</span> : Plugin&lt;Project&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">apply</span>(target: Project) {
+</span></span><span style="display:flex;"><span>        with(target) {
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;nowinandroid.android.library&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;nowinandroid.hilt&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;org.jetbrains.kotlin.plugin.serialization&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            extensions.configure&lt;LibraryExtension&gt; {
+</span></span><span style="display:flex;"><span>                testOptions.animationsDisabled = <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>                configureGradleManagedDevices(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            dependencies {
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(project(<span style="color:#e6db74">&#34;:core:ui&#34;</span>))
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(project(<span style="color:#e6db74">&#34;:core:designsystem&#34;</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.hilt.navigation.compose&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.lifecycle.runtimeCompose&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.lifecycle.viewModelCompose&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.navigation.compose&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.tracing.ktx&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;kotlinx.serialization.json&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;testImplementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.navigation.testing&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;androidTestImplementation&#34;</span>(
+</span></span><span style="display:flex;"><span>                    libs.findLibrary(<span style="color:#e6db74">&#34;androidx.lifecycle.runtimeTesting&#34;</span>).<span style="color:#66d9ef">get</span>(),
+</span></span><span style="display:flex;"><span>                )
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="3-核心方法apply">3. 核心方法：<code>apply</code>
+</h5><p>当你将这个插件引用到一个模块时（例如，在<code>:feature:foryou</code>中应用它），Gradle就会执行这个插件类中的<code>apply</code>方法。逐行分析这个方法做了什么：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 在 AndroidFeatureConventionPlugin.kt 中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AndroidFeatureConventionPlugin</span> : Plugin&lt;Project&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">apply</span>(target: Project) { <span style="color:#75715e">// &#39;target&#39; 就是应用这个插件的模块, 比如 :feature:foryou
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        with(target) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// --- 动作一：应用其他更基础的约定插件 ---
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 这行代码在说：“一个 `feature` 模块，首先它是一个 `library` 模块，
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 并且它也需要 Hilt 依赖注入和序列化功能。”
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 这体现了插件的组合能力。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            apply(plugin = <span style="color:#e6db74">&#34;nowinandroid.android.library&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;nowinandroid.hilt&#34;</span>)
+</span></span><span style="display:flex;"><span>            apply(plugin = <span style="color:#e6db74">&#34;org.jetbrains.kotlin.plugin.serialization&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// --- 动作二：配置通用的 Android 属性 ---
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 这里统一为所有 feature 模块配置 &#39;android&#39; 代码块。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 比如，统一关闭测试中的动画，统一配置测试设备。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            extensions.configure&lt;LibraryExtension&gt; {
+</span></span><span style="display:flex;"><span>                testOptions.animationsDisabled = <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>                configureGradleManagedDevices(<span style="color:#66d9ef">this</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// --- 动作三：添加所有 feature 模块都需要的通用依赖 ---
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 这是最强大的部分。它声明了“每一个” feature 模块都会自动获得这些依赖。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 无需在各自的 build.gradle.kts 中重复添加。
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            dependencies {
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(project(<span style="color:#e6db74">&#34;:core:ui&#34;</span>))
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(project(<span style="color:#e6db74">&#34;:core:designsystem&#34;</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.hilt.navigation.compose&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;implementation&#34;</span>(libs.findLibrary(<span style="color:#e6db74">&#34;androidx.lifecycle.viewModelCompose&#34;</span>).<span style="color:#66d9ef">get</span>())
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// ... 以及其他所有通用依赖
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="4-共享配置函数">4. 共享配置函数
+</h5><p><strong>KotlinAndroid.kt</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">import</span> com.android.build.api.dsl.CommonExtension
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> org.gradle.api.JavaVersion
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> org.gradle.api.Project
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> org.gradle.kotlin.dsl.dependencies
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> org.gradle.kotlin.dsl.withType
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">import</span> org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">Project</span>.configureKotlinAndroid(
+</span></span><span style="display:flex;"><span>    commonExtension: CommonExtension&lt;*, *, *, *, *, *&gt;,
+</span></span><span style="display:flex;"><span>) {
+</span></span><span style="display:flex;"><span>    commonExtension.apply {
+</span></span><span style="display:flex;"><span>        compileSdk = <span style="color:#ae81ff">34</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        defaultConfig {
+</span></span><span style="display:flex;"><span>            minSdk = <span style="color:#ae81ff">24</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        compileOptions {
+</span></span><span style="display:flex;"><span>            sourceCompatibility = <span style="color:#a6e22e">JavaVersion</span>.VERSION_17
+</span></span><span style="display:flex;"><span>            targetCompatibility = <span style="color:#a6e22e">JavaVersion</span>.VERSION_17
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    configureKotlin()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">Project</span>.configureKotlin() {
+</span></span><span style="display:flex;"><span>    tasks.withType&lt;KotlinCompile&gt;().configureEach {
+</span></span><span style="display:flex;"><span>        kotlinOptions {
+</span></span><span style="display:flex;"><span>            jvmTarget = <span style="color:#a6e22e">JavaVersion</span>.VERSION_17.toString()
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            freeCompilerArgs = freeCompilerArgs + listOf(
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;-opt-in=kotlin.RequiresOptIn&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi&#34;</span>,
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="5-在根项目中引入">5. 在根项目中引入
+</h5><p><strong>settings.gradle.kts</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>pluginManagement {
+</span></span><span style="display:flex;"><span>    includeBuild(<span style="color:#e6db74">&#34;build-logic&#34;</span>)
+</span></span><span style="display:flex;"><span>    repositories {
+</span></span><span style="display:flex;"><span>        google()
+</span></span><span style="display:flex;"><span>        mavenCentral()
+</span></span><span style="display:flex;"><span>        gradlePluginPortal()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="6-在模块中引入">6. 在模块中引入
+</h5><p><strong>app/build.gradle.kts</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>plugins {
+</span></span><span style="display:flex;"><span>    id(<span style="color:#e6db74">&#34;myapp.android.application&#34;</span>)
+</span></span><span style="display:flex;"><span>    id(<span style="color:#e6db74">&#34;myapp.android.application.compose&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>android {
+</span></span><span style="display:flex;"><span>    namespace = <span style="color:#e6db74">&#34;com.example.myapp&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 只需配置特定于此模块的内容
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    defaultConfig {
+</span></span><span style="display:flex;"><span>        applicationId = <span style="color:#e6db74">&#34;com.example.myapp&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dependencies {
+</span></span><span style="display:flex;"><span>    implementation(project(<span style="color:#e6db74">&#34;:feature:home&#34;</span>))
+</span></span><span style="display:flex;"><span>    implementation(project(<span style="color:#e6db74">&#34;:feature:profile&#34;</span>))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>feature/feature-home/build.gradle.kts</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>plugins {
+</span></span><span style="display:flex;"><span>    id(<span style="color:#e6db74">&#34;myapp.android.feature&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>android {
+</span></span><span style="display:flex;"><span>    namespace = <span style="color:#e6db74">&#34;com.example.myapp.feature.home&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dependencies {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Feature 特定的依赖
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h4 id="convention-plugin的优势">Convention Plugin的优势
+</h4><ol>
+<li><strong>DRY (Don&rsquo;t Repeat Yourself)</strong> 原则：消除了在几十个文件中复制粘贴的构建逻辑。</li>
+<li>单一事实来源 (<strong>Single Source of Truth</strong>)：如果需要更新一个所有<code> feature</code> 模块都在用的库版本（比如 Lifecycle），你只需要在 <code>AndroidFeatureConventionPlugin.kt</code> 这一个文件里修改即可。</li>
+<li>简洁与清晰：每个模块的构建脚本变得非常短，只包含对该模块独一无二的配置，可读性大大提高。</li>
+<li>类型安全与 IDE 支持：因为这些插件是用 Kotlin 编写的，你可以享受到 IDE 的自动补全、编译时类型检查和方便的导航跳转，这比传统的 Groovy 脚本要强大得多。</li>
+</ol>
+<p>这些都是<code>now-in-android</code>所应用的，更详细的可以通过此项目学习</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

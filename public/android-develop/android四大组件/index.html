@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Activity 生命周期 ┌──────────────┐ │ Activity │ │ Created │ └──────────────┘ ↓ onCreate() ← 创建，初始化变量、加载布局 ↓ onStart() ← 可见但不可交互 ↓ onResume() ← 可见且可交互（前台） ↓ [运行中] ↓ onPause() ← 部分可见（被遮挡，如对话框） ↓ onStop() ← 完全不可见（切到后台） ↓ onDestroy() ← 销毁，释放资源 ↓ [结束] 状态保存与恢复 为什么需要保存状态？ 用户正在填写表单 ↓ 突然来电话 → Activity 被销毁 ↓ 电话结束返回 → Activity 重新创建 ↓ 表单内容丢失了！❌ 保存状态 class FormActivity : AppCompatActivity() { private var userName: String = &#34;&#34; private var age: Int = 0 // 保存状态（系统杀死 Activity 前调用） override fun onSaveInstanceState(outState: Bundle) { super.onSaveInstanceState(outState) outState.putString(&#34;userName&#34;, userName) outState.putInt(&#34;age&#34;, age) Log.d(&#34;State&#34;, &#34;状态已保存&#34;) } // 恢复状态 override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) setContentView(R.layout.activity_form) // 方式 1: 在 onCreate 中恢复 if (savedInstanceState != null) { userName = savedInstanceState.getString(&#34;userName&#34;, &#34;&#34;) age = savedInstanceState.getInt(&#34;age&#34;, 0) Log.d(&#34;State&#34;, &#34;状态已恢复: $userName, $age&#34;) } } // 方式 2: 在 onRestoreInstanceState 中恢复 override fun onRestoreInstanceState(savedInstanceState: Bundle) { super.onRestoreInstanceState(savedInstanceState) userName = savedInstanceState.getString(&#34;userName&#34;, &#34;&#34;) age = savedInstanceState.getInt(&#34;age&#34;, 0) } } 启动模式 4种启动模式 &lt;!-- AndroidManifest.xml --&gt; &lt;activity android:name=&#34;.MainActivity&#34; android:launchMode=&#34;standard&#34; /&gt; 1. standard 每次启动都创建新实例 MainActivity → MainActivity → MainActivity ↑ ↑ ↑ 实例 1 实例 2 实例 3 返回栈: [实例3, 实例2, 实例1] 2. singleTop 如果在栈顶，复用；否则创建新实例 场景 1: MainActivity 在栈顶 MainActivity (栈顶) → 启动 MainActivity ↓ 调用 onNewIntent() 复用，不创建新实例 场景 2: MainActivity 不在栈顶 MainActivity → DetailActivity → 启动 MainActivity ↓ 创建新实例: [MainActivity(新), DetailActivity, MainActivity(旧)] 用途：通知栏点击、搜索结果页\n">
+<title>Android四大组件</title>
+
+<link rel='canonical' href='http://localhost:1313/android-develop/android%E5%9B%9B%E5%A4%A7%E7%BB%84%E4%BB%B6/'>
+
+<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Android四大组件">
+<meta property='og:description' content="Activity 生命周期 ┌──────────────┐ │ Activity │ │ Created │ └──────────────┘ ↓ onCreate() ← 创建，初始化变量、加载布局 ↓ onStart() ← 可见但不可交互 ↓ onResume() ← 可见且可交互（前台） ↓ [运行中] ↓ onPause() ← 部分可见（被遮挡，如对话框） ↓ onStop() ← 完全不可见（切到后台） ↓ onDestroy() ← 销毁，释放资源 ↓ [结束] 状态保存与恢复 为什么需要保存状态？ 用户正在填写表单 ↓ 突然来电话 → Activity 被销毁 ↓ 电话结束返回 → Activity 重新创建 ↓ 表单内容丢失了！❌ 保存状态 class FormActivity : AppCompatActivity() { private var userName: String = &#34;&#34; private var age: Int = 0 // 保存状态（系统杀死 Activity 前调用） override fun onSaveInstanceState(outState: Bundle) { super.onSaveInstanceState(outState) outState.putString(&#34;userName&#34;, userName) outState.putInt(&#34;age&#34;, age) Log.d(&#34;State&#34;, &#34;状态已保存&#34;) } // 恢复状态 override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) setContentView(R.layout.activity_form) // 方式 1: 在 onCreate 中恢复 if (savedInstanceState != null) { userName = savedInstanceState.getString(&#34;userName&#34;, &#34;&#34;) age = savedInstanceState.getInt(&#34;age&#34;, 0) Log.d(&#34;State&#34;, &#34;状态已恢复: $userName, $age&#34;) } } // 方式 2: 在 onRestoreInstanceState 中恢复 override fun onRestoreInstanceState(savedInstanceState: Bundle) { super.onRestoreInstanceState(savedInstanceState) userName = savedInstanceState.getString(&#34;userName&#34;, &#34;&#34;) age = savedInstanceState.getInt(&#34;age&#34;, 0) } } 启动模式 4种启动模式 &lt;!-- AndroidManifest.xml --&gt; &lt;activity android:name=&#34;.MainActivity&#34; android:launchMode=&#34;standard&#34; /&gt; 1. standard 每次启动都创建新实例 MainActivity → MainActivity → MainActivity ↑ ↑ ↑ 实例 1 实例 2 实例 3 返回栈: [实例3, 实例2, 实例1] 2. singleTop 如果在栈顶，复用；否则创建新实例 场景 1: MainActivity 在栈顶 MainActivity (栈顶) → 启动 MainActivity ↓ 调用 onNewIntent() 复用，不创建新实例 场景 2: MainActivity 不在栈顶 MainActivity → DetailActivity → 启动 MainActivity ↓ 创建新实例: [MainActivity(新), DetailActivity, MainActivity(旧)] 用途：通知栏点击、搜索结果页\n">
+<meta property='og:url' content='http://localhost:1313/android-develop/android%E5%9B%9B%E5%A4%A7%E7%BB%84%E4%BB%B6/'>
+<meta property='og:site_name' content='zed的博客'>
+<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-10-21T00:05:46&#43;08:00'/><meta property='article:modified_time' content='2025-10-21T00:05:46&#43;08:00'/>
+<meta name="twitter:title" content="Android四大组件">
+<meta name="twitter:description" content="Activity 生命周期 ┌──────────────┐ │ Activity │ │ Created │ └──────────────┘ ↓ onCreate() ← 创建，初始化变量、加载布局 ↓ onStart() ← 可见但不可交互 ↓ onResume() ← 可见且可交互（前台） ↓ [运行中] ↓ onPause() ← 部分可见（被遮挡，如对话框） ↓ onStop() ← 完全不可见（切到后台） ↓ onDestroy() ← 销毁，释放资源 ↓ [结束] 状态保存与恢复 为什么需要保存状态？ 用户正在填写表单 ↓ 突然来电话 → Activity 被销毁 ↓ 电话结束返回 → Activity 重新创建 ↓ 表单内容丢失了！❌ 保存状态 class FormActivity : AppCompatActivity() { private var userName: String = &#34;&#34; private var age: Int = 0 // 保存状态（系统杀死 Activity 前调用） override fun onSaveInstanceState(outState: Bundle) { super.onSaveInstanceState(outState) outState.putString(&#34;userName&#34;, userName) outState.putInt(&#34;age&#34;, age) Log.d(&#34;State&#34;, &#34;状态已保存&#34;) } // 恢复状态 override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) setContentView(R.layout.activity_form) // 方式 1: 在 onCreate 中恢复 if (savedInstanceState != null) { userName = savedInstanceState.getString(&#34;userName&#34;, &#34;&#34;) age = savedInstanceState.getInt(&#34;age&#34;, 0) Log.d(&#34;State&#34;, &#34;状态已恢复: $userName, $age&#34;) } } // 方式 2: 在 onRestoreInstanceState 中恢复 override fun onRestoreInstanceState(savedInstanceState: Bundle) { super.onRestoreInstanceState(savedInstanceState) userName = savedInstanceState.getString(&#34;userName&#34;, &#34;&#34;) age = savedInstanceState.getInt(&#34;age&#34;, 0) } } 启动模式 4种启动模式 &lt;!-- AndroidManifest.xml --&gt; &lt;activity android:name=&#34;.MainActivity&#34; android:launchMode=&#34;standard&#34; /&gt; 1. standard 每次启动都创建新实例 MainActivity → MainActivity → MainActivity ↑ ↑ ↑ 实例 1 实例 2 实例 3 返回栈: [实例3, 实例2, 实例1] 2. singleTop 如果在栈顶，复用；否则创建新实例 场景 1: MainActivity 在栈顶 MainActivity (栈顶) → 启动 MainActivity ↓ 调用 onNewIntent() 复用，不创建新实例 场景 2: MainActivity 不在栈顶 MainActivity → DetailActivity → 启动 MainActivity ↓ 创建新实例: [MainActivity(新), DetailActivity, MainActivity(旧)] 用途：通知栏点击、搜索结果页\n">
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">zed的博客</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/android-develop' >
+                
+                
+                
+                <span>android-develop</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/rust' >
+                
+                
+                
+                <span>rust</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/learning-reflection/' >
+                
+                
+                
+                <span>Learning-Reflections</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/tutorials/' >
+                
+                
+                
+                <span>Tutorials</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/android-develop/" >
+                Android-Develop
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/android-develop/android%E5%9B%9B%E5%A4%A7%E7%BB%84%E4%BB%B6/">Android四大组件</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Oct 21, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 12 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h4 id="activity">Activity
+</h4><h5 id="生命周期">生命周期
+</h5><pre tabindex="0"><code>┌──────────────┐
+│  Activity    │
+│  Created     │
+└──────────────┘
+       ↓
+   onCreate()  ← 创建，初始化变量、加载布局
+       ↓
+   onStart()   ← 可见但不可交互
+       ↓
+   onResume()  ← 可见且可交互（前台）
+       ↓
+   [运行中]
+       ↓
+   onPause()   ← 部分可见（被遮挡，如对话框）
+       ↓
+   onStop()    ← 完全不可见（切到后台）
+       ↓
+   onDestroy() ← 销毁，释放资源
+       ↓
+   [结束]
+</code></pre><hr>
+<h5 id="状态保存与恢复">状态保存与恢复
+</h5><h6 id="为什么需要保存状态">为什么需要保存状态？
+</h6><pre tabindex="0"><code>用户正在填写表单
+  ↓
+突然来电话 → Activity 被销毁
+  ↓
+电话结束返回 → Activity 重新创建
+  ↓
+表单内容丢失了！❌
+</code></pre><h5 id="保存状态">保存状态
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FormActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">var</span> userName: String = <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">var</span> age: Int = <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 保存状态（系统杀死 Activity 前调用）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onSaveInstanceState</span>(outState: Bundle) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onSaveInstanceState(outState)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        outState.putString(<span style="color:#e6db74">&#34;userName&#34;</span>, userName)
+</span></span><span style="display:flex;"><span>        outState.putInt(<span style="color:#e6db74">&#34;age&#34;</span>, age)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;State&#34;</span>, <span style="color:#e6db74">&#34;状态已保存&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 恢复状态
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_form)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 方式 1: 在 onCreate 中恢复
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (savedInstanceState <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            userName = savedInstanceState.getString(<span style="color:#e6db74">&#34;userName&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            age = savedInstanceState.getInt(<span style="color:#e6db74">&#34;age&#34;</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;State&#34;</span>, <span style="color:#e6db74">&#34;状态已恢复: </span><span style="color:#e6db74">$userName</span><span style="color:#e6db74">, </span><span style="color:#e6db74">$age</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 方式 2: 在 onRestoreInstanceState 中恢复
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onRestoreInstanceState</span>(savedInstanceState: Bundle) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onRestoreInstanceState(savedInstanceState)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        userName = savedInstanceState.getString(<span style="color:#e6db74">&#34;userName&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>        age = savedInstanceState.getInt(<span style="color:#e6db74">&#34;age&#34;</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h5 id="启动模式">启动模式
+</h5><h6 id="4种启动模式">4种启动模式
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>&lt;!<span style="color:#f92672">--</span> <span style="color:#a6e22e">AndroidManifest</span>.xml <span style="color:#f92672">--</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;activity
+</span></span><span style="display:flex;"><span>    android:name=<span style="color:#e6db74">&#34;.MainActivity&#34;</span>
+</span></span><span style="display:flex;"><span>    android:launchMode=<span style="color:#e6db74">&#34;standard&#34;</span> /&gt;
+</span></span></code></pre></div><h6 id="1-standard">1. standard
+</h6><pre tabindex="0"><code>每次启动都创建新实例
+
+MainActivity → MainActivity → MainActivity
+    ↑              ↑              ↑
+  实例 1        实例 2         实例 3
+
+返回栈: [实例3, 实例2, 实例1]
+</code></pre><h6 id="2-singletop">2. singleTop
+</h6><pre tabindex="0"><code>如果在栈顶，复用；否则创建新实例
+
+场景 1: MainActivity 在栈顶
+MainActivity (栈顶) → 启动 MainActivity
+    ↓
+调用 onNewIntent() 复用，不创建新实例
+
+场景 2: MainActivity 不在栈顶
+MainActivity → DetailActivity → 启动 MainActivity
+    ↓
+创建新实例: [MainActivity(新), DetailActivity, MainActivity(旧)]
+</code></pre><p>用途：通知栏点击、搜索结果页</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SearchActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        handleIntent(intent)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// singleTop 模式下，再次启动时调用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onNewIntent</span>(intent: Intent) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onNewIntent(intent)
+</span></span><span style="display:flex;"><span>        setIntent(intent)  <span style="color:#75715e">// 更新 intent
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        handleIntent(intent)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">handleIntent</span>(intent: Intent) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> query = intent.getStringExtra(<span style="color:#e6db74">&#34;query&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 搜索...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="3-singletask">3. singleTask
+</h6><pre tabindex="0"><code>整个任务栈中只有一个实例
+
+场景 1: 不存在
+TaskA: [DetailActivity, MainActivity]
+启动 ProfileActivity (singleTask)
+  ↓
+TaskA: [ProfileActivity, DetailActivity, MainActivity]
+
+场景 2: 已存在
+TaskA: [DetailActivity, ProfileActivity, MainActivity]
+启动 ProfileActivity
+  ↓
+清除其上所有 Activity，ProfileActivity 移到栈顶
+TaskA: [ProfileActivity, MainActivity]
+DetailActivity 被销毁！
+</code></pre><p>用途：主页、登录页</p>
+<h6 id="4-singleinstance">4. singleInstance
+</h6><pre tabindex="0"><code>独占一个任务栈，整个系统中只有一个实例
+
+TaskA: [DetailActivity, MainActivity]
+启动 VideoActivity (singleInstance)
+  ↓
+TaskA: [DetailActivity, MainActivity]
+TaskB: [VideoActivity]  ← 独立的任务栈
+
+从 VideoActivity 启动其他 Activity
+  ↓
+TaskA: [OtherActivity, DetailActivity, MainActivity]
+TaskB: [VideoActivity]  ← 仍然独占
+</code></pre><p>用途：视频通话、闹钟</p>
+<hr>
+<h5 id="intent-flags">Intent Flags
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// FLAG_ACTIVITY_NEW_TASK: 新任务栈
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MainActivity<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>intent.flags = <span style="color:#a6e22e">Intent</span>.FLAG_ACTIVITY_NEW_TASK
+</span></span><span style="display:flex;"><span>startActivity(intent)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// FLAG_ACTIVITY_CLEAR_TOP: 清除其上所有 Activity
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 常用于&#34;返回主页&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MainActivity<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>intent.flags = <span style="color:#a6e22e">Intent</span>.FLAG_ACTIVITY_CLEAR_TOP
+</span></span><span style="display:flex;"><span>startActivity(intent)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// FLAG_ACTIVITY_SINGLE_TOP: 等同于 singleTop 模式
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>intent.flags = <span style="color:#a6e22e">Intent</span>.FLAG_ACTIVITY_SINGLE_TOP
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 组合使用（清除栈并启动）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>intent.flags = <span style="color:#a6e22e">Intent</span>.FLAG_ACTIVITY_NEW_TASK or <span style="color:#a6e22e">Intent</span>.FLAG_ACTIVITY_CLEAR_TASK
+</span></span></code></pre></div><hr>
+<h4 id="service">Service
+</h4><h5 id="什么是service">什么是Service？
+</h5><p>Service = 在后台执行长时间运行操作的组件，没有用户界面</p>
+<pre tabindex="0"><code>前台 Activity: 用户正在浏览商品
+后台 Service: 同时下载文件、播放音乐、同步数据
+</code></pre><hr>
+<h5 id="service的三种类型">Service的三种类型
+</h5><h6 id="1-前台服务foreground-service">1. 前台服务（Foreground Service）
+</h6><p>必须显示通知，用户可见</p>
+<pre tabindex="0"><code>┌─────────────────┐
+│ 🔔 通知栏        │
+│ 正在播放音乐... │ ← 前台服务的通知
+├─────────────────┤
+│   应用界面      │
+└─────────────────┘
+</code></pre><p>用途：音乐播放、导航、文件下载</p>
+<h6 id="2-后台服务background-service">2. 后台服务（Background Service）
+</h6><p>用户不可见，但会被系统限制；Android 8.0+严格限制后台服务</p>
+<p>用途：数据同步，日志上传（但推荐用WorkManager）</p>
+<h6 id="3-绑定服务bound-service">3. 绑定服务（Bound Service）
+</h6><p>与组件绑定，提供客户端-服务器接口</p>
+<pre tabindex="0"><code>Activity ←───绑定───→ Service
+   ↓                    ↓
+调用方法             提供方法
+</code></pre><p>用途：进程间通信（IPC）、音乐播放器控制</p>
+<hr>
+<h4 id="service生命周期">Service生命周期
+</h4><h5 id="启动服务started-service">启动服务（Started Service）
+</h5><pre tabindex="0"><code>startService()
+     ↓
+ onCreate()     ← 首次创建时调用（只调用一次）
+     ↓
+onStartCommand() ← 每次 startService() 都调用
+     ↓
+ [运行中]
+     ↓
+ onDestroy()    ← 服务销毁
+</code></pre><h5 id="绑定服务bound-service">绑定服务（Bound Service）
+</h5><pre tabindex="0"><code>bindService()
+     ↓
+ onCreate()     ← 首次创建时调用
+     ↓
+  onBind()      ← 返回 IBinder 对象
+     ↓
+ [绑定中]
+     ↓
+unbindService()
+     ↓
+ onUnbind()     ← 所有客户端解绑后调用
+     ↓
+ onDestroy()
+</code></pre><h5 id="混合模式既启动又绑定">混合模式（既启动又绑定）
+</h5><pre tabindex="0"><code>startService() + bindService()
+     ↓
+ onCreate()
+     ↓
+onStartCommand() + onBind()
+     ↓
+ [运行并绑定]
+     ↓
+unbindService() ← 解绑后仍然运行
+     ↓
+stopService() or stopSelf()
+     ↓
+ onDestroy()
+</code></pre><hr>
+<h4 id="启动服务started-service-1">启动服务（Started Service）
+</h4><h5 id="基本实现">基本实现
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// MyService.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyService</span> : Service() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> TAG = <span style="color:#e6db74">&#34;MyService&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 创建时调用（只调用一次）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate()
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(TAG, <span style="color:#e6db74">&#34;Service 创建&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 每次 startService() 都调用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onStartCommand</span>(intent: Intent?, flags: Int, startId: Int): Int {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(TAG, <span style="color:#e6db74">&#34;Service 启动&#34;</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 获取传递的数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> data = intent<span style="color:#f92672">?.</span>getStringExtra(<span style="color:#e6db74">&#34;data&#34;</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 执行后台任务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        doWork()
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 返回值决定系统杀死服务后的行为
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">return</span> START_STICKY
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 销毁时调用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onDestroy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onDestroy()
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(TAG, <span style="color:#e6db74">&#34;Service 销毁&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 必须实现，但启动服务不需要绑定
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onBind</span>(intent: Intent?): IBinder? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">doWork</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ⚠️ 不要在主线程做耗时操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Thread {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 执行后台任务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#a6e22e">Thread</span>.sleep(<span style="color:#ae81ff">5000</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Log</span>.d(TAG, <span style="color:#e6db74">&#34;任务完成&#34;</span>)
+</span></span><span style="display:flex;"><span>            stopSelf()  <span style="color:#75715e">// 任务完成后停止服务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        }.start()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="启动和停止服务">启动和停止服务
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// MainActivity.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 启动服务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">startMyService</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MyService<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>        intent.putExtra(<span style="color:#e6db74">&#34;data&#34;</span>, <span style="color:#e6db74">&#34;Hello Service&#34;</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Android 8.0+ 如果是前台服务，使用 startForegroundService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">Build</span>.<span style="color:#a6e22e">VERSION</span>.SDK_INT <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">Build</span>.<span style="color:#a6e22e">VERSION_CODES</span>.O) {
+</span></span><span style="display:flex;"><span>            startForegroundService(intent)
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            startService(intent)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 停止服务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">stopMyService</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MyService<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>        stopService(intent)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="onstartcommand返回值">onStartCommand返回值
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onStartCommand</span>(intent: Intent?, flags: Int, startId: Int): Int {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">when</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// START_STICKY: 系统杀死后重启服务，但 intent 为 null
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 适用：音乐播放器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">true</span> <span style="color:#f92672">-&gt;</span> START_STICKY
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// START_NOT_STICKY: 系统杀死后不重启
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 适用：一次性任务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">false</span> <span style="color:#f92672">-&gt;</span> START_NOT_STICKY
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// START_REDELIVER_INTENT: 系统杀死后重启，重新传递 intent
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 适用：需要保证任务完成（如下载）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">else</span> <span style="color:#f92672">-&gt;</span> START_REDELIVER_INTENT
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h4 id="前台服务">前台服务
+</h4><p><strong>Android 8.0+严格限制后台服务：</strong></p>
+<ul>
+<li>应用进入后台几分钟后，系统会停止后台服务</li>
+<li>前台服务不会被限制，但必须显示通知</li>
+</ul>
+<h5 id="实现前台服务">实现前台服务
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MusicService</span> : Service() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> CHANNEL_ID = <span style="color:#e6db74">&#34;music_channel&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> NOTIFICATION_ID = <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate()
+</span></span><span style="display:flex;"><span>        createNotificationChannel()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onStartCommand</span>(intent: Intent?, flags: Int, startId: Int): Int {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 创建通知
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> notification = createNotification()
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ⚠️ 必须在 5 秒内调用 startForeground，否则 ANR
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        startForeground(NOTIFICATION_ID, notification)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 播放音乐...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        playMusic()
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> START_STICKY
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">createNotificationChannel</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">Build</span>.<span style="color:#a6e22e">VERSION</span>.SDK_INT <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">Build</span>.<span style="color:#a6e22e">VERSION_CODES</span>.O) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> channel = NotificationChannel(
+</span></span><span style="display:flex;"><span>                CHANNEL_ID,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;音乐播放&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">NotificationManager</span>.IMPORTANCE_LOW
+</span></span><span style="display:flex;"><span>            ).apply {
+</span></span><span style="display:flex;"><span>                description = <span style="color:#e6db74">&#34;音乐播放服务&#34;</span>
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">val</span> manager = getSystemService(NotificationManager<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>            manager.createNotificationChannel(channel)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">createNotification</span>(): Notification {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 点击通知打开 Activity
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MainActivity<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> pendingIntent = <span style="color:#a6e22e">PendingIntent</span>.getActivity(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>            intent,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">PendingIntent</span>.FLAG_IMMUTABLE
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">NotificationCompat</span>.Builder(<span style="color:#66d9ef">this</span>, CHANNEL_ID)
+</span></span><span style="display:flex;"><span>            .setContentTitle(<span style="color:#e6db74">&#34;正在播放&#34;</span>)
+</span></span><span style="display:flex;"><span>            .setContentText(<span style="color:#e6db74">&#34;歌曲名称 - 艺术家&#34;</span>)
+</span></span><span style="display:flex;"><span>            .setSmallIcon(<span style="color:#a6e22e">R</span>.drawable.ic_music)
+</span></span><span style="display:flex;"><span>            .setContentIntent(pendingIntent)
+</span></span><span style="display:flex;"><span>            .setOngoing(<span style="color:#66d9ef">true</span>)  <span style="color:#75715e">// 不可滑动删除
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            .addAction(<span style="color:#a6e22e">R</span>.drawable.ic_pause, <span style="color:#e6db74">&#34;暂停&#34;</span>, createPauseIntent())
+</span></span><span style="display:flex;"><span>            .addAction(<span style="color:#a6e22e">R</span>.drawable.ic_next, <span style="color:#e6db74">&#34;下一首&#34;</span>, createNextIntent())
+</span></span><span style="display:flex;"><span>            .build()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">createPauseIntent</span>(): PendingIntent {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MusicService<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java).apply {
+</span></span><span style="display:flex;"><span>            action = <span style="color:#e6db74">&#34;ACTION_PAUSE&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">PendingIntent</span>.getService(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>            intent,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">PendingIntent</span>.FLAG_IMMUTABLE
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">createNextIntent</span>(): PendingIntent {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MusicService<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java).apply {
+</span></span><span style="display:flex;"><span>            action = <span style="color:#e6db74">&#34;ACTION_NEXT&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">PendingIntent</span>.getService(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>            intent,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">PendingIntent</span>.FLAG_IMMUTABLE
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">playMusic</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 播放逻辑...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onBind</span>(intent: Intent?): IBinder? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="前台服务类型android-14">前台服务类型（Android 14+）
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- AndroidManifest.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;manifest&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">&lt;!-- 声明前台服务类型 --&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;uses-permission</span> <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;android.permission.FOREGROUND_SERVICE&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;uses-permission</span> <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;application&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;service</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;.MusicService&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:foregroundServiceType=</span><span style="color:#e6db74">&#34;mediaPlayback&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/application&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/manifest&gt;</span>
+</span></span></code></pre></div><p><strong>前台服务类型</strong></p>
+<ul>
+<li><code>camera</code> - 相机</li>
+<li><code>connectedDevice</code> - 连接设备</li>
+<li><code>dataSync</code> - 数据同步</li>
+<li><code>location</code> - 位置</li>
+<li><code>mediaPlayback</code> - 媒体播放</li>
+<li><code>mediaProjection</code> - 屏幕录制</li>
+<li><code>microphone</code> - 麦克风</li>
+<li><code>phoneCall</code> - 电话</li>
+<li><code>remoteMessaging</code> - 远程消息</li>
+<li><code>shortService</code> - 短时服务</li>
+<li><code>specialUse</code> - 特殊用途</li>
+</ul>
+<hr>
+<h4 id="绑定服务">绑定服务
+</h4><h5 id="使用场景">使用场景
+</h5><pre tabindex="0"><code>Activity 需要：
+- 调用 Service 的方法
+- 获取 Service 的数据
+- 监听 Service 的状态
+
+Example: 音乐播放器控制
+Activity: 播放/暂停/切歌
+Service: 执行实际操作
+</code></pre><h5 id="实现绑定服务">实现绑定服务
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// MusicPlayerService.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MusicPlayerService</span> : Service() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 定义 Binder（本地服务）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">inner</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MusicBinder</span> : Binder() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">getService</span>(): MusicPlayerService = <span style="color:#66d9ef">this</span><span style="color:#a6e22e">@MusicPlayerService</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> binder = MusicBinder()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 返回 Binder
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onBind</span>(intent: Intent?): IBinder = binder
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 提供公共方法供客户端调用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">play</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Music&#34;</span>, <span style="color:#e6db74">&#34;播放音乐&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">pause</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Music&#34;</span>, <span style="color:#e6db74">&#34;暂停音乐&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">getCurrentPosition</span>(): Int {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>  <span style="color:#75715e">// 返回当前播放位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="绑定服务-1">绑定服务
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// MainActivity.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">var</span> musicService: MusicPlayerService? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">var</span> isBound = <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 定义 ServiceConnection
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> connection = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">ServiceConnection</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onServiceConnected</span>(name: ComponentName?, service: IBinder?) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 服务连接成功
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">val</span> binder = service <span style="color:#66d9ef">as</span> <span style="color:#a6e22e">MusicPlayerService</span>.MusicBinder
+</span></span><span style="display:flex;"><span>            musicService = binder.getService()
+</span></span><span style="display:flex;"><span>            isBound = <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Bind&#34;</span>, <span style="color:#e6db74">&#34;服务已连接&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onServiceDisconnected</span>(name: ComponentName?) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 服务意外断开（如崩溃）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            musicService = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>            isBound = <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Bind&#34;</span>, <span style="color:#e6db74">&#34;服务已断开&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_main)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 绑定服务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#66d9ef">this</span>, MusicPlayerService<span style="color:#f92672">::</span><span style="color:#66d9ef">class</span>.java)
+</span></span><span style="display:flex;"><span>        bindService(intent, connection, <span style="color:#a6e22e">Context</span>.BIND_AUTO_CREATE)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 调用服务方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onPlayClick</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (isBound) {
+</span></span><span style="display:flex;"><span>            musicService<span style="color:#f92672">?.</span>play()
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onPauseClick</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (isBound) {
+</span></span><span style="display:flex;"><span>            musicService<span style="color:#f92672">?.</span>pause()
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onDestroy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onDestroy()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 4. 解绑服务
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (isBound) {
+</span></span><span style="display:flex;"><span>            unbindService(connection)
+</span></span><span style="display:flex;"><span>            isBound = <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="aidl跨进程通信">AIDL(跨进程通信)
+</h5><p>用于不同应用之间的通信</p>
+<pre tabindex="0"><code class="language-aidl" data-lang="aidl">// IMusicService.aidl
+package com.example.myapp;
+
+interface IMusicService {
+    void play();
+    void pause();
+    int getCurrentPosition();
+}
+</code></pre><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// MusicPlayerService.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MusicPlayerService</span> : Service() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 实现 AIDL 接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> binder = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">IMusicService</span>.Stub() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">play</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 播放逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">pause</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 暂停逻辑
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">getCurrentPosition</span>(): Int {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onBind</span>(intent: Intent?): IBinder = binder
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 客户端 Activity
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">var</span> musicService: IMusicService? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> connection = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">ServiceConnection</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onServiceConnected</span>(name: ComponentName?, service: IBinder?) {
+</span></span><span style="display:flex;"><span>            musicService = <span style="color:#a6e22e">IMusicService</span>.<span style="color:#a6e22e">Stub</span>.asInterface(service)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onServiceDisconnected</span>(name: ComponentName?) {
+</span></span><span style="display:flex;"><span>            musicService = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onPlayClick</span>() {
+</span></span><span style="display:flex;"><span>        musicService<span style="color:#f92672">?.</span>play()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h4 id="service的限制android-80">Service的限制（Android 8.0+）
+</h4><h5 id="后台执行限制">后台执行限制
+</h5><pre tabindex="0"><code>应用进入后台几分钟后：
+- stopService() 后台服务被停止
+- WorkManager 继续执行（推荐）
+</code></pre><h5 id="解决方案">解决方案
+</h5><h6 id="1-使用前台服务">1. 使用前台服务
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 音乐播放、导航、下载
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>startForegroundService(intent)
+</span></span><span style="display:flex;"><span>service.startForeground(NOTIFICATION_ID, notification)
+</span></span></code></pre></div><h6 id="2-使用workmanger">2. 使用workManger
+</h6><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 数据同步、日志上传
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> workRequest = OneTimeWorkRequestBuilder&lt;MyWorker&gt;().build()
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WorkManager</span>.getInstance(context).enqueue(workRequest)
+</span></span></code></pre></div><hr>
+<h4 id="broadcastreceiver">BroadcastReceiver
+</h4><p><strong>BroadcastReceiver</strong> = 接收系统或应用发出的广播消息</p>
+<pre tabindex="0"><code>发送者 (Sender)              接收者 (Receiver)
+    ↓                            ↓
+发送广播 → [Android System] → BroadcastReceiver
+   (Intent)                    (onReceive)
+</code></pre><hr>
+<h4 id="广播的类型">广播的类型
+</h4><h5 id="1-系统广播system-broadcast">1. 系统广播（System Broadcast）
+</h5><p>系统发出的广播</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 常见系统广播
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_BOOT_COMPLETED    <span style="color:#75715e">// 开机完成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_BATTERY_LOW       <span style="color:#75715e">// 电量低
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_POWER_CONNECTED   <span style="color:#75715e">// 充电器连接
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_SCREEN_ON         <span style="color:#75715e">// 屏幕开启
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_SCREEN_OFF        <span style="color:#75715e">// 屏幕关闭
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_TIMEZONE_CHANGED  <span style="color:#75715e">// 时区改变
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">Intent</span>.ACTION_LOCALE_CHANGED    <span style="color:#75715e">// 语言改变
+</span></span></span></code></pre></div><h5 id="应用内广播local-broadcast">应用内广播（Local Broadcast）
+</h5><p>只在应用内传递，更安全</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 使用 LocalBroadcastManager（已废弃）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 推荐使用 LiveData 或事件总线
+</span></span></span></code></pre></div><h5 id="3-自定义广播custom-broadcast">3. 自定义广播（Custom Broadcast）
+</h5><p>应用自己定义的广播</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> ACTION_CUSTOM = <span style="color:#e6db74">&#34;com.example.ACTION_CUSTOM&#34;</span>
+</span></span></code></pre></div><hr>
+<h4 id="注册广播接收器">注册广播接收器
+</h4><h5 id="方式1-静态注册manifest">方式1: 静态注册（Manifest）
+</h5><p>应用未运行时也能接收广播</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- AndroidManifest.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;manifest&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">&lt;!-- 需要的权限 --&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;uses-permission</span> <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;android.permission.RECEIVE_BOOT_COMPLETED&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;application&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">&lt;!-- 注册接收器 --&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;receiver</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;.BootReceiver&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:enabled=</span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:exported=</span><span style="color:#e6db74">&#34;false&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">&lt;!-- 声明要接收的广播 --&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;intent-filter&gt;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&lt;action</span> <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;android.intent.action.BOOT_COMPLETED&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;/intent-filter&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;/receiver&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/application&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/manifest&gt;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// BootReceiver.kt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">BootReceiver</span> : BroadcastReceiver() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onReceive</span>(context: Context, intent: Intent) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">when</span> (intent.action) {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Intent</span>.ACTION_BOOT_COMPLETED <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Boot&#34;</span>, <span style="color:#e6db74">&#34;设备启动完成&#34;</span>)
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 启动服务或执行初始化
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>**Android 8.0+**限制：</p>
+<ul>
+<li>大部分系统广播不能静态注册</li>
+<li>只有少数例外（如<code>BOOT_COMPLETED</code>、<code>LOCALE_CHANGED</code>）</li>
+</ul>
+<h5 id="方式2动态注册">方式2:动态注册
+</h5><p>应用运行时注册，更灵活</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 创建接收器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> batteryReceiver = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">BroadcastReceiver</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onReceive</span>(context: Context, intent: Intent) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">when</span> (intent.action) {
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">Intent</span>.ACTION_BATTERY_LOW <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">Toast</span>.makeText(context, <span style="color:#e6db74">&#34;电量低&#34;</span>, <span style="color:#a6e22e">Toast</span>.LENGTH_SHORT).show()
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">Intent</span>.ACTION_BATTERY_OKAY <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#a6e22e">Toast</span>.makeText(context, <span style="color:#e6db74">&#34;电量恢复&#34;</span>, <span style="color:#a6e22e">Toast</span>.LENGTH_SHORT).show()
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        setContentView(<span style="color:#a6e22e">R</span>.layout.activity_main)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 注册接收器
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> filter = IntentFilter().apply {
+</span></span><span style="display:flex;"><span>            addAction(<span style="color:#a6e22e">Intent</span>.ACTION_BATTERY_LOW)
+</span></span><span style="display:flex;"><span>            addAction(<span style="color:#a6e22e">Intent</span>.ACTION_BATTERY_OKAY)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        registerReceiver(batteryReceiver, filter)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onDestroy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onDestroy()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. 必须取消注册，避免内存泄漏
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        unregisterReceiver(batteryReceiver)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>**Android13+**动态注册</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// Android 13+ 需要在运行时请求权限
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">Build</span>.<span style="color:#a6e22e">VERSION</span>.SDK_INT <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">Build</span>.<span style="color:#a6e22e">VERSION_CODES</span>.TIRAMISU) {
+</span></span><span style="display:flex;"><span>    registerReceiver(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">receiver</span>,
+</span></span><span style="display:flex;"><span>        filter,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Context</span>.RECEIVER_NOT_EXPORTED  <span style="color:#75715e">// 或 RECEIVER_EXPORTED
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    )
+</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>    registerReceiver(<span style="color:#66d9ef">receiver</span>, filter)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h4 id="发送广播">发送广播
+</h4><h5 id="1-标准广播normal-broadcast">1. 标准广播（Normal Broadcast）
+</h5><p>所有接收器几乎同时收到</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 发送广播
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#e6db74">&#34;com.example.ACTION_CUSTOM&#34;</span>)
+</span></span><span style="display:flex;"><span>intent.putExtra(<span style="color:#e6db74">&#34;data&#34;</span>, <span style="color:#e6db74">&#34;Hello Broadcast&#34;</span>)
+</span></span><span style="display:flex;"><span>sendBroadcast(intent)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 接收广播
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyReceiver</span> : BroadcastReceiver() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onReceive</span>(context: Context, intent: Intent) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> data = intent.getStringExtra(<span style="color:#e6db74">&#34;data&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Receiver&#34;</span>, <span style="color:#e6db74">&#34;收到: </span><span style="color:#e6db74">$data</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="2-有序广播ordered-broadcast">2. 有序广播（Ordered Broadcast）
+</h5><p>按优先级一次传递，可拦截</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 发送有序广播
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#e6db74">&#34;com.example.ACTION_ORDERED&#34;</span>)
+</span></span><span style="display:flex;"><span>sendOrderedBroadcast(intent, <span style="color:#66d9ef">null</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>&lt;!<span style="color:#f92672">--</span> 设置优先级 <span style="color:#f92672">--</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#66d9ef">receiver</span> android:name=<span style="color:#e6db74">&#34;.HighPriorityReceiver&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>    &lt;intent-filter android:priority=<span style="color:#e6db74">&#34;1000&#34;</span>&gt;
+</span></span><span style="display:flex;"><span>        &lt;action android:name=<span style="color:#e6db74">&#34;com.example.ACTION_ORDERED&#34;</span> /&gt;
+</span></span></code></pre></div><hr>
+<h4 id="contentprovider">ContentProvider
+</h4><p><strong>ContentProvider</strong> = 跨应用共享数据的标准接口</p>
+<pre tabindex="0"><code>应用 A (数据提供者)         应用 B (数据使用者)
+    ↓                           ↓
+ContentProvider ←─────URI────→ ContentResolver
+    ↓
+数据库/文件/网络
+</code></pre><hr>
+<h4 id="contentprovider的作用">ContentProvider的作用
+</h4><h5 id="1-跨应用数据共享">1. 跨应用数据共享
+</h5><pre tabindex="0"><code>联系人应用 → ContentProvider → 其他应用读取联系人
+相册应用 → ContentProvider → 其他应用读取图片
+</code></pre><h5 id="2-统一数据访问接口">2. 统一数据访问接口
+</h5><pre tabindex="0"><code>不管数据存在哪里（数据库/文件/网络）
+都通过统一的 URI 访问
+
+content://com.example.provider/users/1
+content://com.android.contacts/contacts/1
+</code></pre><h5 id="3-数据安全控制">3. 数据安全控制
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span>可以控制<span style="color:#960050;background-color:#1e0010">：</span>
+</span></span><span style="display:flex;"><span>- 哪些应用可以访问
+</span></span><span style="display:flex;"><span>- 哪些数据可以访问<span style="color:#960050;background-color:#1e0010">（</span>读/写权限<span style="color:#960050;background-color:#1e0010">）</span>
+</span></span><span style="display:flex;"><span>- 数据访问的粒度
+</span></span></code></pre></div><hr>
+<h4 id="contentprovider架构">ContentProvider架构
+</h4><p><strong>URI</strong>结构</p>
+<pre tabindex="0"><code>content://authority/path/id
+   ↑        ↑       ↑    ↑
+  协议    标识符   路径  ID
+
+示例：
+content://com.example.provider/users
+content://com.example.provider/users/123
+content://com.android.contacts/contacts
+content://media/external/images/media
+</code></pre><p>组件关系</p>
+<pre tabindex="0"><code>应用 A                      应用 B
+  ↓                          ↓
+ContentProvider          ContentResolver
+  ↓                          ↓
+query()                    query()
+insert()                   insert()
+update()                   update()
+delete()                   delete()
+  ↓
+实际数据存储 (SQLite/文件等)
+</code></pre><hr>
+<h4 id="创建contentprovider">创建ContentProvider
+</h4><h5 id="步骤1定义数据模型">步骤1:定义数据模型
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// Contract 类（定义 URI 和列名）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">object</span> <span style="color:#a6e22e">UserContract</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> AUTHORITY = <span style="color:#e6db74">&#34;com.example.provider&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> CONTENT_URI: Uri = <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://</span><span style="color:#e6db74">$AUTHORITY</span><span style="color:#e6db74">/users&#34;</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">object</span> <span style="color:#a6e22e">Columns</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> ID = <span style="color:#e6db74">&#34;_id&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> NAME = <span style="color:#e6db74">&#34;name&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> EMAIL = <span style="color:#e6db74">&#34;email&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> AGE = <span style="color:#e6db74">&#34;age&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="步骤2创建数据库helper可选">步骤2：创建数据库Helper(可选)
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DatabaseHelper</span>(context: Context) : SQLiteOpenHelper(
+</span></span><span style="display:flex;"><span>    context,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;users.db&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(db: SQLiteDatabase) {
+</span></span><span style="display:flex;"><span>        db.execSQL(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            CREATE TABLE users (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                _id INTEGER PRIMARY KEY AUTOINCREMENT,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                name TEXT NOT NULL,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                email TEXT,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                age INTEGER
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            )
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onUpgrade</span>(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+</span></span><span style="display:flex;"><span>        db.execSQL(<span style="color:#e6db74">&#34;DROP TABLE IF EXISTS users&#34;</span>)
+</span></span><span style="display:flex;"><span>        onCreate(db)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="实现contentprovider">实现ContentProvider
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UserProvider</span> : ContentProvider() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">lateinit</span> <span style="color:#66d9ef">var</span> dbHelper: DatabaseHelper
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> uriMatcher = UriMatcher(<span style="color:#a6e22e">UriMatcher</span>.NO_MATCH).apply {
+</span></span><span style="display:flex;"><span>        addURI(<span style="color:#a6e22e">UserContract</span>.AUTHORITY, <span style="color:#e6db74">&#34;users&#34;</span>, USERS)
+</span></span><span style="display:flex;"><span>        addURI(<span style="color:#a6e22e">UserContract</span>.AUTHORITY, <span style="color:#e6db74">&#34;users/#&#34;</span>, USER_ID)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">companion</span> <span style="color:#66d9ef">object</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> USERS = <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">val</span> USER_ID = <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 1. 初始化（在应用启动时调用）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(): Boolean {
+</span></span><span style="display:flex;"><span>        dbHelper = DatabaseHelper(context<span style="color:#f92672">!!</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 2. 查询数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">query</span>(
+</span></span><span style="display:flex;"><span>        uri: Uri,
+</span></span><span style="display:flex;"><span>        projection: Array&lt;String&gt;?,
+</span></span><span style="display:flex;"><span>        selection: String?,
+</span></span><span style="display:flex;"><span>        selectionArgs: Array&lt;String&gt;?,
+</span></span><span style="display:flex;"><span>        sortOrder: String?
+</span></span><span style="display:flex;"><span>    ): Cursor? {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> db = dbHelper.readableDatabase
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">when</span> (uriMatcher.match(uri)) {
+</span></span><span style="display:flex;"><span>            USERS <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 查询所有用户
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                db.query(
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;users&#34;</span>,
+</span></span><span style="display:flex;"><span>                    projection,
+</span></span><span style="display:flex;"><span>                    selection,
+</span></span><span style="display:flex;"><span>                    selectionArgs,
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>                    sortOrder
+</span></span><span style="display:flex;"><span>                )
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            USER_ID <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 查询指定 ID 的用户
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">val</span> id = uri.lastPathSegment
+</span></span><span style="display:flex;"><span>                db.query(
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;users&#34;</span>,
+</span></span><span style="display:flex;"><span>                    projection,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${UserContract.Columns.ID}</span><span style="color:#e6db74"> = ?&#34;</span>,
+</span></span><span style="display:flex;"><span>                    arrayOf(id),
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>                    sortOrder
+</span></span><span style="display:flex;"><span>                )
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span> <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">throw</span> IllegalArgumentException(<span style="color:#e6db74">&#34;Unknown URI: </span><span style="color:#e6db74">$uri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 3. 插入数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">insert</span>(uri: Uri, values: ContentValues?): Uri? {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> db = dbHelper.writableDatabase
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">when</span> (uriMatcher.match(uri)) {
+</span></span><span style="display:flex;"><span>            USERS <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">val</span> id = db.insert(<span style="color:#e6db74">&#34;users&#34;</span>, <span style="color:#66d9ef">null</span>, values)
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> (id &gt; <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">val</span> newUri = <span style="color:#a6e22e">ContentUris</span>.withAppendedId(<span style="color:#a6e22e">UserContract</span>.CONTENT_URI, id)
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 通知数据变化
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    context<span style="color:#f92672">?.</span>contentResolver<span style="color:#f92672">?.</span>notifyChange(newUri, <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>                    newUri
+</span></span><span style="display:flex;"><span>                } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span> <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">throw</span> IllegalArgumentException(<span style="color:#e6db74">&#34;Unknown URI: </span><span style="color:#e6db74">$uri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 4. 更新数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">update</span>(
+</span></span><span style="display:flex;"><span>        uri: Uri,
+</span></span><span style="display:flex;"><span>        values: ContentValues?,
+</span></span><span style="display:flex;"><span>        selection: String?,
+</span></span><span style="display:flex;"><span>        selectionArgs: Array&lt;String&gt;?
+</span></span><span style="display:flex;"><span>    ): Int {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> db = dbHelper.writableDatabase
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> count = <span style="color:#66d9ef">when</span> (uriMatcher.match(uri)) {
+</span></span><span style="display:flex;"><span>            USERS <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                db.update(<span style="color:#e6db74">&#34;users&#34;</span>, values, selection, selectionArgs)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            USER_ID <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">val</span> id = uri.lastPathSegment
+</span></span><span style="display:flex;"><span>                db.update(
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;users&#34;</span>,
+</span></span><span style="display:flex;"><span>                    values,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${UserContract.Columns.ID}</span><span style="color:#e6db74"> = ?&#34;</span>,
+</span></span><span style="display:flex;"><span>                    arrayOf(id)
+</span></span><span style="display:flex;"><span>                )
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span> <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">throw</span> IllegalArgumentException(<span style="color:#e6db74">&#34;Unknown URI: </span><span style="color:#e6db74">$uri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (count &gt; <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            context<span style="color:#f92672">?.</span>contentResolver<span style="color:#f92672">?.</span>notifyChange(uri, <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> count
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 5. 删除数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">delete</span>(
+</span></span><span style="display:flex;"><span>        uri: Uri,
+</span></span><span style="display:flex;"><span>        selection: String?,
+</span></span><span style="display:flex;"><span>        selectionArgs: Array&lt;String&gt;?
+</span></span><span style="display:flex;"><span>    ): Int {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> db = dbHelper.writableDatabase
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> count = <span style="color:#66d9ef">when</span> (uriMatcher.match(uri)) {
+</span></span><span style="display:flex;"><span>            USERS <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                db.delete(<span style="color:#e6db74">&#34;users&#34;</span>, selection, selectionArgs)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            USER_ID <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">val</span> id = uri.lastPathSegment
+</span></span><span style="display:flex;"><span>                db.delete(
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;users&#34;</span>,
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${UserContract.Columns.ID}</span><span style="color:#e6db74"> = ?&#34;</span>,
+</span></span><span style="display:flex;"><span>                    arrayOf(id)
+</span></span><span style="display:flex;"><span>                )
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span> <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">throw</span> IllegalArgumentException(<span style="color:#e6db74">&#34;Unknown URI: </span><span style="color:#e6db74">$uri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (count &gt; <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            context<span style="color:#f92672">?.</span>contentResolver<span style="color:#f92672">?.</span>notifyChange(uri, <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> count
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 6. 返回 MIME 类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">getType</span>(uri: Uri): String? {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">when</span> (uriMatcher.match(uri)) {
+</span></span><span style="display:flex;"><span>            USERS <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;vnd.android.cursor.dir/vnd.com.example.provider.users&#34;</span>
+</span></span><span style="display:flex;"><span>            USER_ID <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;vnd.android.cursor.item/vnd.com.example.provider.users&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span> <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">throw</span> IllegalArgumentException(<span style="color:#e6db74">&#34;Unknown URI: </span><span style="color:#e6db74">$uri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="步骤4注册provider">步骤4:注册Provider
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- AndroidManifest.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;manifest&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;application&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;provider</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;.UserProvider&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:authorities=</span><span style="color:#e6db74">&#34;com.example.provider&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:exported=</span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:permission=</span><span style="color:#e6db74">&#34;com.example.READ_USERS&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">&lt;!-- 授予其他应用读写权限 --&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;grant-uri-permission</span> <span style="color:#a6e22e">android:pathPattern=</span><span style="color:#e6db74">&#34;/users/.*&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;/provider&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/application&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">&lt;!-- 定义权限 --&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;permission</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;com.example.READ_USERS&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:protectionLevel=</span><span style="color:#e6db74">&#34;normal&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;permission</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;com.example.WRITE_USERS&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:protectionLevel=</span><span style="color:#e6db74">&#34;normal&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/manifest&gt;</span>
+</span></span></code></pre></div><hr>
+<h4 id="使用contentprovider">使用ContentProvider
+</h4><p><strong>查询数据</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">queryUsers</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 获取 ContentResolver
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> resolver = contentResolver
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 构建查询
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> uri = <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://com.example.provider/users&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> projection = arrayOf(
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.ID,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.NAME,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.EMAIL
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> selection = <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${UserContract.Columns.AGE}</span><span style="color:#e6db74"> &gt; ?&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> selectionArgs = arrayOf(<span style="color:#e6db74">&#34;18&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> sortOrder = <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${UserContract.Columns.NAME}</span><span style="color:#e6db74"> ASC&#34;</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. 执行查询
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">val</span> cursor = resolver.query(
+</span></span><span style="display:flex;"><span>            uri,
+</span></span><span style="display:flex;"><span>            projection,
+</span></span><span style="display:flex;"><span>            selection,
+</span></span><span style="display:flex;"><span>            selectionArgs,
+</span></span><span style="display:flex;"><span>            sortOrder
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 4. 处理结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        cursor<span style="color:#f92672">?.</span>use {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">while</span> (<span style="color:#66d9ef">it</span>.moveToNext()) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">val</span> id = <span style="color:#66d9ef">it</span>.getLong(<span style="color:#66d9ef">it</span>.getColumnIndexOrThrow(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.ID))
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">val</span> name = <span style="color:#66d9ef">it</span>.getString(<span style="color:#66d9ef">it</span>.getColumnIndexOrThrow(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.NAME))
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">val</span> email = <span style="color:#66d9ef">it</span>.getString(<span style="color:#66d9ef">it</span>.getColumnIndexOrThrow(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.EMAIL))
+</span></span><span style="display:flex;"><span>                
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;User&#34;</span>, <span style="color:#e6db74">&#34;ID: </span><span style="color:#e6db74">$id</span><span style="color:#e6db74">, Name: </span><span style="color:#e6db74">$name</span><span style="color:#e6db74">, Email: </span><span style="color:#e6db74">$email</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>插入数据</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">insertUser</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> resolver = contentResolver
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> uri = <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://com.example.provider/users&#34;</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> values = ContentValues().apply {
+</span></span><span style="display:flex;"><span>        put(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.NAME, <span style="color:#e6db74">&#34;Alice&#34;</span>)
+</span></span><span style="display:flex;"><span>        put(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.EMAIL, <span style="color:#e6db74">&#34;alice@example.com&#34;</span>)
+</span></span><span style="display:flex;"><span>        put(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.AGE, <span style="color:#ae81ff">25</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> newUri = resolver.insert(uri, values)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Insert&#34;</span>, <span style="color:#e6db74">&#34;新用户 URI: </span><span style="color:#e6db74">$newUri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>更新数据</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">updateUser</span>(userId: Long) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> resolver = contentResolver
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> uri = <span style="color:#a6e22e">ContentUris</span>.withAppendedId(
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://com.example.provider/users&#34;</span>),
+</span></span><span style="display:flex;"><span>        userId
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> values = ContentValues().apply {
+</span></span><span style="display:flex;"><span>        put(<span style="color:#a6e22e">UserContract</span>.<span style="color:#a6e22e">Columns</span>.EMAIL, <span style="color:#e6db74">&#34;newemail@example.com&#34;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> count = resolver.update(uri, values, <span style="color:#66d9ef">null</span>, <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Update&#34;</span>, <span style="color:#e6db74">&#34;更新了 </span><span style="color:#e6db74">$count</span><span style="color:#e6db74"> 条记录&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>删除数据</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">deleteUser</span>(userId: Long) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> resolver = contentResolver
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> uri = <span style="color:#a6e22e">ContentUris</span>.withAppendedId(
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://com.example.provider/users&#34;</span>),
+</span></span><span style="display:flex;"><span>        userId
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">val</span> count = resolver.delete(uri, <span style="color:#66d9ef">null</span>, <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Delete&#34;</span>, <span style="color:#e6db74">&#34;删除了 </span><span style="color:#e6db74">$count</span><span style="color:#e6db74"> 条记录&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h4 id="监听数据变化">监听数据变化
+</h4><p><strong>ContentObserver</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MainActivity</span> : AppCompatActivity() {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> userObserver = <span style="color:#66d9ef">object</span> <span style="color:#960050;background-color:#1e0010">: </span><span style="color:#a6e22e">ContentObserver</span>(Handler(<span style="color:#a6e22e">Looper</span>.getMainLooper())) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onChange</span>(selfChange: Boolean, uri: Uri?) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">super</span>.onChange(selfChange, uri)
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Log</span>.d(<span style="color:#e6db74">&#34;Observer&#34;</span>, <span style="color:#e6db74">&#34;数据变化: </span><span style="color:#e6db74">$uri</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 重新查询数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            queryUsers()
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onCreate</span>(savedInstanceState: Bundle?) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onCreate(savedInstanceState)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 注册观察者
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        contentResolver.registerContentObserver(
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://com.example.provider/users&#34;</span>),
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">true</span>,  <span style="color:#75715e">// 监听所有子 URI
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            userObserver
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onDestroy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.onDestroy()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 取消注册
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        contentResolver.unregisterContentObserver(userObserver)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><hr>
+<h4 id="权限控制">权限控制
+</h4><h5 id="定义权限">定义权限
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- AndroidManifest.xml --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;manifest&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">&lt;!-- 定义权限 --&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;permission</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;com.example.READ_USERS&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:label=</span><span style="color:#e6db74">&#34;读取用户数据&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:description=</span><span style="color:#e6db74">&#34;允许读取用户数据&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:protectionLevel=</span><span style="color:#e6db74">&#34;normal&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;permission</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;com.example.WRITE_USERS&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:label=</span><span style="color:#e6db74">&#34;写入用户数据&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">android:protectionLevel=</span><span style="color:#e6db74">&#34;normal&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;application&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;provider</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;.UserProvider&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:authorities=</span><span style="color:#e6db74">&#34;com.example.provider&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:exported=</span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:readPermission=</span><span style="color:#e6db74">&#34;com.example.READ_USERS&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">android:writePermission=</span><span style="color:#e6db74">&#34;com.example.WRITE_USERS&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/application&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/manifest&gt;</span>
+</span></span></code></pre></div><h5 id="请求权限">请求权限
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- 其他应用的 Manifest --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;manifest&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;uses-permission</span> <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;com.example.READ_USERS&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;uses-permission</span> <span style="color:#a6e22e">android:name=</span><span style="color:#e6db74">&#34;com.example.WRITE_USERS&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/manifest&gt;</span>
+</span></span></code></pre></div><h5 id="临时授权uri权限">临时授权(URI权限)
+</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#75715e">// 授予其他应用临时访问权限
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">val</span> intent = Intent(<span style="color:#a6e22e">Intent</span>.ACTION_VIEW)
+</span></span><span style="display:flex;"><span>intent.<span style="color:#66d9ef">data</span> = <span style="color:#a6e22e">Uri</span>.parse(<span style="color:#e6db74">&#34;content://com.example.provider/users/1&#34;</span>)
+</span></span><span style="display:flex;"><span>intent.addFlags(<span style="color:#a6e22e">Intent</span>.FLAG_GRANT_READ_URI_PERMISSION)
+</span></span><span style="display:flex;"><span>startActivity(intent)
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 zed的博客
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
