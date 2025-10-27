@@ -28,7 +28,7 @@ android应用的打包流程是将代码、资源文件、清单文件等编译�
 
 ##### 4.打包与签名
 
-* 合并资源： AAPT2链接编译后的资源，生成resources.arsc（资源索引表）和优化后的res/目录
+* 合并资源： AAPT2链接编译后的资源，生成`resources.arsc`（资源索引表）和优化后的`res/`目录
 * 打包成APK：APK Builder将以下文件合并为未签名的APK：
   * 编译后的字节码(`.dex`)
   * 资源文件(`res/` + `resources.arsc`)
@@ -45,7 +45,7 @@ android应用的打包流程是将代码、资源文件、清单文件等编译�
 
 ##### 1. 临时资源包
 
-在AAPT2（`Android Asset Packaging Tool 2`）的资源预编译阶段会生成.flat文件，这些文件是中间产物
+在AAPT2（`Android Asset Packaging Tool 2`）的资源预编译阶段会生成`.flat`文件，这些文件是中间产物
 
 * 独立编译：AAPT2将`/res`目录下的每个资源文件单独编译成二进制格式的`.flat`文件
 * 支持增量编译：若只修改了单个资源文件，只需重新编译该文件的.flat文件，避免全量编译，加快构建速度
