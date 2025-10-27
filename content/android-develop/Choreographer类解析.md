@@ -319,6 +319,34 @@ CallbackRecord extractDueCallbacksLocked(long now) {
 }
 ```
 
+##### 完整流程
+
+```
+[1] postCallback()
+     ↓
+[2] scheduleFrameLocked()
+     ↓
+[3] scheduleVsyncLocked()
+     ↓
+[4] mDisplayEventReceiver.scheduleVsync()  (请求 Vsync)
+     ↓
+     ... 等待硬件 Vsync 信号 ...
+     ↓
+[5] onVsync() (native 线程回调)
+     ↓
+[6] Message msg = obtainMessage(MSG_DO_FRAME)
+     ↓
+[7] mHandler.sendMessageAtTime(msg, ...)  (发送到主线程)
+     ↓
+[8] FrameHandler.handleMessage()  (主线程)
+     ↓
+[9] doFrame()  (主线程执行)
+     ↓
+[10] doCallbacks()  (执行所有 Callback)
+```
+
+-----
+
 #### 六、Choreographer的其他作用
 
 ##### 1. 帧率监控
