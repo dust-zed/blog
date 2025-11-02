@@ -27,6 +27,7 @@ tutorials = "tutorials/:slug/"
 kotlin = "kotlin/:slug"
 rust = "rust/:sections[1]/:slug" # :sections[1] 捕获子分类名
 reviews = "reviews/:slug"
+basics = "rust/:slug/"
 
 [[menu.main]]
   name = "rust"
@@ -72,6 +73,16 @@ reviews = "reviews/:slug"
     name = "base"
     url = "/android-develop/base"
     weight = 1
+
+[[menu.main]]
+  name = "basic"
+  url = "/basic"
+  weight = 2
+
+  [[menu.main.children]]
+  name = "internet"
+  url = "/basic/internet"
+  weight = 1
 
 [params]
 text_color = ""
