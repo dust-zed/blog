@@ -703,7 +703,7 @@
 &lt;/ul&gt;
 &lt;h5 id=&#34;4打包与签名&#34;&gt;4.打包与签名
 &lt;/h5&gt;&lt;ul&gt;
-&lt;li&gt;合并资源： AAPT2链接编译后的资源，生成resources.arsc（资源索引表）和优化后的res/目录&lt;/li&gt;
+&lt;li&gt;合并资源： AAPT2链接编译后的资源，生成&lt;code&gt;resources.arsc&lt;/code&gt;（资源索引表）和优化后的&lt;code&gt;res/&lt;/code&gt;目录&lt;/li&gt;
 &lt;li&gt;打包成APK：APK Builder将以下文件合并为未签名的APK：
 &lt;ul&gt;
 &lt;li&gt;编译后的字节码(&lt;code&gt;.dex&lt;/code&gt;)&lt;/li&gt;
@@ -721,7 +721,7 @@
 &lt;/ul&gt;
 &lt;h4 id=&#34;二名词解释&#34;&gt;二、名词解释
 &lt;/h4&gt;&lt;h5 id=&#34;1-临时资源包&#34;&gt;1. 临时资源包
-&lt;/h5&gt;&lt;p&gt;在AAPT2（&lt;code&gt;Android Asset Packaging Tool 2&lt;/code&gt;）的资源预编译阶段会生成.flat文件，这些文件是中间产物&lt;/p&gt;
+&lt;/h5&gt;&lt;p&gt;在AAPT2（&lt;code&gt;Android Asset Packaging Tool 2&lt;/code&gt;）的资源预编译阶段会生成&lt;code&gt;.flat&lt;/code&gt;文件，这些文件是中间产物&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;独立编译：AAPT2将&lt;code&gt;/res&lt;/code&gt;目录下的每个资源文件单独编译成二进制格式的&lt;code&gt;.flat&lt;/code&gt;文件&lt;/li&gt;
 &lt;li&gt;支持增量编译：若只修改了单个资源文件，只需重新编译该文件的.flat文件，避免全量编译，加快构建速度&lt;/li&gt;
@@ -1028,7 +1028,30 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;// 返回的是倒序链表（最近加入的先执行）&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; callbacks;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;六choreographer的其他作用&#34;&gt;六、Choreographer的其他作用
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h5 id=&#34;完整流程&#34;&gt;完整流程
+&lt;/h5&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[1] postCallback()
+     ↓
+[2] scheduleFrameLocked()
+     ↓
+[3] scheduleVsyncLocked()
+     ↓
+[4] mDisplayEventReceiver.scheduleVsync()  (请求 Vsync)
+     ↓
+     ... 等待硬件 Vsync 信号 ...
+     ↓
+[5] onVsync() (native 线程回调)
+     ↓
+[6] Message msg = obtainMessage(MSG_DO_FRAME)
+     ↓
+[7] mHandler.sendMessageAtTime(msg, ...)  (发送到主线程)
+     ↓
+[8] FrameHandler.handleMessage()  (主线程)
+     ↓
+[9] doFrame()  (主线程执行)
+     ↓
+[10] doCallbacks()  (执行所有 Callback)
+&lt;/code&gt;&lt;/pre&gt;&lt;hr&gt;
+&lt;h4 id=&#34;六choreographer的其他作用&#34;&gt;六、Choreographer的其他作用
 &lt;/h4&gt;&lt;h5 id=&#34;1-帧率监控&#34;&gt;1. 帧率监控
 &lt;/h5&gt;&lt;p&gt;开发者可以通过postFrameCallback实现帧率监控：&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-java&#34; data-lang=&#34;java&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;public&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;void&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;startMonitoring&lt;/span&gt;() {
