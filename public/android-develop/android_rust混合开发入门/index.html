@@ -1,239 +1,10 @@
-<!DOCTYPE html>
-<html lang="zh-cn" dir="ltr">
-    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="什么是NDK? NDK = Native Development Kit(原生开发工具包)\n一句话解释\nNDK 是 Android 提供的工具集,让你能用 C/C++/Rust 等原生语言开发 Android 应用的一部分\nAndroid应用的两种开发方式 ┌─────────────────────────────────────────┐ │ Android 应用 │ ├─────────────────────────────────────────┤ │ │ │ 方式 1: Java/Kotlin (Android SDK) │ │ ┌──────────────────────────────────┐ │ │ │ Kotlin/Java 代码 │ │ │ │ ↓ │ │ │ │ 编译为 DEX 字节码 │ │ │ │ ↓ │ │ │ │ 在 Dalvik/ART 虚拟机运行 │ │ │ └──────────────────────────────────┘ │ │ │ │ 方式 2: C/C++/Rust (Android NDK) │ │ ┌──────────────────────────────────┐ │ │ │ C/C++/Rust 代码 │ │ │ │ ↓ │ │ │ │ 编译为 .so 文件 (机器码) │ │ │ │ ↓ │ │ │ │ 直接在 CPU 上运行 (无虚拟机) │ │ │ └──────────────────────────────────┘ │ │ │ │ 两者通过 JNI 桥接 │ └─────────────────────────────────────────┘ 为什么需要NDK？ 对比理解 纯 Java/Kotlin(SDK):\n">
-<title>Android_rust混合开发入门</title>
-
-<link rel='canonical' href='http://localhost:1313/android-develop/android_rust%E6%B7%B7%E5%90%88%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8/'>
-
-<link rel="stylesheet" href="/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Android_rust混合开发入门">
-<meta property='og:description' content="什么是NDK? NDK = Native Development Kit(原生开发工具包)\n一句话解释\nNDK 是 Android 提供的工具集,让你能用 C/C++/Rust 等原生语言开发 Android 应用的一部分\nAndroid应用的两种开发方式 ┌─────────────────────────────────────────┐ │ Android 应用 │ ├─────────────────────────────────────────┤ │ │ │ 方式 1: Java/Kotlin (Android SDK) │ │ ┌──────────────────────────────────┐ │ │ │ Kotlin/Java 代码 │ │ │ │ ↓ │ │ │ │ 编译为 DEX 字节码 │ │ │ │ ↓ │ │ │ │ 在 Dalvik/ART 虚拟机运行 │ │ │ └──────────────────────────────────┘ │ │ │ │ 方式 2: C/C++/Rust (Android NDK) │ │ ┌──────────────────────────────────┐ │ │ │ C/C++/Rust 代码 │ │ │ │ ↓ │ │ │ │ 编译为 .so 文件 (机器码) │ │ │ │ ↓ │ │ │ │ 直接在 CPU 上运行 (无虚拟机) │ │ │ └──────────────────────────────────┘ │ │ │ │ 两者通过 JNI 桥接 │ └─────────────────────────────────────────┘ 为什么需要NDK？ 对比理解 纯 Java/Kotlin(SDK):\n">
-<meta property='og:url' content='http://localhost:1313/android-develop/android_rust%E6%B7%B7%E5%90%88%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8/'>
-<meta property='og:site_name' content='zed的博客'>
-<meta property='og:type' content='article'><meta property='article:section' content='Android-Develop' /><meta property='article:published_time' content='2025-10-15T11:55:59&#43;08:00'/><meta property='article:modified_time' content='2025-10-15T11:55:59&#43;08:00'/>
-<meta name="twitter:title" content="Android_rust混合开发入门">
-<meta name="twitter:description" content="什么是NDK? NDK = Native Development Kit(原生开发工具包)\n一句话解释\nNDK 是 Android 提供的工具集,让你能用 C/C++/Rust 等原生语言开发 Android 应用的一部分\nAndroid应用的两种开发方式 ┌─────────────────────────────────────────┐ │ Android 应用 │ ├─────────────────────────────────────────┤ │ │ │ 方式 1: Java/Kotlin (Android SDK) │ │ ┌──────────────────────────────────┐ │ │ │ Kotlin/Java 代码 │ │ │ │ ↓ │ │ │ │ 编译为 DEX 字节码 │ │ │ │ ↓ │ │ │ │ 在 Dalvik/ART 虚拟机运行 │ │ │ └──────────────────────────────────┘ │ │ │ │ 方式 2: C/C++/Rust (Android NDK) │ │ ┌──────────────────────────────────┐ │ │ │ C/C++/Rust 代码 │ │ │ │ ↓ │ │ │ │ 编译为 .so 文件 (机器码) │ │ │ │ ↓ │ │ │ │ 直接在 CPU 上运行 (无虚拟机) │ │ │ └──────────────────────────────────┘ │ │ │ │ 两者通过 JNI 桥接 │ └─────────────────────────────────────────┘ 为什么需要NDK？ 对比理解 纯 Java/Kotlin(SDK):\n">
-    </head>
-    <body class="
-    article-page
-    ">
-    <script>
-        (function() {
-            const colorSchemeKey = 'StackColorScheme';
-            if(!localStorage.getItem(colorSchemeKey)){
-                localStorage.setItem(colorSchemeKey, "auto");
-            }
-        })();
-    </script><script>
-    (function() {
-        const colorSchemeKey = 'StackColorScheme';
-        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
-        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
-
-        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
-            
-
-            document.documentElement.dataset.scheme = 'dark';
-        } else {
-            document.documentElement.dataset.scheme = 'light';
-        }
-    })();
-</script>
-<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
-    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
-        <span class="hamburger-box">
-            <span class="hamburger-inner"></span>
-        </span>
-    </button>
-
-    <header>
-        
-            
-            <figure class="site-avatar">
-                <a href="/">
-                
-                    
-                    
-                    
-                        
-                        <img src="/img/avatar_hu_f509edb42ecc0ebd.png" width="300"
-                            height="300" class="site-logo" loading="lazy" alt="Avatar">
-                    
-                
-                </a>
-                
-            </figure>
-            
-        
-        
-        <div class="site-meta">
-            <h1 class="site-name"><a href="/">zed的博客</a></h1>
-            <h2 class="site-description"></h2>
-        </div>
-    </header><ol class="menu" id="main-menu">
-        
-        
-        
-        <li >
-            <a href='/android-develop' >
-                
-                
-                
-                <span>android-develop</span>
-            </a>
-        </li>
-        
-        
-        <li >
-            <a href='/basic' >
-                
-                
-                
-                <span>basic</span>
-            </a>
-        </li>
-        
-        
-        <li >
-            <a href='/rust' >
-                
-                
-                
-                <span>rust</span>
-            </a>
-        </li>
-        
-        
-        <li >
-            <a href='/learning-reflection/' >
-                
-                
-                
-                <span>Learning-Reflections</span>
-            </a>
-        </li>
-        
-        
-        <li >
-            <a href='/tutorials/' >
-                
-                
-                
-                <span>Tutorials</span>
-            </a>
-        </li>
-        
-        <li class="menu-bottom-section">
-            <ol class="menu">
-
-                
-                    <li id="dark-mode-toggle">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="8" cy="12" r="2" />
-  <rect x="2" y="6" width="20" height="12" rx="6" />
-</svg>
-
-
-
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="16" cy="12" r="2" />
-  <rect x="2" y="6" width="20" height="12" rx="6" />
-</svg>
-
-
-
-                        <span>暗色模式</span>
-                    </li>
-                
-            </ol>
-        </li>
-    </ol>
-</aside>
-
-    
-
-            <main class="main full-width">
-    <article class="main-article">
-    <header class="article-header">
-
-    <div class="article-details">
-    
-    <header class="article-category">
-        
-            <a href="/categories/android-develop/" >
-                Android-Develop
-            </a>
-        
-            <a href="/categories/jni-rust/" >
-                Jni-Rust
-            </a>
-        
-    </header>
-    
-
-    <div class="article-title-wrapper">
-        <h2 class="article-title">
-            <a href="/android-develop/android_rust%E6%B7%B7%E5%90%88%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8/">Android_rust混合开发入门</a>
-        </h2>
-    
-        
-    </div>
-
-    
-    
-    
-    
-    <footer class="article-time">
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-  <circle cx="18" cy="18" r="4" />
-  <path d="M15 3v4" />
-  <path d="M7 3v4" />
-  <path d="M3 11h16" />
-  <path d="M18 16.496v1.504l1 1" />
-</svg>
-                <time class="article-time--published">Oct 15, 2025</time>
-            </div>
-        
-
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="12" cy="12" r="9" />
-  <polyline points="12 7 12 12 15 15" />
-</svg>
-
-
-
-                <time class="article-time--reading">
-                    阅读时长: 4 分钟
-                </time>
-            </div>
-        
-    </footer>
-    
-
-    
-</div>
-
-</header>
-
-    <section class="article-content">
-    
-    
-    <h4 id="什么是ndk">什么是NDK?
-</h4><p><strong>NDK = Native Development Kit(原生开发工具包)</strong></p>
-<p><strong>一句话解释</strong></p>
-<p>NDK 是 Android 提供的工具集,让你能用 <strong>C/C++/Rust</strong> 等原生语言开发 Android 应用的一部分</p>
-<hr>
-<h4 id="android应用的两种开发方式">Android应用的两种开发方式
-</h4><pre tabindex="0"><code>┌─────────────────────────────────────────┐
+<!doctype html><html lang=zh-cn dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="什么是NDK? NDK = Native Development Kit(原生开发工具包)\n一句话解释\nNDK 是 Android 提供的工具集,让你能用 C/C++/Rust 等原生语言开发 Android 应用的一部分\nAndroid应用的两种开发方式 ┌─────────────────────────────────────────┐ │ Android 应用 │ ├─────────────────────────────────────────┤ │ │ │ 方式 1: Java/Kotlin (Android SDK) │ │ ┌──────────────────────────────────┐ │ │ │ Kotlin/Java 代码 │ │ │ │ ↓ │ │ │ │ 编译为 DEX 字节码 │ │ │ │ ↓ │ │ │ │ 在 Dalvik/ART 虚拟机运行 │ │ │ └──────────────────────────────────┘ │ │ │ │ 方式 2: C/C++/Rust (Android NDK) │ │ ┌──────────────────────────────────┐ │ │ │ C/C++/Rust 代码 │ │ │ │ ↓ │ │ │ │ 编译为 .so 文件 (机器码) │ │ │ │ ↓ │ │ │ │ 直接在 CPU 上运行 (无虚拟机) │ │ │ └──────────────────────────────────┘ │ │ │ │ 两者通过 JNI 桥接 │ └─────────────────────────────────────────┘ 为什么需要NDK？ 对比理解 纯 Java/Kotlin(SDK):\n"><title>Android_rust混合开发入门</title><link rel=canonical href=https://www.dust-zed.site/android-develop/android_rust%E6%B7%B7%E5%90%88%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8/><link rel=stylesheet href=/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css><meta property='og:title' content="Android_rust混合开发入门"><meta property='og:description' content="什么是NDK? NDK = Native Development Kit(原生开发工具包)\n一句话解释\nNDK 是 Android 提供的工具集,让你能用 C/C++/Rust 等原生语言开发 Android 应用的一部分\nAndroid应用的两种开发方式 ┌─────────────────────────────────────────┐ │ Android 应用 │ ├─────────────────────────────────────────┤ │ │ │ 方式 1: Java/Kotlin (Android SDK) │ │ ┌──────────────────────────────────┐ │ │ │ Kotlin/Java 代码 │ │ │ │ ↓ │ │ │ │ 编译为 DEX 字节码 │ │ │ │ ↓ │ │ │ │ 在 Dalvik/ART 虚拟机运行 │ │ │ └──────────────────────────────────┘ │ │ │ │ 方式 2: C/C++/Rust (Android NDK) │ │ ┌──────────────────────────────────┐ │ │ │ C/C++/Rust 代码 │ │ │ │ ↓ │ │ │ │ 编译为 .so 文件 (机器码) │ │ │ │ ↓ │ │ │ │ 直接在 CPU 上运行 (无虚拟机) │ │ │ └──────────────────────────────────┘ │ │ │ │ 两者通过 JNI 桥接 │ └─────────────────────────────────────────┘ 为什么需要NDK？ 对比理解 纯 Java/Kotlin(SDK):\n"><meta property='og:url' content='https://www.dust-zed.site/android-develop/android_rust%E6%B7%B7%E5%90%88%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8/'><meta property='og:site_name' content='zed的博客'><meta property='og:type' content='article'><meta property='article:section' content='Android-Develop'><meta property='article:published_time' content='2025-10-15T11:55:59+08:00'><meta property='article:modified_time' content='2025-10-15T11:55:59+08:00'><meta name=twitter:title content="Android_rust混合开发入门"><meta name=twitter:description content="什么是NDK? NDK = Native Development Kit(原生开发工具包)\n一句话解释\nNDK 是 Android 提供的工具集,让你能用 C/C++/Rust 等原生语言开发 Android 应用的一部分\nAndroid应用的两种开发方式 ┌─────────────────────────────────────────┐ │ Android 应用 │ ├─────────────────────────────────────────┤ │ │ │ 方式 1: Java/Kotlin (Android SDK) │ │ ┌──────────────────────────────────┐ │ │ │ Kotlin/Java 代码 │ │ │ │ ↓ │ │ │ │ 编译为 DEX 字节码 │ │ │ │ ↓ │ │ │ │ 在 Dalvik/ART 虚拟机运行 │ │ │ └──────────────────────────────────┘ │ │ │ │ 方式 2: C/C++/Rust (Android NDK) │ │ ┌──────────────────────────────────┐ │ │ │ C/C++/Rust 代码 │ │ │ │ ↓ │ │ │ │ 编译为 .so 文件 (机器码) │ │ │ │ ↓ │ │ │ │ 直接在 CPU 上运行 (无虚拟机) │ │ │ └──────────────────────────────────┘ │ │ │ │ 两者通过 JNI 桥接 │ └─────────────────────────────────────────┘ 为什么需要NDK？ 对比理解 纯 Java/Kotlin(SDK):\n"></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label=切换菜单>
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu_f509edb42ecc0ebd.png width=300 height=300 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>zed的博客</a></h1><h2 class=site-description></h2></div></header><ol class=menu id=main-menu><li><a href=/android-develop><span>android-develop</span></a></li><li><a href=/basic><span>basic</span></a></li><li><a href=/rust><span>rust</span></a></li><li><a href=/learning-reflection/><span>Learning-Reflections</span></a></li><li><a href=/tutorials/><span>Tutorials</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>暗色模式</span></li></ol></li></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/android-develop/>Android-Develop
+</a><a href=/categories/jni-rust/>Jni-Rust</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/android-develop/android_rust%E6%B7%B7%E5%90%88%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8/>Android_rust混合开发入门</a></h2></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Oct 15, 2025</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>阅读时长: 4 分钟</time></div></footer></div></header><section class=article-content><h4 id=什么是ndk>什么是NDK?</h4><p><strong>NDK = Native Development Kit(原生开发工具包)</strong></p><p><strong>一句话解释</strong></p><p>NDK 是 Android 提供的工具集,让你能用 <strong>C/C++/Rust</strong> 等原生语言开发 Android 应用的一部分</p><hr><h4 id=android应用的两种开发方式>Android应用的两种开发方式</h4><pre tabindex=0><code>┌─────────────────────────────────────────┐
 │         Android 应用                     │
 ├─────────────────────────────────────────┤
 │                                         │
@@ -257,10 +28,7 @@
 │                                         │
 │  两者通过 JNI 桥接                      │
 └─────────────────────────────────────────┘
-</code></pre><h4 id="为什么需要ndk">为什么需要NDK？
-</h4><h5 id="对比理解">对比理解
-</h5><p>纯 <strong>Java/Kotlin(SDK):</strong></p>
-<pre tabindex="0"><code>优点:
+</code></pre><h4 id=为什么需要ndk>为什么需要NDK？</h4><h5 id=对比理解>对比理解</h5><p>纯 <strong>Java/Kotlin(SDK):</strong></p><pre tabindex=0><code>优点:
 ✅ 开发简单
 ✅ 跨设备兼容好
 ✅ 调试方便
@@ -269,8 +37,7 @@
 ❌ 性能有限 (虚拟机开销)
 ❌ 某些功能无法实现
 ❌ 无法复用 C/C++ 库
-</code></pre><p><strong>NDK(C/C++/Rust)</strong></p>
-<pre tabindex="0"><code>优点:
+</code></pre><p><strong>NDK(C/C++/Rust)</strong></p><pre tabindex=0><code>优点:
 ✅ 性能极高 (接近机器码)
 ✅ 可以复用现有 C/C++ 库
 ✅ 直接访问硬件
@@ -280,10 +47,7 @@
 ❌ 开发复杂
 ❌ 调试困难
 ❌ 需要为不同 CPU 编译
-</code></pre><hr>
-<h4 id="ndk工作原理">NDK工作原理
-</h4><h5 id="完整流程">完整流程
-</h5><pre tabindex="0"><code>第 1 步: 写 Rust 代码
+</code></pre><hr><h4 id=ndk工作原理>NDK工作原理</h4><h5 id=完整流程>完整流程</h5><pre tabindex=0><code>第 1 步: 写 Rust 代码
 ┌────────────────────────┐
 │ // Rust 代码           │
 │ pub fn add(a: i32, b: i32) -&gt; i32 {
@@ -317,10 +81,7 @@
 │ val result = add(5, 3) │
 │ // result = 8          │
 └────────────────────────┘
-</code></pre><hr>
-<h4 id="ndk包含什么">NDK包含什么？
-</h4><h5 id="ndk工具集">NDK工具集
-</h5><pre tabindex="0"><code>$ANDROID_NDK_HOME/
+</code></pre><hr><h4 id=ndk包含什么>NDK包含什么？</h4><h5 id=ndk工具集>NDK工具集</h5><pre tabindex=0><code>$ANDROID_NDK_HOME/
 ├── build/              # 构建脚本
 ├── toolchains/         # 编译器工具链
 │   ├── aarch64-linux-android/  # ARM64 编译器
@@ -330,17 +91,13 @@
 ├── platforms/          # Android API 级别的头文件
 ├── sources/           # 示例代码
 └── sysroot/           # 系统库
-</code></pre><h5 id="编译器">编译器
-</h5><pre tabindex="0"><code>NDK 提供了针对不同 CPU 架构的编译器:
+</code></pre><h5 id=编译器>编译器</h5><pre tabindex=0><code>NDK 提供了针对不同 CPU 架构的编译器:
 
 ARM64 (arm64-v8a):     现代手机 (主流)
 ARM32 (armeabi-v7a):   老手机
 x86:                   模拟器
 x86_64:                模拟器
-</code></pre><hr>
-<h4 id="so文件是什么">.so文件是什么？
-</h4><h5 id="理解so文件">理解.so文件
-</h5><pre tabindex="0"><code>.so = Shared Object (共享对象)
+</code></pre><hr><h4 id=so文件是什么>.so文件是什么？</h4><h5 id=理解so文件>理解.so文件</h5><pre tabindex=0><code>.so = Shared Object (共享对象)
 类似于:
 - Windows 的 .dll 文件
 - macOS 的 .dylib 文件
@@ -348,23 +105,19 @@ x86_64:                模拟器
 作用:
 - 包含编译后的机器码
 - 可以被多个程序共享使用
-</code></pre><h5 id="so文件示例">.so文件示例
-</h5><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 查看 .so 文件</span>
-</span></span><span style="display:flex;"><span>ls android/app/src/main/jniLibs/arm64-v8a/
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># librust_lib.so  ← 这就是编译后的 Rust 代码</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 查看文件信息</span>
-</span></span><span style="display:flex;"><span>file librust_lib.so
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># librust_lib.so: ELF 64-bit LSB shared object, ARM aarch64, ...</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># 查看导出的函数</span>
-</span></span><span style="display:flex;"><span>nm -D librust_lib.so | grep Java
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># Java_com_example_rustdemo_RustBridge_add</span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e"># Java_com_example_rustdemo_RustBridge_reverseString</span>
-</span></span></code></pre></div><hr>
-<h4 id="ndk开发流程">NDK开发流程
-</h4><h5 id="完整开发流程">完整开发流程
-</h5><pre tabindex="0"><code>1. 安装 NDK
+</code></pre><h5 id=so文件示例>.so文件示例</h5><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># 查看 .so 文件</span>
+</span></span><span style=display:flex><span>ls android/app/src/main/jniLibs/arm64-v8a/
+</span></span><span style=display:flex><span><span style=color:#75715e># librust_lib.so  ← 这就是编译后的 Rust 代码</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 查看文件信息</span>
+</span></span><span style=display:flex><span>file librust_lib.so
+</span></span><span style=display:flex><span><span style=color:#75715e># librust_lib.so: ELF 64-bit LSB shared object, ARM aarch64, ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 查看导出的函数</span>
+</span></span><span style=display:flex><span>nm -D librust_lib.so | grep Java
+</span></span><span style=display:flex><span><span style=color:#75715e># Java_com_example_rustdemo_RustBridge_add</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Java_com_example_rustdemo_RustBridge_reverseString</span>
+</span></span></code></pre></div><hr><h4 id=ndk开发流程>NDK开发流程</h4><h5 id=完整开发流程>完整开发流程</h5><pre tabindex=0><code>1. 安装 NDK
    ↓
    Android Studio → SDK Manager → SDK Tools → NDK
 
@@ -393,11 +146,7 @@ x86_64:                模拟器
    ↓
    System.loadLibrary(&#34;mylib&#34;)
    external fun add(a: Int, b: Int): Int
-</code></pre><hr>
-<h4 id="ndk核心概念">NDK核心概念
-</h4><h5 id="jnijava-native-interface">JNI(Java Native Interface)
-</h5><p><strong>JNI</strong>是桥梁:</p>
-<pre tabindex="0"><code>┌──────────────┐         ┌──────────────┐
+</code></pre><hr><h4 id=ndk核心概念>NDK核心概念</h4><h5 id=jnijava-native-interface>JNI(Java Native Interface)</h5><p><strong>JNI</strong>是桥梁:</p><pre tabindex=0><code>┌──────────────┐         ┌──────────────┐
 │   Kotlin     │   JNI   │   Rust       │
 │   (虚拟机)    │ ◄─────► │   (原生码)    │
 └──────────────┘         └──────────────┘
@@ -406,25 +155,18 @@ x86_64:                模拟器
 Kotlin Int      ↔  Rust i32
 Kotlin String   ↔  Rust String
 Kotlin IntArray ↔  Rust &amp;[i32]
-</code></pre><h5 id="交叉编译">交叉编译
-</h5><p>什么是交叉编译?</p>
-<pre tabindex="0"><code>你在 x86_64 电脑上开发
+</code></pre><h5 id=交叉编译>交叉编译</h5><p>什么是交叉编译?</p><pre tabindex=0><code>你在 x86_64 电脑上开发
    ↓
 但手机是 ARM64 架构
    ↓
 需要&#34;交叉编译&#34;: 在 x86_64 上编译出 ARM64 代码
    ↓
 NDK 提供了交叉编译工具链
-</code></pre><h5 id="abiapplication-binary-interface">ABI(Application Binary Interface)
-</h5><p>不同<strong>CPU</strong>需要不同的**.so**文件:</p>
-<pre tabindex="0"><code>arm64-v8a/libmylib.so    → ARM64 手机
+</code></pre><h5 id=abiapplication-binary-interface>ABI(Application Binary Interface)</h5><p>不同<strong>CPU</strong>需要不同的**.so**文件:</p><pre tabindex=0><code>arm64-v8a/libmylib.so    → ARM64 手机
 armeabi-v7a/libmylib.so  → ARM32 手机
 x86/libmylib.so          → x86 模拟器
 x86_64/libmylib.so       → x86_64 模拟器
-</code></pre><hr>
-<h4 id="什么时候用ndk">什么时候用NDK?
-</h4><h5 id="应该用ndk的场景">应该用NDK的场景
-</h5><pre tabindex="0"><code>1. 性能关键代码
+</code></pre><hr><h4 id=什么时候用ndk>什么时候用NDK?</h4><h5 id=应该用ndk的场景>应该用NDK的场景</h5><pre tabindex=0><code>1. 性能关键代码
    - 图像/视频处理
    - 音频处理
    - 大量数学计算
@@ -441,8 +183,7 @@ x86_64/libmylib.so       → x86_64 模拟器
 4. 访问底层功能
    - 硬件控制
    - 系统调用
-</code></pre><h5 id="不应该用ndk的场景">不应该用NDK的场景
-</h5><pre tabindex="0"><code>1. 简单业务逻辑
+</code></pre><h5 id=不应该用ndk的场景>不应该用NDK的场景</h5><pre tabindex=0><code>1. 简单业务逻辑
    - 按钮点击
    - 数据展示
    - 网络请求
@@ -454,10 +195,7 @@ x86_64/libmylib.so       → x86_64 模拟器
 3. 团队不熟悉 C/C++/Rust
    - 维护成本高
    - Bug 难以调试
-</code></pre><hr>
-<h4 id="ndk开发工具">NDK开发工具
-</h4><h5 id="必备工具">必备工具
-</h5><pre tabindex="0"><code>1. Android NDK
+</code></pre><hr><h4 id=ndk开发工具>NDK开发工具</h4><h5 id=必备工具>必备工具</h5><pre tabindex=0><code>1. Android NDK
    - 下载: Android Studio SDK Manager
 
 2. CMake (C/C++) 或 cargo-ndk (Rust)
@@ -465,8 +203,7 @@ x86_64/libmylib.so       → x86_64 模拟器
 
 3. LLDB (调试器)
    - Android Studio 内置
-</code></pre><h5 id="辅助工具">辅助工具
-</h5><pre tabindex="0"><code># 查看 .so 文件信息
+</code></pre><h5 id=辅助工具>辅助工具</h5><pre tabindex=0><code># 查看 .so 文件信息
 readelf -h libmylib.so
 
 # 查看导出的函数
@@ -474,10 +211,7 @@ nm -D libmylib.so
 
 # 反汇编 (调试用)
 objdump -d libmylib.so
-</code></pre><hr>
-<h4 id="总结">总结
-</h4><h5 id="ndk是什么">NDK是什么？
-</h5><pre tabindex="0"><code>NDK = 让你用 C/C++/Rust 开发 Android 的工具包
+</code></pre><hr><h4 id=总结>总结</h4><h5 id=ndk是什么>NDK是什么？</h5><pre tabindex=0><code>NDK = 让你用 C/C++/Rust 开发 Android 的工具包
 
 作用:
 1. 提供交叉编译工具链
@@ -489,146 +223,17 @@ objdump -d libmylib.so
 - 高性能计算
 - 复用 C/C++ 库
 - 跨平台开发
-</code></pre><h5 id="关键概念">关键概念
-</h5><pre tabindex="0"><code>NDK:   工具包
+</code></pre><h5 id=关键概念>关键概念</h5><pre tabindex=0><code>NDK:   工具包
 JNI:   桥梁 (Kotlin ↔ 原生代码)
 .so:   编译后的机器码
 ABI:   不同 CPU 架构
 
 流程:
 Rust 代码 → NDK 编译 → .so 文件 → JNI 调用 → Kotlin 使用
-</code></pre>
-</section>
-
-
-    <footer class="article-footer">
-    
-
-    </footer>
-
-
-    
-</article>
-
-    
-
-    
-
-     
-    
-        
-    
-
-    <footer class="site-footer">
-    <section class="copyright">
-        &copy; 
-        
-        2025 zed的博客
-    </section>
-    
-    <section class="powerby">
-        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
-        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
-    </section>
-</footer>
-
-
-    
-<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
-
-    
-    <div class="pswp__bg"></div>
-
-    
-    <div class="pswp__scroll-wrap">
-
-        
-        <div class="pswp__container">
-            <div class="pswp__item"></div>
-            <div class="pswp__item"></div>
-            <div class="pswp__item"></div>
-        </div>
-
-        
-        <div class="pswp__ui pswp__ui--hidden">
-
-            <div class="pswp__top-bar">
-
-                
-
-                <div class="pswp__counter"></div>
-
-                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-
-                <button class="pswp__button pswp__button--share" title="Share"></button>
-
-                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-
-                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
-
-                
-                
-                <div class="pswp__preloader">
-                    <div class="pswp__preloader__icn">
-                        <div class="pswp__preloader__cut">
-                            <div class="pswp__preloader__donut"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
-                <div class="pswp__share-tooltip"></div>
-            </div>
-
-            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
-            </button>
-
-            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
-            </button>
-
-            <div class="pswp__caption">
-                <div class="pswp__caption__center"></div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div><script 
-                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
-                defer
-                >
-            </script><script 
-                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
-                defer
-                >
-            </script><link 
-                rel="stylesheet" 
-                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
-            ><link 
-                rel="stylesheet" 
-                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
-            >
-
-            </main>
-        </div>
-        <script 
-                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
-                
-                >
-            </script><script type="text/javascript" src="/ts/main.0640c0f9745d7bd65b558574cdb67852b46437c1f807526bf043aebc566fd6e4.js" defer></script>
-<script>
-    (function () {
-        const customFont = document.createElement('link');
-        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
-
-        customFont.type = "text/css";
-        customFont.rel = "stylesheet";
-
-        document.head.appendChild(customFont);
-    }());
-</script>
-
-    </body>
-</html>
+</code></pre></section><footer class=article-footer></footer></article><footer class=site-footer><section class=copyright>&copy;
+2025 zed的博客</section><section class=powerby>使用 <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> 构建<br>主题 <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.30.0>Stack</a></b> 由 <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a> 设计</section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
