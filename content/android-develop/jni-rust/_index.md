@@ -1,4 +1,0 @@
-+++
-title = 'jni-rust'
-
-+++
