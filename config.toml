@@ -1,46 +1,54 @@
-theme = 'hugo-theme-stack'
 baseURL = "https://www.dust-zed.site"
 title = "zed的博客"
+theme = "hugo-theme-stack"
 languageCode = "zh-cn"
 DefaultContentLanguage = "zh-cn"
-SectionPagesMenu = "main"
-googleAnalytics = ""
-enableRobotsTXT = true
+# Google Analytics 如果没有ID，建议留空或者注释掉
+# googleAnalytics = "" 
+
+enableRobotsTXT = true 
 buildDrafts = false
 buildFuture = false
 
+# 【重要】确保菜单只显示主要部分
+SectionPagesMenu = "main"
+
 [server]
-relativeURLs = true
+    relativeURLs = true
 
 [sitemap]
-changefreq = "monthly"
-priority = 0.5
-filename = "sitemap.xml"
+    changefreq = "monthly"
+    priority = 0.5
+    filename = "sitemap.xml"
 
 [taxonomies]
-category = "categories"
-tag = "tags"
+    category = "categories"
+    tag = "tags"
 
-[cascade]
-_target = { path = "/categories/rust/**" }
-
+# 你的 cascade 写法看起来未完成，如果没有特殊针对 rust 分类的配置，建议先注释掉，否则可能报错
+# [cascade]
+#    _target = { path = "/categories/rust/**" }
 
 [params]
-text_color = ""
-favicon = ""
-site_logo = ""
-description = "The last theme you'll ever need. Maybe."
-# choose a background color from any on this page: https://tachyons.io/docs/themes/skins/ and preface it with "bg-"
-background_color_class = "bg-black"
-recent_posts_number = 3
-menu_layout = "multilevel"  # stack 主题特有配置
-  [params.notes]
-    enabled = true
-    showConnections = true
+    # 这里的 description 会显示在左侧栏
+    description = "The last theme you'll ever need. Maybe."
+    background_color_class = "bg-black"
+    
+    # 【解决重复问题关键点】
+    # 如果你觉得右侧显示文章是“重复”，请设置为 0
+    recent_posts_number = 0 
+    
+    menu_layout = "multilevel"
+
+    [params.notes]
+        enabled = true
+        showConnections = true
 
 [author]
-name = "zed"
-email = "zed118@gmail.com"
+    name = "zed"
+    email = "zed118@gmail.com"
+    # 建议加上头像路径，否则 stack 主题左侧会是空的
+    # avatar = "/img/avatar.png" 
 
 [markup]
   [markup.goldmark]
