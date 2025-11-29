@@ -9,6 +9,9 @@ enableRobotsTXT = true
 buildDrafts = false
 buildFuture = false
 
+[server]
+relativeURLs = true
+
 [sitemap]
 changefreq = "monthly"
 priority = 0.5
@@ -21,68 +24,6 @@ tag = "tags"
 [cascade]
 _target = { path = "/categories/rust/**" }
 
-[permalinks]
-android-develop = "android-develop/:slug/"
-tutorials = "tutorials/:slug/"
-kotlin = "kotlin/:slug"
-rust = "rust/:sections[1]/:slug" # :sections[1] 捕获子分类名
-reviews = "reviews/:slug"
-basics = "rust/:slug/"
-
-[[menu.main]]
-  name = "rust"
-  url = "/rust"
-  weight = 2
-    
-  [[menu.main.children]]
-    name = "std"
-    url = "/rust/std"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "ripgrep"
-    url = "/rust/ripgrep"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "tokio"
-    url = "/rust/tokio"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "reqwest"
-    url = "/rust/reqwest"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "docs_rs_zh"
-    url = "/rust/docs_rs_zh"
-    weight = 1
-
-[[menu.main]]
-  name = "android-develop"
-  url = "/android-develop"
-  weight = 2
-  
-  [[menu.main.children]]
-    name = "jni-rust"
-    url = "/android-develop/jni-rust"
-    weight = 1
-  
-  [[menu.main.children]]
-    name = "base"
-    url = "/android-develop/base"
-    weight = 1
-
-[[menu.main]]
-  name = "basic"
-  url = "/basic"
-  weight = 2
-
-  [[menu.main.children]]
-  name = "internet"
-  url = "/basic/internet"
-  weight = 1
 
 [params]
 text_color = ""
