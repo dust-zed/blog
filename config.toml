@@ -3,43 +3,44 @@ title = "zed的博客"
 theme = "hugo-theme-stack"
 languageCode = "zh-cn"
 DefaultContentLanguage = "zh-cn"
-# Google Analytics 如果没有ID，建议留空或者注释掉
-# googleAnalytics = "" 
+
+# 【修改1】删除或注释掉下面这一行，禁止 Hugo 自动把文件夹名字加到菜单里
+# SectionPagesMenu = "main"
+
+# Google Analytics
+googleAnalytics = "" 
 
 enableRobotsTXT = true 
 buildDrafts = false
 buildFuture = false
 
-# 【重要】确保菜单只显示主要部分
-SectionPagesMenu = "main"
-
 [server]
-    relativeURLs = true
+relativeURLs = true
 
 [sitemap]
-    changefreq = "monthly"
-    priority = 0.5
-    filename = "sitemap.xml"
+changefreq = "monthly"
+priority = 0.5
+filename = "sitemap.xml"
 
 [taxonomies]
-    category = "categories"
-    tag = "tags"
+category = "categories"
+tag = "tags"
 
-# 你的 cascade 写法看起来未完成，如果没有特殊针对 rust 分类的配置，建议先注释掉，否则可能报错
-# [cascade]
-#    _target = { path = "/categories/rust/**" }
+# 【修改2】这是实现你“文章都在根目录下”愿望的关键
+# 它的意思是：对于 post 文件夹下的文章，生成的网址直接是 域名/文章名/
+# 这样用户在浏览器里看到的就是 localhost:1313/xxx/ 而不是 localhost:1313/post/xxx/
+[permalinks]
+    post = "/:slug/"
 
 [params]
-    # 这里的 description 会显示在左侧栏
+    text_color = ""
+    favicon = ""
+    site_logo = ""
     description = "The last theme you'll ever need. Maybe."
     background_color_class = "bg-black"
+    recent_posts_number = 3
+    menu_layout = "multilevel" 
     
-    # 【解决重复问题关键点】
-    # 如果你觉得右侧显示文章是“重复”，请设置为 0
-    recent_posts_number = 0 
-    
-    menu_layout = "multilevel"
-
     [params.notes]
         enabled = true
         showConnections = true
@@ -47,10 +48,28 @@ SectionPagesMenu = "main"
 [author]
     name = "zed"
     email = "zed118@gmail.com"
-    # 建议加上头像路径，否则 stack 主题左侧会是空的
-    # avatar = "/img/avatar.png" 
 
 [markup]
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
+
+# 【修改3】手动控制左侧菜单
+# 如果你希望左侧完全是空的，就把下面这段删掉。
+# 如果你希望只显示“首页”，保留这个即可。不会再出现 "Post" 这种分类了。
+[[menu.main]]
+    identifier = "home"
+    name = "首页"
+    url = "/"
+    weight = 1
+    [menu.main.params]
+        icon = "home"
+
+# 如果你想加一个归档页面，可以取消注释下面这段
+# [[menu.main]]
+#     identifier = "archives"
+#     name = "归档"
+#     url = "/archives/"
+#     weight = 2
+#     [menu.main.params]
+#         icon = "archive"
