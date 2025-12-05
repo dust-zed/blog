@@ -81,7 +81,7 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$
 
 ```bash
 # 编辑 zsh 配置文件
-nano ~/.zshrc
+vim ~/.zshrc
 ```
 
 找到 `ZSH_THEME` 行，修改为：
@@ -187,7 +187,7 @@ source ~/.zshrc
 
 ```bash
 # 更好的 ls
-brew install exa
+brew install eza
 
 # 更好的 cat
 brew install bat
@@ -205,9 +205,9 @@ brew install ripgrep
 
 ```bash
 # 现代化命令别名
-alias ls='exa --icons'
-alias ll='exa -l --icons'
-alias la='exa -la --icons'
+alias ls='eza --icons'
+alias ll='eza -l --icons'
+alias la='eza -la --icons'
 alias cat='bat'
 alias find='fd'
 alias grep='rg'
