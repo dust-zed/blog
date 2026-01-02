@@ -1,14 +1,14 @@
 +++
+title = '包体积优化'
 date = '2025-06-15T23:19:59+08:00'
 draft = false
-title = '包体积优化'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Performance', 'APK Optimization', 'R8']
+description = "Android 包体积优化指南：代码混淆 (R8), 资源优化, 库优化及 APK 分析工具。"
+slug = "apk-size-optimization"
 +++
 
-#### 包体积优化
-
-#### 一、APK结构分析工具
+## 一、APK结构分析工具
 
 1. Android Studio内置工具
    * 使用 Build > Analyze APK
@@ -19,7 +19,7 @@ categories = ['android-develop']
 ./gradlew :app:assembleRelease --scan
 ```
 
-#### 二、代码优化
+## 二、代码优化
 
 1. 启用代码混淆与优化
 2. 移除未使用代码
@@ -29,7 +29,7 @@ categories = ['android-develop']
    * 启用Multidex前优化
    * 使用D8编译器的dex优化
 
-#### 三、资源优化
+## 三、资源优化
 
 1. 资源压缩与清理
 2. 移除未使用资源
@@ -45,22 +45,22 @@ categories = ['android-develop']
 3. 矢量图代替位图
 4. Webp格式转换
 
-#### 四、库优化
+## 四、库优化
 
 1. 仅保留必要ABI
 2. 轻量库代替
 
-#### 五、高级优化技术
+## 五、高级优化技术
 
 1. 资源混淆
 2. 资源分包加载
 3. 按需加载功能模块
 
-#### 六 、 Assets优化
+## 六 、 Assets优化
 
 1. 压缩assets资源：存储时压缩，使用时解压
 
-#### 七、知识补充
+## 七、知识补充
 
 1. D8、R8和代码混淆的关系
    * D8负责字节码到Dex的精确转换

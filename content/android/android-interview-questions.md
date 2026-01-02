@@ -1,12 +1,14 @@
 +++
+title = '面试问题收集'
 date = '2025-06-13T09:30:56+08:00'
 draft = false
-title = '面试问题收集'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Interview', 'Summary']
+description = "Android 面试常见问题汇总：Bitmap 优化, ViewModel 机制, View 原理, 事件分发等。"
+slug = "android-interview-questions"
 +++
 
-#### 一、Bitmap内存优化  
+## 一、Bitmap内存优化  
 Bitmap是内存消耗大户，通过以下方法减少占用：  
 1. **降低色彩解析模式**  
    使用RGB565等低色彩模式，将单个像素的字节大小从32位（ARGB8888）减少到16位，显著节省内存。
@@ -17,7 +19,7 @@ Bitmap是内存消耗大户，通过以下方法减少占用：
 
 ---
 
-#### 二、ViewModel与LiveData机制  
+## 二、ViewModel与LiveData机制  
 ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应式UI更新。
 
 1. **粘性事件（Sticky Event）**  
@@ -62,7 +64,7 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 三、View基础原理  
+## 三、View基础原理  
 深入理解View的测量、布局、绘制机制，是优化UI性能的核心。
 
 1. **MeasureSpec计算与布局优化**  
@@ -131,7 +133,7 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 四、事件分发机制
+## 四、事件分发机制
 
 1. **滑动实现方式**
    * **`scrollTo()`/`scrollBy()`**: scrollTo()是直接跳转到指定位置，scrollBy是相对移动，基于当前位置滑动指定偏移量
@@ -147,13 +149,13 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 五、Handler
+## 五、Handler
 
 1. 
 
 ---
 
-#### 六、性能优化 （todo）
+## 六、性能优化 （todo）
 
 1. **内存管理与泄漏排查**
 1. **UI渲染性能(卡顿优化)**
@@ -163,7 +165,7 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 七、常用库与框架（todo）
+## 七、常用库与框架（todo）
 
 1. **网络请求(如Retrofit)**
 2. **图片加载(如Glide / Picasso)**
@@ -171,7 +173,7 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 八、网络与后台
+## 八、网络与后台
 
 1. **RESTful API概念与使用**
 2. **异步处理深入（线程安全、后台限制）**
@@ -179,7 +181,7 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 九、架构设计
+## 九、架构设计
 
 1. MVVM/MVI理解与实践
 2. 模块化 / 组件化
@@ -187,14 +189,14 @@ ViewModel和LiveData是Jetpack组件，用于数据生命周期管理和响应�
 
 ---
 
-#### 十、新技术与趋势
+## 十、新技术与趋势
 
 1. Compose
 2. KMM / Flutter
 
 ---
 
-#### 十一、JVM / 内存模型基础
+## 十一、JVM / 内存模型基础
 
 1. JVM内存结构
 2. 垃圾回收机制基础

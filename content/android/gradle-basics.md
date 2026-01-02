@@ -1,12 +1,14 @@
 +++
+title = 'gradle相关知识'
 date = '2025-06-29T15:26:57+08:00'
 draft = false
-title = 'gradle相关知识'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Gradle', 'Build Tool']
+description = "Android Gradle 基础知识：插件 vs 库的区别，implementation/api 等依赖配置详解。"
+slug = "gradle-basics"
 +++
 
-### 一、插件(Plugins) vs 库(Libraries)
+## 一、插件(Plugins) vs 库(Libraries)
 | **特征**     | 插件 (Plugins)         | 库 (Libraries)           |
 | ------------ | ---------------------- | ------------------------ |
 | **本质**     | 构建逻辑扩展工具       | 运行时依赖的代码组件     |
@@ -15,7 +17,7 @@ categories = ['android-develop']
 | **影响范围** | 构建过程               | 运行时或编译时           |
 | **典型示例** | `java`，`android`      | `gson`, `junit`          |
 
-#### 1. 插件详解
+### 1. 插件详解
 **核心作用**：  
 - 添加新任务（如 `compileJava`, `assemble`）
 - 定义默认目录结构（如 `src/main/java`）
@@ -29,7 +31,7 @@ plugins {
 }
 ```
 
-#### 2. 库详解
+### 2. 库详解
 **关键特征**：  
 - 通过坐标声明：`group:name:version`（如 `com.google.guava:guava:32.0-jre`）
 - **传递依赖**：库可能自带其他依赖（如 Retrofit 自动引入 OkHttp）
@@ -44,8 +46,8 @@ dependencies {
 
 ---
 
-### 二、依赖配置详解
-#### 1. `implementation`（最常用）
+## 二、依赖配置详解
+### 1. `implementation`（最常用）
 **特点**:
 - 依赖**不传递**给其他模块,`模块F → 模块D → 模块E`（传导终止于D），模块F完全不知道模块E的存在
 - 加快构建（减少重编译）
@@ -55,7 +57,7 @@ dependencies {
 implementation 'com.squareup.retrofit2:retrofit:2.9.0'
 ```
 
-#### 2. `api`（谨慎使用）
+### 2. `api`（谨慎使用）
 **特点**:
 - 依赖**传递**给其他模块，建立**依赖传递链**：`模块C → 模块A → 模块B`，模块C可以使用模块B公开的接口
 - 用于 SDK 开发需暴露依赖的场景
@@ -65,7 +67,7 @@ implementation 'com.squareup.retrofit2:retrofit:2.9.0'
 api 'com.google.dagger:dagger:2.48' // 其他模块需使用Dagger
 ```
 
-#### 3. `classpath`
+### 3. `classpath`
 **特点**:
 - 仅用于项目级构建脚本(`build.gradle`)
 - 为 Gradle 自身引入插件包，然后在模块级plugins块中声明使用
@@ -80,7 +82,7 @@ buildscript {
 }
 ```
 
-#### 4. `alias`（版本目录）
+### 4. `alias`（版本目录）
 **特点**：
 - 在 `gradle/libs.versions.toml` 中集中管理依赖
 - 解决版本号硬编码问题

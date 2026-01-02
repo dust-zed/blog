@@ -1,4 +1,4 @@
 +++
-title = 'jni-rust'
+title = 'JNI & Rust Integration'
 
 +++

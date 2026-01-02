@@ -1,27 +1,29 @@
 +++
-date = '2025-11-05T13:20:21+08:00'
-draft = true
 title = '一次Gson解析导致NPE的排查'
-categories = ['android-develop']
-
+date = '2025-11-05T13:20:21+08:00'
+draft = false
+categories = ['android']
+tags = ['Android', 'Gson', 'Kotlin', 'Troubleshooting']
+description = "排查 Gson 绕过 Kotlin 构造函数导致非空字段出现 NPE 的问题，深入分析 Gson 架构及解决方案。"
+slug = "gson-npe-investigation"
 +++
 
-#### 问题描述
+## 问题描述
 
 使用Gson库解析出Kotlin对象时，其中的非空变量在使用时意外的出现了NPE。
 
-#### 问题定位
+## 问题定位
 
 Gson为了性能，使用了`Unsafe.allocateInstance()`直接分配内存创建对象，绕过了构造函数。而Kotlin的非空检查是在构造函数里做的，所以非空检查被绕过了。
 
-#### 解决思路
+## 解决思路
 
 * 给DataClass的所有字段加默认值，使其具备默认构造函数
 * 或者自定义TypeAdapterFactory
 
-#### Gson的核心架构
+## Gson的核心架构
 
-##### 整体流程
+### 整体流程
 
 ```
 JSON字符串 
@@ -33,7 +35,7 @@ TypeAdapter (解析并构造对象)
 Java/Kotlin对象
 ```
 
-##### Gson的三层架构
+### Gson的三层架构
 
 ```java
 // 1. Gson - 入口
@@ -49,7 +51,7 @@ TypeAdapterFactory factory = new MyTypeAdapterFactory();
 TypeAdapter<User> adapter = factory.create(gson, TypeToken.get(User.class));
 ```
 
-##### TypeAdapter的核心方法
+### TypeAdapter的核心方法
 
 ```java
 public abstract class TypeAdapter<T> {
@@ -82,15 +84,15 @@ public abstract class TypeAdapter<T> {
 }
 ```
 
-##### Gson的反序列化流程
+### Gson的反序列化流程
 
 * 先尝试无参构造函数
 * 失败后用Unsafe.allocateInstance()直接分配内存
 * 通过反射设置字段值
 
-#### 自定义TypeAdapter
+## 自定义TypeAdapter
 
-##### TypeAdapterFactory
+### TypeAdapterFactory
 
 ```kotlin
 class NullSafeTypeAdapterFactory : TypeAdapterFactory {
@@ -172,7 +174,7 @@ fun Class<*>.isKotlinClass(): Boolean {
 }
 ```
 
-##### 注册Factory
+### 注册Factory
 
 ```kotlin
 val gson = GsonBuilder()
@@ -184,9 +186,9 @@ val user = gson.fromJson(json, User::class.java)
 val product = gson.fromJson(json, Product::class.java)
 ```
 
-#### Gson如何选择TypeAdapter
+## Gson如何选择TypeAdapter
 
-##### 完整流程
+### 完整流程
 
 ```java
 // 用户调用
@@ -205,7 +207,7 @@ public <T> T fromJson(String json, Class<T> classOfT) {
 }
 ```
 
-##### getAdapter的逻辑
+### getAdapter的逻辑
 
 ```java
 // Gson.java (简化版)
@@ -242,7 +244,7 @@ public class Gson {
 }
 ```
 
-##### Factory的注册顺序
+### Factory的注册顺序
 
 ```java
 // GsonBuilder.java

@@ -1,13 +1,14 @@
 +++
+title = 'RecyclerView缓存机制'
 date = '2025-06-11T15:26:57+08:00'
 draft = false
-title = 'RecyclerView缓存机制'
-categories = ['android-develop']
+categories = ['android']
+tags = ['Android', 'RecyclerView', 'Performance']
+description = "深入解析 RecyclerView 的多级缓存机制：Scrap, Cache, ViewCacheExtension 和 RecycledViewPool。"
+slug = "recyclerview-caching-mechanism"
 +++
 
-RecyclerView缓存机制
-
-#### **多级缓存体系架构图**
+## 多级缓存体系架构图
 
 ```
 TEXT
@@ -29,7 +30,7 @@ RecyclerView 缓存系统
 
 ---
 
-### **1. `changedScrap` 的作用**
+## 1. `changedScrap` 的作用
 
 - **用途**：专门配合 `notifyItemChanged()` 或 `notifyDataSetChanged()` 使用。
 - **工作机制**：
@@ -39,7 +40,7 @@ RecyclerView 缓存系统
 
 ---
 
-### **2. `attachedScrap` 的作用**
+## 2. `attachedScrap` 的作用
 
 - **用途**：用于 **快速复用可见或即将可见的 ViewHolder**。
 - **工作机制**：
@@ -49,7 +50,7 @@ RecyclerView 缓存系统
 
 ---
 
-### **3. Stable IDs 如何改变 ViewHolder 获取方式**
+## 3. Stable IDs 如何改变 ViewHolder 获取方式
 
 当启用 **Stable IDs**（通过 `setHasStableIds(true)` + 重写 `getItemId()`）时：
 
@@ -69,7 +70,7 @@ RecyclerView 缓存系统
   ViewHolder vh = changedScrap.findViewHolderByItemId(id);
   ```
 
-#### **优势**
+### 优势
 
 1. **位置无关复用**：  
    - 即使数据集变化导致 item 位置改变（如插入/删除），仍能通过唯一 ID 正确复用 ViewHolder。
@@ -81,7 +82,7 @@ RecyclerView 缓存系统
 
 ---
 
-### **关键对比总结**
+## 关键对比总结
 
 | **特性**              | `changedScrap`                   | `attachedScrap`                   |
 | --------------------- | -------------------------------- | --------------------------------- |

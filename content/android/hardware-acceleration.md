@@ -1,12 +1,14 @@
 +++
+title = '关于硬件加速'
 date = '2025-06-13T22:50:57+08:00'
 draft = false
-title = '关于硬件加速'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Performance', 'Hardware Acceleration']
+description = "Android 硬件加速详解：CPU 与 GPU 的分工、光栅化流程对比及最佳实践。"
+slug = "hardware-acceleration"
 +++
 
-#### 一、硬件加速核心概念
+## 一、硬件加速核心概念
 
 硬件加速是将图形渲染中的光栅化从CPU转移到GPU执行的技术。CPU只需要生成**绘制指令集(DisplayList)**，由GPU进行高效的并行光栅化计算，最终写入图形缓冲区提供屏幕显示。
 
@@ -14,7 +16,7 @@ categories = ['android-develop']
 
 光栅化：可以高度抽象的概括为**计算屏幕上每个像素点最终显示的ARGB值**
 
-#### 二、硬件加速启用前后的核心流程对比
+## 二、硬件加速启用前后的核心流程对比
 
 1. **未启用硬件加速**
    * **measure & layout**：由CPU在主线程（UI线程）执行
@@ -38,7 +40,7 @@ categories = ['android-develop']
      * 核心：CPU负责记录绘制命令(onDraw -> DisplayList)；GPU负责光栅化，结果写入图形缓冲区
      * Frame Buffer是抽象的缓冲区，而GRALLOC Buffers是物理缓冲区
 
-#### 三、启用硬件层
+## 三、启用硬件层
 
 1. **目的**：对像素不会频繁变化的View采用空间换时间的方案，避免View内容未变时重复光栅化，用于后续快速合成
 2. **作用**：仅当视图内容改变(`invalidate()`)时或主动更新时：GPU重新光栅化该View的DisplayList -> 更新离屏纹理。而只涉及纹理的变换时，不会重新光栅化DisplayList，而是直接使用纹理缓存进行合成，纹理变换正是GPU擅长的。纹理变换和opengl管线工作流程中的顶点变换是不同的层级概念

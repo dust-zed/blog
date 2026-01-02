@@ -1,16 +1,18 @@
 +++
+title = 'View性能优化'
 date = '2025-06-13T23:55:35+08:00'
 draft = false
-title = 'View性能优化'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Performance', 'View']
+description = "Android View 性能优化全方位指南：GPU 过度绘制优化, CPU 绘制指令优化, 以及通用技术方案。"
+slug = "view-performance-optimization"
 +++
 
-### Android View 性能优化体系
+
 
 ---
 
-### 一、规避过度绘制（GPU优化）
+## 一、规避过度绘制（GPU优化）
 专注于减少GPU的无效像素填充负载
 
 *   **概念解析：**  
@@ -33,7 +35,7 @@ categories = ['android-develop']
 
 ---
 
-### 二、绘制指令优化（CPU优化）
+## 二、绘制指令优化（CPU优化）
 降低CPU生成绘制指令的开销
 
 *   **优化焦点：**  
@@ -58,7 +60,7 @@ categories = ['android-develop']
 
 ---
 
-### 三、通用核心技术
+## 三、通用核心技术
 跨优化领域的共性技术方案
 
 *   **区域裁剪技术：**
@@ -101,7 +103,7 @@ categories = ['android-develop']
 
 ---
 
-### 四、布局优化（独立模块）
+## 四、布局优化（独立模块）
 优化测量(measure)与布局(layout)阶段性能
 
 *   **检测工具：**  
@@ -119,7 +121,7 @@ categories = ['android-develop']
 
 ---
 
-### 优化关联图谱
+## 优化关联图谱
 ```mermaid
 flowchart TD
     A[性能优化] --> B[GPU负载]

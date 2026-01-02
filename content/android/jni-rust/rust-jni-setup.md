@@ -1,14 +1,16 @@
 +++
+title = 'Rust JNI 配置'
 date = '2025-10-15T13:45:38+08:00'
 draft = false
-title = 'Rust Jni配置'
-categories = ['android-develop', 'rust-jni']
-
+categories = ['android']
+tags = ['Android', 'Rust', 'JNI', 'Environment Setup']
+description = "Rust JNI 开发环境配置指南：安装 Rust, cargo-ndk, NDK 及环境变量设置。"
+slug = "rust-jni-setup"
 +++
 
-#### 环境配置
+## 环境配置
 
-##### 1. 环境检查
+### 1. 环境检查
 
 ```bash
 # 检查 Rust 是否安装
@@ -22,7 +24,7 @@ cargo --version
 # 确保已安装 Android Studio
 ```
 
-##### 2. 安装必要工具
+### 2. 安装必要工具
 
 ```bash
 # 1. 安装 Android targets
@@ -38,7 +40,7 @@ cargo install cargo-ndk
 cargo ndk --version
 ```
 
-##### 配置NDK路径
+### 配置NDK路径
 
 **macOS/Linux**:
 
@@ -63,7 +65,7 @@ setx ANDROID_HOME "C:\Users\YourName\AppData\Local\Android\Sdk"
 setx ANDROID_NDK_HOME "%ANDROID_HOME%\ndk\25.2.9519653"
 ```
 
-##### 验证NDK:
+### 验证NDK:
 
 ```bash
 echo $ANDROID_NDK_HOME

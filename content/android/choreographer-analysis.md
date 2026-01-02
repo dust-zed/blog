@@ -1,16 +1,18 @@
 +++
+title = 'Choreographer类解析'
 date = '2025-06-16T06:49:21+08:00'
 draft = false
-title = 'Choreographer类解析'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Choreographer', 'VSYNC', 'Performance']
+description = "深入解析 Android Choreographer：VSYNC 同步机制、帧调度流程及 Callback 执行逻辑。"
+slug = "choreographer-analysis"
 +++
 
-#### 一、核心作用
+## 一、核心作用
 
 Choreographer是Android系统**协调动画、输入和绘制操作的核心调度器**。它通过VSYNC信号确保帧的渲染与屏幕刷新率同步，避免画面撕裂和卡顿。
 
-#### 二、关键概念
+## 二、关键概念
 
 * VSYNC：垂直同步信号，表示屏幕开始刷新新的一帧
 * Frame Callbacks：注册的回调函数，在下一帧的特定阶段执行
@@ -54,7 +56,7 @@ public final class Choreographer {
 
 
 
-#### 三、核心架构图解
+## 三、核心架构图解
 
 ```tex
 ┌───────────────────────┐       ┌───────────────────────┐
@@ -81,9 +83,9 @@ public final class Choreographer {
 └───────────────────────┘
 ```
 
-#### 三、回调添加入口
+## 四、回调添加入口
 
-##### 1. 添加回调入口
+### 1. 添加回调入口
 
 ```java
 public void postCallback(int callbackType, Runnable action, Object token) {
@@ -95,7 +97,7 @@ public void postCallbackDelayed(int callbackType, Runnable action, long delayMil
 }
 ```
 
-##### 2. 内部添加实现
+### 2. 内部添加实现
 
 ```java
 private void postCallbackDelayedInternal(int callbackType,
@@ -123,7 +125,7 @@ private void postCallbackDelayedInternal(int callbackType,
 }
 ```
 
-##### 3. 回调链表结构
+### 3. 回调链表结构
 
 ```java
 private static final class CallbackQueue {
@@ -166,9 +168,9 @@ private static final class CallbackRecord {
 }
 ```
 
-#### 四、VSYNC同步机制
+## 五、VSYNC同步机制
 
-##### 1、 VSYNC请求
+### 1、 VSYNC请求
 
 ```java
 private void scheduleFrameLocked(long now) {
@@ -201,7 +203,7 @@ private void scheduleVsyncLocked() {
 }
 ```
 
-##### 2. VSYNC接收与处理
+### 2. VSYNC接收与处理
 
 ```java
 private final class FrameDisplayEventReceiver extends DisplayEventReceiver {
@@ -219,7 +221,7 @@ private final class FrameDisplayEventReceiver extends DisplayEventReceiver {
 }
 ```
 
-##### 3. 帧处理核心 - doFrame()
+### 3. 帧处理核心 - doFrame()
 
 ```java
 void doFrame(long frameTimeNanos, int frame) {
@@ -261,9 +263,9 @@ void doFrame(long frameTimeNanos, int frame) {
 }
 ```
 
-#### 五、回调执行处理
+## 六、回调执行处理
 
-##### 1. 执行回调核心逻辑
+### 1. 执行回调核心逻辑
 
 ```java
 void doCallbacks(int callbackType, long frameTimeNanos) {
@@ -296,7 +298,7 @@ void doCallbacks(int callbackType, long frameTimeNanos) {
 }
 ```
 
-##### 2.到期回调提取算法
+### 2.到期回调提取算法
 
 ```java
 CallbackRecord extractDueCallbacksLocked(long now) {
@@ -319,7 +321,7 @@ CallbackRecord extractDueCallbacksLocked(long now) {
 }
 ```
 
-##### 完整流程
+### 完整流程
 
 ```
 [1] postCallback()
@@ -347,9 +349,9 @@ CallbackRecord extractDueCallbacksLocked(long now) {
 
 -----
 
-#### 六、Choreographer的其他作用
+## 七、Choreographer的其他作用
 
-##### 1. 帧率监控
+### 1. 帧率监控
 
 开发者可以通过postFrameCallback实现帧率监控：
 
@@ -373,7 +375,7 @@ public void startMonitoring() {
 }
 ```
 
-#### 七、总结
+## 八、总结
 
 Choreographer 是 Android 渲染系统的核心协调器，其工作原理可以概括为：
 

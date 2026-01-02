@@ -1,12 +1,14 @@
 +++
+title = 'Android Rust混合开发入门'
 date = '2025-10-15T11:55:59+08:00'
 draft = false
-title = 'Android_rust混合开发入门'
-categories = ['android-develop', 'jni-rust']
-
+categories = ['android']
+tags = ['Android', 'Rust', 'JNI', 'NDK']
+description = "Android Rust 混合开发入门指南：JNI 原理、NDK 工作流程及 Rust 与 Java/Kotlin 交互基础。"
+slug = "android-rust-integration-intro"
 +++
 
-#### 什么是NDK?
+## 什么是NDK?
 
 **NDK = Native Development Kit(原生开发工具包)**
 
@@ -16,7 +18,7 @@ NDK 是 Android 提供的工具集,让你能用 **C/C++/Rust** 等原生语言�
 
 ----
 
-#### Android应用的两种开发方式
+## Android应用的两种开发方式
 
 ```
 ┌─────────────────────────────────────────┐
@@ -45,9 +47,9 @@ NDK 是 Android 提供的工具集,让你能用 **C/C++/Rust** 等原生语言�
 └─────────────────────────────────────────┘
 ```
 
-#### 为什么需要NDK？
+## 为什么需要NDK？
 
-##### 对比理解
+### 对比理解
 
 纯 **Java/Kotlin(SDK):**
 
@@ -80,9 +82,9 @@ NDK 是 Android 提供的工具集,让你能用 **C/C++/Rust** 等原生语言�
 
 ----
 
-#### NDK工作原理
+## NDK工作原理
 
-##### 完整流程
+### 完整流程
 
 ```
 第 1 步: 写 Rust 代码
@@ -123,9 +125,9 @@ NDK 是 Android 提供的工具集,让你能用 **C/C++/Rust** 等原生语言�
 
 -----
 
-#### NDK包含什么？
+## NDK包含什么？
 
-##### NDK工具集
+### NDK工具集
 
 ```
 $ANDROID_NDK_HOME/
@@ -140,7 +142,7 @@ $ANDROID_NDK_HOME/
 └── sysroot/           # 系统库
 ```
 
-##### 编译器
+### 编译器
 
 ```
 NDK 提供了针对不同 CPU 架构的编译器:
@@ -153,9 +155,9 @@ x86_64:                模拟器
 
 -----
 
-#### .so文件是什么？
+## .so文件是什么？
 
-##### 理解.so文件
+### 理解.so文件
 
 ```
 .so = Shared Object (共享对象)
@@ -168,7 +170,7 @@ x86_64:                模拟器
 - 可以被多个程序共享使用
 ```
 
-##### .so文件示例
+### .so文件示例
 
 ```bash
 # 查看 .so 文件
@@ -187,9 +189,9 @@ nm -D librust_lib.so | grep Java
 
 ----
 
-#### NDK开发流程
+## NDK开发流程
 
-##### 完整开发流程
+### 完整开发流程
 
 ```
 1. 安装 NDK
@@ -225,9 +227,9 @@ nm -D librust_lib.so | grep Java
 
 ----
 
-#### NDK核心概念
+## NDK核心概念
 
-##### JNI(Java Native Interface)
+### JNI(Java Native Interface)
 
 **JNI**是桥梁:
 
@@ -243,7 +245,7 @@ Kotlin String   ↔  Rust String
 Kotlin IntArray ↔  Rust &[i32]
 ```
 
-##### 交叉编译
+### 交叉编译
 
 什么是交叉编译?
 
@@ -257,7 +259,7 @@ Kotlin IntArray ↔  Rust &[i32]
 NDK 提供了交叉编译工具链
 ```
 
-##### ABI(Application Binary Interface)
+### ABI(Application Binary Interface)
 
 不同**CPU**需要不同的**.so**文件:
 
@@ -270,9 +272,9 @@ x86_64/libmylib.so       → x86_64 模拟器
 
 ----
 
-#### 什么时候用NDK?
+## 什么时候用NDK?
 
-##### 应该用NDK的场景
+### 应该用NDK的场景
 
 ```
 1. 性能关键代码
@@ -294,7 +296,7 @@ x86_64/libmylib.so       → x86_64 模拟器
    - 系统调用
 ```
 
-##### 不应该用NDK的场景
+### 不应该用NDK的场景
 
 ```
 1. 简单业务逻辑
@@ -313,9 +315,9 @@ x86_64/libmylib.so       → x86_64 模拟器
 
 -----
 
-#### NDK开发工具
+## NDK开发工具
 
-##### 必备工具
+### 必备工具
 
 ```
 1. Android NDK
@@ -328,7 +330,7 @@ x86_64/libmylib.so       → x86_64 模拟器
    - Android Studio 内置
 ```
 
-##### 辅助工具
+### 辅助工具
 
 ```
 # 查看 .so 文件信息
@@ -343,9 +345,9 @@ objdump -d libmylib.so
 
 ----
 
-#### 总结
+## 总结
 
-##### NDK是什么？
+### NDK是什么？
 
 ```
 NDK = 让你用 C/C++/Rust 开发 Android 的工具包
@@ -362,7 +364,7 @@ NDK = 让你用 C/C++/Rust 开发 Android 的工具包
 - 跨平台开发
 ```
 
-##### 关键概念
+### 关键概念
 
 ```
 NDK:   工具包

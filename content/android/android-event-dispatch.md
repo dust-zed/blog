@@ -1,14 +1,16 @@
 +++
+title = 'Android事件分发机制详解'
 date = '2025-09-02T21:41:39+08:00'
 draft = false
-title = 'Android事件分发机制详解'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Event Dispatch', 'View']
+description = "详解 Android 事件分发机制：Activity -> ViewGroup -> View 的传递流程及源码分析。"
+slug = "android-event-dispatch"
 +++
 
-#### 1. 事件分发的基本流程
+## 1. 事件分发的基本流程
 
-##### 1.1 事件传递顺序
+### 1.1 事件传递顺序
 
 事件从Activity开始，按照一下顺序传递：
 
@@ -16,7 +18,7 @@ categories = ['android-develop']
 Activity -> Window -> DecorView -> ViewGroup -> View
 ```
 
-##### 1.2 核心方法
+### 1.2 核心方法
 
 1. **dispatchTouchEvent**
    * 负责事件的分发
@@ -28,9 +30,9 @@ Activity -> Window -> DecorView -> ViewGroup -> View
    * 处理点击事件
    * 返回true表示事件被消费
 
-#### 2. 源码分析
+## 2. 源码分析
 
-##### 2.1 Activity的dispatchTouchEvent
+### 2.1 Activity的dispatchTouchEvent
 
 ```java
 public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -44,7 +46,7 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 }
 ```
 
-##### 2.2 ViewGroup的dispatchTouchEvent
+### 2.2 ViewGroup的dispatchTouchEvent
 
 ```java
 public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -95,7 +97,7 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 }
 ```
 
-###### 实际执行流程
+#### 实际执行流程
 
 1. **DOWN事件**:
    - `mFirstTouchTarget == null`，进入寻找目标View的循环
@@ -112,13 +114,13 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
    * 如果找到匹配的 `TouchTarget`，则将事件分发给对应的子View
    * 如果没有找到匹配的 `TouchTarget`，则返回false
 
-###### 为什么这样设计
+#### 为什么这样设计
 
 1. **性能优化**：避免每次事件都遍历所有子View
 2. **事件一致性**：确保同一事件序列由同一View处理
 3. **正确性**：防止事件序列被拆分到不同View处理
 
-##### 2.3 View的dispatchTouchEvent
+### 2.3 View的dispatchTouchEvent
 
 ```java
 public boolean dispatchTouchEvent(MotionEvent event) {
@@ -139,35 +141,35 @@ public boolean dispatchTouchEvent(MotionEvent event) {
 }
 ```
 
-#### 3. 事件分发的关键点
+## 3. 事件分发的关键点
 
 1. **事件序列**：从ACTION_DOWN开始，到ACTION_UP或ACTION_CANCEL结束的一些列事件
 2. **事件拦截**：ViewGroup可以通过onIterceptTouchEvent拦截事件
 3. **事件消费**：View可以通过onTouchEvent或OnTouchListener消费事件
 4. **事件传递**：默认情况下，事件会从上到下传递，直到被消费
 
-#### 4. 常见面试题
+## 4. 常见面试题
 
-##### 4.1 事件分发的流程是怎样的
+### 4.1 事件分发的流程是怎样的
 
 * 从Activity的dispatchTouchEvent开始
 * 经过Window、DecorView、ViewGroup
 * 最终到达具体的View
 * 如果没有任何View消费事件，事件会回传到Activity的onTouchEvent
 
-##### 4.2 onTouch和onTouchEvent的区别
+### 4.2 onTouch和onTouchEvent的区别
 
 * onTouch是View.OnTouchListener接口中的方法
 * onTouchEvent是View的方法
 * onTouch的优先级高于onTouchEvent
 * 如果onTouch返回true，则onTouch不会被调用
 
-##### 4.3 如何解决滑动冲突
+### 4.3 如何解决滑动冲突
 
 1. 外部拦截法：重写父容器的onInterceptTouchEvent方法
 2. 内部拦截法： 重写子元素的dispatchTouchEvent方法，结合requestDisallowInterceptTouchEvent方法
 
-#### 5. 实际应用示例
+## 5. 实际应用示例
 
 ```java
 // 自定义ViewGroup，处理左右滑动冲突

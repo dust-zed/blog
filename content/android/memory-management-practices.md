@@ -1,12 +1,14 @@
 +++
+title = '内存管理最佳实践'
 date = '2025-06-15T13:05:49+08:00'
 draft = false
-title = '内存管理最佳实践'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Performance', 'Memory Management', 'LeakCanary']
+description = "Android 内存管理最佳实践：避免内存泄漏, 优化内存使用, 及排查工具 (LeakCanary, MAT) 使用。"
+slug = "memory-management-practices"
 +++
 
-#### 一、内存管理原则
+## 一、内存管理原则
 
 1. 理解Android内存模型
    * 基于JVM垃圾回收机制，采用分代回收策略
@@ -30,14 +32,14 @@ categories = ['android-develop']
    * 数据缓存
      * 优先使用LruCache和DiskLruCache
 
-#### 二、内存泄漏排查工具
+## 二、内存泄漏排查工具
 
 1. Android Profiler
 2. LeakCanary
 3. MAT
 4. StrictMode
 
-### **二、内存泄漏排查工具**
+## 二、内存泄漏排查工具详解
 
 1. **Android Profiler（Android Studio）**
 

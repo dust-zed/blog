@@ -1,16 +1,18 @@
 +++
-date = '2025-07-01T15:49:53+08:00'
-draft = true
 title = 'MMKV与SharedPreferences'
-categories = ['android-develop']
-
+date = '2025-07-01T15:49:53+08:00'
+draft = false
+categories = ['android']
+tags = ['Android', 'Storage', 'MMKV', 'SharedPreferences', 'Performance']
+description = "对比 Android 中 MMKV 与 SharedPreferences 的设计差异、性能表现及适用场景。"
+slug = "mmkv-vs-sharedpreferences"
 +++
 
 Android中的MMKV和SharedPreferences都是用于存储键值对数据的轻量级解决方案，但他们在设计、性能和适用场景上存在显著差异。
 
 -----
 
-#### SharedPreferences
+## SharedPreferences
 
 * **定位**：Android官方提供的轻量级键值对存储API。
 * **实现**：
@@ -35,7 +37,7 @@ Android中的MMKV和SharedPreferences都是用于存储键值对数据的轻量�
 
 ----
 
-#### 2. MMKV
+## 2. MMKV
 
 * **定位**：由腾讯微信团队开源的高性能**跨平台**键值存储组件
 * **实现原理**：

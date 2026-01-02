@@ -1,12 +1,14 @@
 +++
+title = '协程知识点'
 date = '2025-06-30T19:02:22+08:00'
 draft = false
-title = '协程知识点'
-categories = ['android-develop']
-
+categories = ['android']
+tags = ['Android', 'Kotlin', 'Coroutines', 'Async']
+description = "Kotlin 协程基础知识点：将回调转换为挂起函数、协程作用域 (CoroutineScope) 以及 async/await 的行为解析。"
+slug = "kotlin-coroutines-basics"
 +++
 
-#### 将回调转换为协程
+## 将回调转换为协程
 
 **背景**：很多库（尤其是Java/Android遗留库）使用基于回调（Callback）的API处理异步操作（如网络请求，数据库操作）。这在代码中会导致回调地狱。我们需要一种方法将这种回调风格的API转换成`挂起函数(suspend fun)`，使其可以在协程中像**顺序代码**一样使用。
 
@@ -65,9 +67,9 @@ suspend fun <T> convertCallbackToSuspendingFuncSafely(): T = suspendCancellableC
   3. 在块内，你调用库的取消方法去清理资源并停止操作。
 - 这是**将回调 API 集成到协程世界的最佳实践**。
 
-#### 协程作用域
+## 协程作用域
 
-##### 1、什么是协程作用域（CoroutineScope）
+### 1、什么是协程作用域（CoroutineScope）
 
 * `CoroutineScope`不是协程本身，而是一个**定义新协程运行环境**的接口
 * 它为在其内部启动的所有子协程提供了一个统一的`CoroutineContext`基础
@@ -103,9 +105,9 @@ interface CoroutineScope {
 
 ----
 
-#### async的行为
+## async的行为
 
-##### 1. async的立即启动特性
+### 1. async的立即启动特性
 
 * async不是等待await才执行：当使用async { ... } 创建协程时，其中的代码会立即开始执行，而不是等待调用`await()`。即使不调用await()，协程体也会在后台启动。
 * 并发执行：多个async协程默认并行执行（取决于调度器和上下文）。例如：
@@ -115,7 +117,7 @@ val deferred1 = async { task1() } // 立即开始执行
 val deferred2 = async { task2() } // 立即开始执行（可能与 task1 同时运行）
 ```
 
-##### 2. await()的作用
+### 2. await()的作用
 
 * 同步等待结果：await()是一个挂起点：
   * 如果协程已完成：直接返回结果
@@ -127,7 +129,7 @@ val result1 = deferred1.await() // 等待 task1 完成
 val result2 = deferred2.await() // 再等待 task2 完成
 ```
 
-#### Q&A
+## Q&A
 
 1. 父协程的挂起会影响子协程的运行吗？
    * **通常不会影响子协程的运行**，父协程与子协程是独立的任务单元，只要子协程未完成且未被取消，他们会继续由调度器分配线程执行。取消是取消，挂起时让出当前线程
