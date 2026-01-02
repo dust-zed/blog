@@ -1,107 +1,140 @@
-theme = 'hugo-theme-stack'
 baseURL = "https://www.dust-zed.site"
 title = "zed的博客"
+theme = "hugo-theme-stack"
+
+# 语言设置
 languageCode = "zh-cn"
-DefaultContentLanguage = "zh-cn"
-SectionPagesMenu = "main"
-googleAnalytics = ""
+defaultContentLanguage = "zh-cn"
+hasCJKLanguage = true  # 开启 CJK (中日韩) 字符统计，让阅读时间计算更准确
+
+# SEO & 构建配置
 enableRobotsTXT = true
 buildDrafts = false
 buildFuture = false
 
-[sitemap]
-changefreq = "monthly"
-priority = 0.5
-filename = "sitemap.xml"
-
-[taxonomies]
-category = "categories"
-tag = "tags"
-
-[cascade]
-_target = { path = "/categories/rust/**" }
-
+# ============================================================
+# [Permalinks] 链接结构管理
+# 核心策略：物理上文件分文件夹存放，逻辑上 URL 按需定制
+# ============================================================
 [permalinks]
-android-develop = "android-develop/:slug/"
-tutorials = "tutorials/:slug/"
-kotlin = "kotlin/:slug"
-rust = "rust/:sections[1]/:slug" # :sections[1] 捕获子分类名
-reviews = "reviews/:slug"
-basics = "rust/:slug/"
+    # 1. 计算机基础 (原 content/cs-basics/)
+    # 生成链接：https://site/p/tcp-handshake/
+    # 理由：基础知识比较通用，用简短的 /p/ 很合适
+    cs-basics = "/p/:slug/"
+
+    # 2. Rust 专栏 (原 content/rust/)
+    # 生成链接：https://site/rust/async-tokio/
+    # 理由：保留 /rust/ 前缀，强调技术栈属性
+    rust = "/rust/:slug/"
+
+    # 3. Android 专栏 (原 content/android/)
+    # 生成链接：https://site/android/binder-mechanism/
+    android = "/android/:slug/"
+
+# ============================================================
+# [Taxonomies] 分类体系
+# ============================================================
+[taxonomies]
+    category = "categories"
+    tag = "tags"
+    series = "series"
+
+# ============================================================
+# [Menu] 菜单设置
+# 注意：这里直接指向 Section (文件夹路径)，而不是分类页
+# ============================================================
 
 [[menu.main]]
-  name = "rust"
-  url = "/rust"
-  weight = 2
-    
-  [[menu.main.children]]
-    name = "std"
-    url = "/rust/std"
+    identifier = "home"
+    name = "首页"
+    url = "/"
     weight = 1
-
-  [[menu.main.children]]
-    name = "ripgrep"
-    url = "/rust/ripgrep"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "tokio"
-    url = "/rust/tokio"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "reqwest"
-    url = "/rust/reqwest"
-    weight = 1
-
-  [[menu.main.children]]
-    name = "docs_rs_zh"
-    url = "/rust/docs_rs_zh"
-    weight = 1
+    params = { icon = "home" }
 
 [[menu.main]]
-  name = "android-develop"
-  url = "/android-develop"
-  weight = 2
-  
-  [[menu.main.children]]
-    name = "jni-rust"
-    url = "/android-develop/jni-rust"
-    weight = 1
-  
-  [[menu.main.children]]
-    name = "base"
-    url = "/android-develop/base"
-    weight = 1
+    identifier = "archives"
+    name = "归档"
+    url = "/archives/"
+    weight = 2
+    params = { icon = "archives" }
+
+# --- 技术栈菜单 ---
 
 [[menu.main]]
-  name = "basic"
-  url = "/basic"
-  weight = 2
+    identifier = "rust"
+    name = "Rust 生态"
+    url = "/rust/"          # 直接指向 content/rust/ 列表页
+    weight = 10
+    params = { icon = "tag" }
 
-  [[menu.main.children]]
-  name = "internet"
-  url = "/basic/internet"
-  weight = 1
+[[menu.main]]
+    identifier = "android"
+    name = "Android 开发"
+    url = "/android/"       # 直接指向 content/android/ 列表页
+    weight = 20
+    params = { icon = "user" }
 
+[[menu.main]]
+    identifier = "cs-basics"
+    name = "计算机基础"
+    url = "/cs-basics/"     # 直接指向 content/cs-basics/ 列表页
+    weight = 30
+    params = { icon = "infinity" }
+
+# ============================================================
+# [Params] Stack 主题参数
+# ============================================================
 [params]
-text_color = ""
-favicon = ""
-site_logo = ""
-description = "The last theme you'll ever need. Maybe."
-# choose a background color from any on this page: https://tachyons.io/docs/themes/skins/ and preface it with "bg-"
-background_color_class = "bg-black"
-recent_posts_number = 3
-menu_layout = "multilevel"  # stack 主题特有配置
-  [params.notes]
-    enabled = true
-    showConnections = true
+    description = "记录 Rust, Android 与计算机基础的学习历程"
+    
+    # 首页配置
+    # 关键：告诉首页从这三个文件夹抓取最新文章
+    mainSections = ["cs-basics", "rust", "android"] 
+    recent_posts_number = 5
+    
+    # 日期格式
+    [params.dateFormat]
+        published = "2006-01-02"
+        lastUpdated = "2006-01-02"
 
+    # 侧边栏
+    [params.sidebar]
+        emoji = "🍥"
+        subtitle = "Android & Rust Developer"
+        
+        [params.sidebar.avatar]
+            enabled = true
+            local = true
+            src = "img/avatar.png"
+
+        [params.sidebar.menu]
+            maximize = true
+
+    # 文章页体验
+    [params.article]
+        readingTime = true
+        toc = true
+        license = { enabled = true } # 显示文章协议（可选）
+
+    # 评论 (暂关闭)
+    [params.comments]
+        enabled = false
+
+    # 搜索 (Stack 自带搜索，通常不需要额外配置，只需 hugo output 包含 json)
+    
 [author]
-name = "zed"
-email = "zed118@gmail.com"
+    name = "zed"
+    email = "zed118@gmail.com"
 
+# ============================================================
+# [Markup] Markdown 渲染配置
+# ============================================================
 [markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      unsafe = true
+    [markup.goldmark]
+        [markup.goldmark.renderer]
+            unsafe = true  # 允许在 md 中写 HTML (B站视频嵌入等需要)
+            
+    # 代码高亮设置 (Stack 主题推荐配置)
+    [markup.highlight]
+        noClasses = false
+        # style = "tango" # 可以选自己喜欢的高亮风格

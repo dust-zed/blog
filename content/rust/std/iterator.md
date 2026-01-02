@@ -1,8 +1,11 @@
 +++
 date = '2025-09-02T10:12:13+08:00'
 draft = true
-title = 'Iterator'
+title = 'Iterator源码分析'
 categories = ['rust', 'std']
+tags = ['Rust', 'Standard Library', 'Iterator', 'Source Code']
+description = "Rust 标准库 Iterator trait 源码分析：Next、Map、Filter、Fold 等核心方法与适配器模式。"
+slug = "iterator"
 
 +++
 
@@ -13,7 +16,7 @@ categories = ['rust', 'std']
 * `acc`：是“accumulator”（累加器）的缩写，在函数式编程中用于表示累积计算过程中的中间结果。
 * `fold`：是一个高阶函数，用于将集合中的所有元素通过一个操作“折叠”成单个值。
 
-#### 1. 基础结构
+## 1. 基础结构
 
 ```rust
 //这是 Iterator trait 的定义
@@ -28,7 +31,7 @@ pub trait Iterator {
 }
 ```
 
-#### 2. 核心方法
+## 2. 核心方法
 
 ```rust
 fn next(&mut self) -> Option<Self::Item>;
@@ -37,7 +40,7 @@ fn next(&mut self) -> Option<Self::Item>;
 * 这是迭代器最基础的方法
 * 每次调用返回`Some(item)`或`None`（表示迭代结束）
 
-#### 3. 常用方法实现
+## 3. 常用方法实现
 
 让我们看看`map`的实现：
 
@@ -69,7 +72,7 @@ where
 }
 ```
 
-#### 4. 其他重要方法
+## 4. 其他重要方法
 
 `collect`方法
 
@@ -94,7 +97,7 @@ where
 }
 ```
 
-#### 5. 高级特性： `try_fold`
+## 5. 高级特性： `try_fold`
 
 ```rust
 fn try_fold<B, F, R>(&mut self, init: B, mut f: F) -> R
@@ -111,7 +114,7 @@ where
 }
 ```
 
-#### 6. 实际使用示例
+## 6. 实际使用示例
 
 ```rust
 // 自定义迭代器示例
@@ -141,7 +144,7 @@ let sum: usize = Counter { count: 0, max: 5 }
     .sum();
 ```
 
-#### 7. 迭代器组合器
+## 7. 迭代器组合器
 
 标准库中还有许多有用的迭代器适配器：
 
@@ -153,7 +156,7 @@ let sum: usize = Counter { count: 0, max: 5 }
 - `peekable`
 - `fuse`
 
-#### 8. 性能考虑
+## 8. 性能考虑
 
 Rust迭代器的零成本抽象：
 
@@ -161,7 +164,7 @@ Rust迭代器的零成本抽象：
 * 内联优化使得方法调用开销被消除
 * 迭代器链会被优化形成单个循环
 
-#### 9. 结构
+## 9. 结构
 
 迭代器大部分需要消耗self的方法，都是新建了一个新迭代器，如`map`之于`Map`，`filter`之于`Filter`。这种设计模式称为“迭代器适配器模式”，它有几个关键优势：
 

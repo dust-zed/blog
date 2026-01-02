@@ -1,14 +1,17 @@
 +++
 date = '2025-09-01T10:59:09+08:00'
 draft = false
-title = 'Option'
+title = 'Option源码分析'
 categories = ['rust', 'std']
+tags = ['Rust', 'Standard Library', 'Option', 'Source Code']
+description = "Rust 标准库 Option 类型源码分析：基础结构、map/and_then/or_else 等核心方法实现与设计模式。"
+slug = "option"
 
 +++
 
 标准库`Option`源码学习
 
-#### 基础结构
+## 基础结构
 
 ```rust
 #[derive(Copy, PartialEq, PartialOrd, Eq, Ord, Debug, Hash)]
@@ -26,13 +29,13 @@ pub enum Option<T> {
 }
 ```
 
-##### 学习点
+### 学习点
 
 * `#[lang = "..."]`属性表示这是语言项
 * 泛型参数T支持任何类型
 * 自动派生多个trait(`Copy`，`PartialEq`等)
 
-#### 2. 核心方法:`map`和`map_or`
+## 2. 核心方法:`map`和`map_or`
 
 ```rust
 #[inline]
@@ -54,13 +57,13 @@ pub fn map_or<U, F: FnOnce(T) -> U>(self, default: U, f: F) -> U {
 }
 ```
 
-##### 学习点
+### 学习点
 
 * map保留Some/None结构
 * map_or提供默认值
 * 使用FnOnce因为闭包最多被调用一次
 
-#### 3.解引用实现
+## 3.解引用实现
 
 ```rust
 #[stable(feature = "rust1", since = "1.0.0")]
@@ -76,12 +79,12 @@ impl<T: Deref> Deref for Option<T> {
 }
 ```
 
-##### 学习点
+### 学习点
 
 * 为`Option<Box<T>>`等类型提供自动解引用
 * 实现`Deref`而不是直接实现方法，保持一致性
 
-#### 4. `and_then`和`or_else`
+## 4. `and_then`和`or_else`
 
 ```rust
 #[inline]
@@ -103,13 +106,13 @@ pub fn or_else<F: FnOnce() -> Option<T>>(self, f: F) -> Option<T> {
 }
 ```
 
-##### 学习点
+### 学习点
 
 * `and_then`用于链式操作
 * `or_else`提供回退逻辑
 * 闭包`F`只在需要时调用
 
-#### 5. `transpose`方法
+## 5. `transpose`方法
 
 ```rust
 #[inline]
@@ -124,12 +127,12 @@ pub fn transpose(self) -> Result<Option<T, E>>
 }
 ```
 
-##### 学习点
+### 学习点
 
 * 在`Option`和`Result`之间转换
 * 保持错误传播语义
 
-#### 6. `zip`和`zip_with`
+## 6. `zip`和`zip_with`
 
 ```rust
 #[stable(feature = "option_zip_option", since = "1.46.0")]
@@ -149,13 +152,13 @@ pub fn zip_with<U, F: FnOnce(T) -> Option<U>>(self, f: F) -> Option<U> {
 }
 ```
 
-##### 学习点
+### 学习点
 
 * `zip`组合两个`Option`值
 * `zip_with`提供更灵活的转换
 * 使用元组模式匹配处理组合逻辑
 
-#### 7. 性能优化：`Option<&T>`
+## 7. 性能优化：`Option<&T>`
 
 ```rust
 // 编译器对 Option<&T> 有特殊优化
@@ -181,7 +184,7 @@ impl<T> Option<&T> {
 }
 ```
 
-##### 学习点
+### 学习点
 
 * 零成本抽象
 * 为引用类型提供特化实现
