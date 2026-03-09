@@ -2,7 +2,7 @@
 date = '2025-09-06T18:53:34+08:00'
 draft = false
 title = 'Runtime的核心概念'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Runtime', 'Concepts']
 description = "Tokio Runtime 核心概念详解：Scheduler、Handle、BlockingPool 及其设计考量。"
 slug = "runtime-concepts"

@@ -2,6 +2,9 @@
 title = "我的博客维护工作流"
 date = 2026-01-02T21:40:00+08:00
 draft = false
+description = "个人博客维护与知识管理工作流：采用渐进式总结，将碎片化输入转化为结构化输出。"
+slug = "blog-workflow-guide"
+categories = ["journal"]
 tags = ["Workflow", "Git", "Knowledge Management"]
 +++
 

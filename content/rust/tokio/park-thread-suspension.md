@@ -2,7 +2,7 @@
 date = '2025-09-10T10:04:26+08:00'
 draft = false
 title = 'Park 线程挂起的实现'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Concurrency', 'Thread Park']
 description = "深入解析 Tokio 中 Park 线程挂起与恢复的实现机制（park.rs）。"
 slug = "park-thread-suspension"

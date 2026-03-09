@@ -2,7 +2,7 @@
 date = '2025-09-11T21:51:21+08:00'
 draft = false
 title = '时间轮算法'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Timer', 'Algorithm', 'Time Wheel']
 description = "详解 Tokio 定时器核心算法：分层时间轮的结构、层级设计与工作流程。"
 slug = "timer-wheel"

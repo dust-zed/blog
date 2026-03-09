@@ -2,7 +2,7 @@
 date = '2025-08-26T15:01:45+08:00'
 draft = false
 title = 'Walk学习'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Walk', 'Source Code']
 description = "Ripgrep Walk 模块学习笔记：DirEntry 设计、并发遍历机制与工作窃取算法。"
 slug = "walk-learning"

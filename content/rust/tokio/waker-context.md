@@ -2,7 +2,7 @@
 date = '2025-09-05T18:51:54+08:00'
 draft = false
 title = 'Waker和Context机制'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Waker', 'Context', 'Future']
 description = "深入解析 Rust 异步任务通知机制：Context、Waker 的工作原理与生命周期。"
 slug = "waker-context"

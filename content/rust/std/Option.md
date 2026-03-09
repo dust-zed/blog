@@ -2,7 +2,7 @@
 date = '2025-09-01T10:59:09+08:00'
 draft = false
 title = 'Option源码分析'
-categories = ['rust', 'std']
+categories = ['rust']
 tags = ['Rust', 'Standard Library', 'Option', 'Source Code']
 description = "Rust 标准库 Option 类型源码分析：基础结构、map/and_then/or_else 等核心方法实现与设计模式。"
 slug = "option"

@@ -2,7 +2,10 @@
 date = '2026-01-04T10:15:55+08:00'
 draft = true
 title = 'Serde and Serde_json'
+description = '深入理解 serde 框架与 serde_json 的分工：serde 作为序列化协议定义 Trait 接口，serde_json 作为 JSON 格式的具体实现。'
+slug = 'serde-and-serde-json'
 categories = ['rust']
+tags = ['serde', 'serde_json', 'serialization']
 
 +++
 

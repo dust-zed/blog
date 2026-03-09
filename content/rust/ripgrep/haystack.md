@@ -2,7 +2,7 @@
 date = '2025-08-26T09:21:41+08:00'
 draft = false
 title = 'Haystack'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 
 +++
 

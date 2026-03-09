@@ -2,7 +2,7 @@
 date = '2025-10-12T15:03:56+08:00'
 draft = true
 title = 'Glob语法'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Glob', 'Syntax']
 description = "Ripgrep 中 Glob 语法详解：通配符、字符集、路径匹配与忽略规则。"
 slug = "glob-syntax"

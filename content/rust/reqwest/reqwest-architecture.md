@@ -2,7 +2,7 @@
 date = '2025-09-02T16:42:46+08:00'
 draft = false
 title = 'Reqwest模块架构解析'
-categories = ['rust', 'reqwest']
+categories = ['rust']
 tags = ['Rust', 'Reqwest', 'Architecture', 'HTTP Client']
 description = "Reqwest 架构解析：核心模块（Async/Blocking）、辅助模块（DNS, Proxy, TLS）及 Features 管理。"
 slug = "reqwest-architecture"

@@ -2,7 +2,7 @@
 date = '2025-08-27T09:07:07+08:00'
 draft = false
 title = 'Walk整体架构'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Walk', 'Architecture']
 description = "Ripgrep Walk 架构深度解析：从三层设计模式到事件驱动遍历模型。"
 slug = "walk-architecture"

@@ -2,7 +2,7 @@
 date = '2025-08-27T10:28:07+08:00'
 draft = false
 title = 'ripgrep的完整架构'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Architecture', 'Design']
 description = "Ripgrep 完整架构解析：从参数解析到并行搜索的数据流与核心组件。"
 slug = "ripgrep-architecture"

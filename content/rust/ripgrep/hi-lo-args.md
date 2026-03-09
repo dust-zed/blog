@@ -2,7 +2,7 @@
 date = '2025-08-24T20:57:16+08:00'
 draft = false
 title = 'HiArgs和lowArgs'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Architecture', 'Arguments']
 description = "Ripgrep 参数分层设计：LowArgs 与 HiArgs 的职责分离、配置构建与核心设计模式。"
 slug = "hi-lo-args"

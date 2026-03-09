@@ -2,7 +2,7 @@
 date = '2025-08-22T22:03:01+08:00'
 draft = false
 title = 'ripgrep的main函数'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Entry Point', 'Execution Flow']
 description = "Ripgrep 入口函数 main.rs 解析：参数分发、并发策略、错误处理与运行模式。"
 slug = "main-entry"

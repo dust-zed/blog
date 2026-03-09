@@ -2,7 +2,7 @@
 date = '2025-09-12T02:39:18+08:00'
 draft = true
 title = '各类Handle之职责区分'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Handle', 'Architecture']
 description = "Tokio 中各类 Handle (Runtime, Time, Scheduler, IO) 的职责与设计目的区分。"
 slug = "handle-responsibilities"

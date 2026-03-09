@@ -2,7 +2,7 @@
 date = '2025-09-02T08:29:31+08:00'
 draft = true
 title = 'Rust标准库学习清单'
-categories = ['rust', 'std']
+categories = ['rust']
 tags = ['Rust', 'Standard Library', 'List']
 description = "Rust 标准库学习清单：核心基础、集合类型、并发、异步、I/O 等模块的学习进度追踪。"
 slug = "std-todo-list"

@@ -2,7 +2,7 @@
 title = "Jetpack Compose 渲染揭秘：从「洋葱模型」到极致性能"
 date = 2026-01-02T21:30:00+08:00
 draft = false
-categories = ["Android", "Performance"]
+categories = ["android"]
 tags = ["Jetpack Compose", "GraphicsLayer", "Optimization", "Rendering"]
 description = "深入剖析 Compose 的渲染流水线，揭示 Modifier 链式调用的本质，并总结虚拟摇杆开发中的性能优化血泪史。"
 +++

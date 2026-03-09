@@ -2,7 +2,7 @@
 title = "从 MVVM 到 MVI：架构的「意图驱动」演进"
 date = 2026-01-02T21:00:00+08:00
 draft = false
-categories = ["Android", "Architecture"]
+categories = ["android"]
 tags = ["MVI", "Clean Architecture", "Kotlin Flow", "Unidirectional Data Flow"]
 description = "深度解析在云游戏客户端开发中，如何从 MVVM 迁移到 MVI 架构，以及「消费者驱动」设计哲学带来的开发范式转变。"
 +++

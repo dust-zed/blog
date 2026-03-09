@@ -2,7 +2,7 @@
 date = '2025-09-03T12:28:49+08:00'
 draft = false
 title = 'Tokio整体结构'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Architecture', 'Design']
 description = "Tokio 整体架构设计：Reactor, Scheduler, 异步任务及核心设计哲学。"
 slug = "tokio-architecture"

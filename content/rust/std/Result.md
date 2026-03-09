@@ -2,7 +2,7 @@
 date = '2025-09-01T10:21:06+08:00'
 draft = false
 title = 'Result源码分析'
-categories = ['rust', 'std']
+categories = ['rust']
 tags = ['Rust', 'Standard Library', 'Result', 'Source Code']
 description = "Rust 标准库 Result 类型源码分析：基础结构、is_ok/err、map/and_then、? 操作符及迭代器集成。"
 slug = "result"

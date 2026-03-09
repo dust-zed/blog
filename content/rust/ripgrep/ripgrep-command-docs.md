@@ -2,7 +2,7 @@
 date = '2025-08-15T12:50:54+08:00'
 draft = false
 title = 'Ripgrep的命令文档'
-categories = ["rust", "ripgrep"]
+categories = ["rust"]
 tags = ['Rust', 'Ripgrep', 'Command Line', 'Reference']
 description = "Ripgrep 常用命令与参数选项详解：Input, Search, Filter, Output Options。"
 slug = "ripgrep-command-docs"

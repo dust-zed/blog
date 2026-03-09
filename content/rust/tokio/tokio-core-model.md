@@ -2,7 +2,7 @@
 date = '2025-09-19T13:50:29+08:00'
 draft = false
 title = 'Tokio核心模型解析'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Async Model', 'Reactor', 'Executor']
 description = "Tokio 核心模型全解析：从 Runtime 顶层架构到任务状态机、调度器及执行流程。"
 slug = "tokio-core-model"

@@ -2,7 +2,7 @@
 date = '2025-10-10T15:43:59+08:00'
 draft = false
 title = '简单版ripgrep实现总结'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Project', 'Implementation', 'Ripgrep']
 description = "一个简化版 Ripgrep (tbt_ripgrep) 的实现总结：功能特性、与原版对比及学习心得。"
 slug = "mini-ripgrep"

@@ -2,7 +2,7 @@
 title = "解构云游戏协议：从 RTSP 握手到 NALU 碎片化"
 date = 2026-01-02T22:00:00+08:00
 draft = false
-categories = ["Cloud Gaming", "Network", "Protocols"]
+categories = ["computer-science"]
 tags = ["RTSP", "RTP", "NALU", "H.264", "ENet", "Reliable UDP"]
 description = "深入云游戏的心脏，解析 HTTP/RTSP/RTP 协议栈的分工，H.264 码流的原子结构，以及为何在输入传输中选择了 Reliable UDP。"
 +++

@@ -2,7 +2,7 @@
 date = '2025-09-11T16:20:08+08:00'
 draft = false
 title = 'Time的阅读学习记录'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Time', 'Source Code']
 description = "Tokio Time 模块源码阅读记录：source.rs, entry.rs, mod.rs 等核心文件详解。"
 slug = "time-notes"

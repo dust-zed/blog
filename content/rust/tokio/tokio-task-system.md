@@ -2,7 +2,7 @@
 date = '2025-09-19T12:38:14+08:00'
 draft = false
 title = 'Tokio任务系统解析'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Task System', 'Scheduling']
 description = "深入解析 Tokio 任务系统：从任务表示、生命周期到并发控制与调度实现。"
 slug = "tokio-task-system"

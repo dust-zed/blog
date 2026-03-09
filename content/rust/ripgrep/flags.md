@@ -2,7 +2,7 @@
 date = '2025-08-23T12:06:35+08:00'
 draft = false
 title = 'Flags相关'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Flags', 'Parsing']
 description = "Ripgrep Flags 解析机制详解：FlagValue, 解析流程, parse_low 与 parse 的职责分离。"
 slug = "flags"

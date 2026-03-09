@@ -2,7 +2,7 @@
 date = '2025-09-17T10:00:38+08:00'
 draft = true
 title = 'Task阅读手记'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Task', 'Source Code']
 description = "Tokio Task 模块源码阅读手记：error.rs, join.rs, core.rs, abort.rs 等核心文件详解。"
 slug = "task-notes"

@@ -2,7 +2,7 @@
 date = '2025-09-04T15:03:11+08:00'
 draft = false
 title = 'Pin和Unpin'
-categories = ['rust', 'tokio']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Pin', 'Unpin', 'Async']
 description = "深入理解 Rust 中的 Pin 和 Unpin 机制及其在异步编程中的作用。"
 slug = "pin-unpin"

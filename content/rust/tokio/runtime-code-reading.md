@@ -2,7 +2,7 @@
 date = '2025-09-09T00:20:36+08:00'
 draft = true
 title = 'Runtime逐文件阅读学习记录'
-categories = ['rust', 'tokio', 'runtime']
+categories = ['rust']
 tags = ['Rust', 'Tokio', 'Runtime', 'Source Code']
 description = "Tokio Runtime 源码阅读笔记：从 thread_id 到 task_hooks，深入理解 Tokio 内部实现机制。"
 slug = "runtime-code-reading"

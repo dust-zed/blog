@@ -2,7 +2,7 @@
 date = '2025-10-11T11:56:55+08:00'
 draft = true
 title = 'WalkParallel的学习'
-categories = ['rust', 'ripgrep']
+categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Parallel', 'Walk']
 description = "深入学习 Ripgrep 并行文件遍历机制：WalkParallel, WalkState, Visitor 模式及实现细节。"
 slug = "walk-parallel"

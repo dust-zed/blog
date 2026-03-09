@@ -2,7 +2,7 @@
 date = '2025-09-02T10:12:13+08:00'
 draft = true
 title = 'Iterator源码分析'
-categories = ['rust', 'std']
+categories = ['rust']
 tags = ['Rust', 'Standard Library', 'Iterator', 'Source Code']
 description = "Rust 标准库 Iterator trait 源码分析：Next、Map、Filter、Fold 等核心方法与适配器模式。"
 slug = "iterator"
