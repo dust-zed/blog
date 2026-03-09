@@ -2,6 +2,10 @@
 date = '2026-01-04T09:56:07+08:00'
 draft = true
 title = 'WebRTC SDP and IceCandidate'
+description = "深入解析 WebRTC 的 SDP 会话描述与 ICE 候选者：协议结构、业务含义及 Rust 代码建模。"
+slug = "webrtc-sdp-and-icecandidate"
+categories = ['computer-science']
+tags = ['WebRTC', 'SDP', 'ICE', 'Network']
 +++
 
 我们将 **SDP** 和 **IceCandidate** 放在云游戏（WebRTC）的宏观图景中，像拆解精密机械一样，从**协议结构**、**业务含义**到**Rust 代码建模**进行一次彻底的综合解析。

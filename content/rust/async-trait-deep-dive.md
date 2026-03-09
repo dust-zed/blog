@@ -1,6 +1,6 @@
 +++
 date = '2026-01-11T20:06:26+08:00'
-draft = true
+draft = false
 title = '从异步 Trait 到底层原理'
 categories = ['rust']
 tags = ['Rust', 'Async', 'Trait', 'VTable', 'Pin']

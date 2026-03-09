@@ -1,6 +1,6 @@
 +++
 date = '2026-02-04T23:19:02+08:00'
-draft = true
+draft = false
 title = 'Wgpu 基本概念与初始化'
 categories = ['rust']
 tags = ['Rust', 'Wgpu', 'GPU', 'Graphics']

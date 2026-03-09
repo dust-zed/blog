@@ -1,7 +1,7 @@
 +++
 title = "12月总结：从 UI 架构到流媒体协议的跨越"
 date = 2026-01-02T20:30:00+08:00
-draft = true
+draft = false
 description = "2024年12月学习总结：从 MVVM 到 MVI 架构演进、Jetpack Compose 性能优化、WebRTC 与流媒体协议深入。"
 slug = "2025-12-monthly-summary"
 categories = ["journal"]
