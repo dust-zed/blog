@@ -187,3 +187,9 @@ impl IceCandidate {
 - **SDP** 是 **静态的蓝图**，规定了有多少条路、通行证密码是什么。没有它，世界是混沌的。
 - **IceCandidate** 是 **动态的探针**，不断尝试填充蓝图中的路径。
 - **Offer 必须在 Candidate 之前**，因为没有蓝图，探针就不知道往哪里插，也没有密码去验证探针的合法性。
+
+---
+
+## 相关内容
+
+- [WebRTC 与云游戏](/p/webrtc-and-cloud-gaming) - WebRTC 宏观架构与云游戏场景优化策略

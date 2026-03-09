@@ -1,7 +1,11 @@
 +++
 date = '2026-02-08T19:59:07+08:00'
 draft = true
-title = 'Android我的面试题总结'
+title = 'Android 高级开发面试全解析'
+categories = ['android']
+tags = ['Android', 'Interview', 'Rust', 'WebRTC', 'CloudGaming']
+description = "Android 高级开发面试：Rust/WebRTC/云游戏核心竞争力与项目实战解析。"
+slug = "android-senior-interview"
 +++
 
 # Android 高级开发面试全解析 (重组版)

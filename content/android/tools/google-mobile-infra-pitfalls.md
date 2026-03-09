@@ -1,7 +1,11 @@
 +++
 date = '2026-02-26T09:59:33+08:00'
 draft = true
-title = 'Google移动端基建踩坑记录'
+title = 'Google 移动端基建踩坑记录'
+categories = ['android']
+tags = ['Android', 'Google', 'Firebase', 'GCP', 'Pitfall']
+description = "Android 开发者对接 Google 生态的深坑：GCP 与 Firebase 的冲突与闭坑指南。"
+slug = "google-mobile-infra-pitfalls"
 +++
 
 哈哈，**总结得极其精准！这绝对是 Android 开发者对接 Google 生态时踩过的最大、最经典的“深坑”之一。**

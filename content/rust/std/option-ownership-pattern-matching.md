@@ -1,7 +1,11 @@
 +++
 date = '2026-02-26T10:45:04+08:00'
 draft = true
-title = 'Option所有权和模式匹配总结'
+title = 'Rust Option 所有权与模式匹配'
+categories = ['rust']
+tags = ['Rust', 'Ownership', 'PatternMatching', 'Option']
+description = "Rust Option<T> 所有权与模式匹配：借用 vs 拿走的四种访问方式详解。"
+slug = "option-ownership-pattern-matching"
 +++
 
 ## 一、 核心问题

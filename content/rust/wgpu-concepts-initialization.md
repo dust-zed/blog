@@ -1,7 +1,11 @@
 +++
 date = '2026-02-04T23:19:02+08:00'
 draft = true
-title = 'Wgpu基本概念与初始化'
+title = 'Wgpu 基本概念与初始化'
+categories = ['rust']
+tags = ['Rust', 'Wgpu', 'GPU', 'Graphics']
+description = "Wgpu 入门：从 Android 开发者视角理解 GPU 编程核心概念与初始化流程。"
+slug = "wgpu-concepts-initialization"
 +++
 
 #### 1. 依赖配置 (Cargo.toml)

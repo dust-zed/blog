@@ -1,7 +1,11 @@
 +++
 date = '2026-02-25T10:46:36+08:00'
 draft = true
-title = 'QUIC网络层实现总结'
+title = 'QUIC 网络层实现总结'
+categories = ['computer-science']
+tags = ['QUIC', 'Network', 'Rust', 'Protocol']
+description = "Embers 项目 QUIC 网络层实现：QuicServer/Client 收发能力与 trait 抽象设计。"
+slug = "quic-implementation-summary"
 +++
 
 # QUIC 网络层实现总结

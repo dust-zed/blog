@@ -1,7 +1,11 @@
 +++
 date = '2026-02-09T10:10:12+08:00'
 draft = true
-title = 'Android_App_Startup'
+title = 'Android App 启动流程'
+categories = ['android']
+tags = ['Android', 'Startup', 'Framework', 'Zygote']
+description = "从点击图标到页面显示：Launcher、AMS、Zygote 三方协作的完整启动流程解析。"
+slug = "android-app-startup"
 +++
 
 ## 从点击图标到页面显示

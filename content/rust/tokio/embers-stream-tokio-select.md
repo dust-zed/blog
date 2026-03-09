@@ -1,7 +1,11 @@
 +++
 date = '2026-02-21T09:56:14+08:00'
 draft = true
-title = 'Embers : Stream与tokio::select的艺术'
+title = 'Embers: Stream 与 tokio::select 的艺术'
+categories = ['rust']
+tags = ['Rust', 'Stream', 'Tokio', 'Async', 'CloudGaming']
+description = "云游戏实时系统中如何优雅处理无限数据流：从迭代器到 Stream，tokio::select! 实践。"
+slug = "embers-stream-tokio-select"
 +++
 
 #### 前言
@@ -96,3 +100,9 @@ fn infinite_counter() -> impl Stream<Item = u64> {
 }
 ```
 
+---
+
+## 相关内容
+
+- [Embers Stream: 云游戏流媒体核心模块](/p/embers-stream-cloud-gaming-core) - 完整的架构设计与实现
+- [QUIC 网络层实现总结](/p/quic-implementation-summary) - QUIC 网络传输实现

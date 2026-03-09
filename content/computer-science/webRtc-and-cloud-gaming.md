@@ -1,7 +1,7 @@
 +++
 date = '2026-01-02T22:57:34+08:00'
 draft = true
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['WebRTC', 'Network']
 description = "简单了解 WebRTC 协议"
 slug = "webRtc-and-cloud-gaming"
@@ -32,3 +32,9 @@ slug = "webRtc-and-cloud-gaming"
 * 单向高码率流：配置 SDP 限制`Receive Video = true`，`Send Video = false`，节省手机电量。
 * 输入低延迟：操作指令不走 WebSocket，也不走 TCP，而是通过 WebRTC DataChnanel（SCTP 协议），配置为`unordered`和`unrliable`，宁可丢包不可重传。
 * 硬件解码：Android端必须正确注入`EglBase.Context`到`PeerConnectionFactory`，启用 MediaCodec 硬解。
+
+---
+
+## 相关内容
+
+- [WebRTC SDP 与 IceCandidate 详解](/p/webrtc-sdp-and-icecandidate) - SDP 媒体协商与 ICE 网络协商的深度解析

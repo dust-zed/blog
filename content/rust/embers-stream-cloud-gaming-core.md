@@ -1,7 +1,11 @@
 +++
 date = '2026-02-17T19:31:18+08:00'
 draft = true
-title = 'Emmbers Stream : 云游戏流媒体核心模块'
+title = 'Embers Stream: 云游戏流媒体核心模块'
+categories = ['rust']
+tags = ['Rust', 'CloudGaming', 'Streaming', 'Architecture']
+description = "Embers 项目流媒体核心模块：屏幕捕获、视频编码、网络传输的完整设计。"
+slug = "embers-stream-cloud-gaming-core"
 +++
 
 ## 一、 模块定位
@@ -435,3 +439,10 @@ impl GStreamerEncoder {
       Frame               NetPacket          网络传输
     (BGRA Vec<u8>)     (H.264 Bytes)       (QUIC Stream)
 ```
+
+---
+
+## 相关内容
+
+- [Embers: Stream 与 tokio::select 的艺术](/p/embers-stream-tokio-select) - 异步流处理的优雅方式
+- [QUIC 网络层实现总结](/p/quic-implementation-summary) - QUIC 网络传输实现详情

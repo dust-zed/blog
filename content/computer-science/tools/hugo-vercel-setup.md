@@ -2,7 +2,7 @@
 date = '2025-06-11T12:20:50+08:00'
 draft = false
 title = 'Hugo Vercel博客配置'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['Hugo', 'Vercel', 'Blog']
 description = '利用Hugo搭建博客并通过Vercel自动部署'
 slug = "hugo-vercel-setup"

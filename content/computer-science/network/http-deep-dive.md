@@ -2,7 +2,7 @@
 date = '2025-11-02T10:14:30+08:00'
 draft = false
 title = 'Http协议深度解析'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['HTTP', 'Protocol', 'Network']
 description = "HTTP 协议核心解析：请求/响应结构、方法与状态码、连接管理、缓存机制及 HTTP/2/3 演进。"
 slug = "http-deep-dive"
