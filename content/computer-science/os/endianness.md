@@ -1,7 +1,7 @@
 +++
 date = 2025-08-22T03:33:16+08:00
 title = '详解大端序与小端序 (Big Endian vs Little Endian)'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['理论', '底层原理', 'Rust']
 description = "详解大端序与小端序的区别、内存布局及 Rust 中的处理方式。"
 slug = "endianness"

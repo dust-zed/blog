@@ -2,7 +2,7 @@
 date = '2025-11-03T14:09:03+08:00'
 draft = false
 title = 'Https加密工作流程'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['HTTPS', 'Security', 'Encryption', 'TLS']
 description = "详解 HTTPS 工作流程：对称加密与非对称加密的结合，数字证书验证过程及握手细节。"
 slug = "https-encryption-flow"

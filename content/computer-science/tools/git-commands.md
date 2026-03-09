@@ -2,7 +2,7 @@
 date = '2025-09-21T11:08:27+08:00'
 draft = false
 title = 'Git命令积累'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['Git', 'Version Control']
 description = "常用 Git 命令速查与技巧积累。"
 slug = "git-commands"

@@ -2,7 +2,7 @@
 date = '2025-09-21T13:21:34+08:00'
 draft = false
 title = '版本迭代式学习项目源码'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['Source Code', 'Learning', 'Git']
 description = "通过 Git 历史与标签进行版本迭代式源码阅读的方法论。"
 slug = "iterative-learning"

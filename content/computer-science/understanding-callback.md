@@ -1,7 +1,7 @@
 +++
 date = 2025-09-12T03:02:50+08:00
 title = '深入理解 Callback：从机制到 Rust 实现'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['编程范式', 'Rust', '闭包']
 description = "深入理解回调 (Callback) 机制：由控制反转 (IoC) 到 Rust 中的闭包实现。"
 slug = "understanding-callback"

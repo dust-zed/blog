@@ -2,7 +2,7 @@
 date = '2025-09-08T14:00:04+08:00'
 draft = false
 title = 'Vscode高效光标移动'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['VSCode', 'Efficiency', 'Shortcuts']
 description = "VS Code 高效光标移动快捷键速查表。"
 slug = "vscode-efficiency"

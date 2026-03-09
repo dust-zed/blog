@@ -2,7 +2,7 @@
 date = '2025-09-08T12:19:22+08:00'
 draft = false
 title = 'Mac终端美化配置'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['Mac', 'Terminal', 'Zsh', 'iTerm2']
 description = "Mac 终端终极美化指南：iTerm2 + Oh My Zsh + Powerlevel10k 配置教程。"
 slug = "mac-terminal-setup"

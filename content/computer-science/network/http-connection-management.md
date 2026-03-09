@@ -2,7 +2,7 @@
 date = '2025-11-03T15:18:19+08:00'
 draft = true
 title = 'HTTP连接管理'
-categories = ['cs-basics']
+categories = ['computer-science']
 tags = ['HTTP', 'Network', 'Performance']
 description = "深入解析 HTTP 连接管理演进：从短连接、Keep-Alive 到管道化与域名分片，以及预热技术。"
 slug = "http-connection-management"
