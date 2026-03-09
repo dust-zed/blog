@@ -1,8 +1,11 @@
 +++
 date = '2026-01-11T13:59:24+08:00'
 draft = true
-title = 'UniFFi 实战手册'
-
+title = 'UniFFI 实战手册：Android + Rust 混合开发'
+categories = ['android']
+tags = ['UniFFI', 'Rust', 'Android', 'FFI']
+description = "UniFFI 实战手册：像写普通 Rust 代码一样开发，自动生成完美的 Kotlin 接口。"
+slug = "uniffi-practical-guide-android-rust"
 +++
 
 **核心定位**：UniFFI 是你的“AI 翻译机”。它让你像写普通 Rust 代码一样开发，然后自动生成完美的 Kotlin 接口 (JNI 胶水代码)。推荐模式：全线采用 **Proc Macros（过程宏）**模式。

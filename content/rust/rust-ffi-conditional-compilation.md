@@ -1,9 +1,11 @@
 +++
 date = '2026-01-18T10:37:29+08:00'
 draft = true
-title = 'Rust FFI最佳实践：利用条件编译实现零成本模型共享'
+title = 'Rust FFI 最佳实践：利用条件编译实现零成本模型共享'
 categories = ['rust']
-
+tags = ['Rust', 'FFI', 'UniFFI', 'ConditionalCompilation']
+description = "利用条件编译实现 Rust Core + 移动端 UI 架构中的零成本模型共享。"
+slug = "rust-ffi-conditional-compilation"
 +++
 
 ### 1. 背景与痛点

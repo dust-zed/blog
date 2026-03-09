@@ -1,9 +1,11 @@
 +++
 date = '2026-01-11T17:32:07+08:00'
 draft = true
-title = 'Rust底层揭秘:函数调用、栈帧与虚表的内存博弈'
+title = 'Rust 底层揭秘：函数调用、栈帧与虚表的内存博弈'
 categories = ['rust']
-
+tags = ['Rust', 'VTable', 'StackFrame', 'Memory', 'LowLevel']
+description = "深入理解 Rust 虚表、栈帧与函数调用的内存布局，以及 async fn 与 dyn Trait 的根本矛盾。"
+slug = "rust-stack-frame-vtable-memory"
 +++
 
 ## Rust底层揭秘：函数调用、栈帧与虚表的内存博弈

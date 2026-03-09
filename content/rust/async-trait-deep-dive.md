@@ -1,9 +1,11 @@
 +++
 date = '2026-01-11T20:06:26+08:00'
 draft = true
-title = '从异步Trait到底层原理'
+title = '从异步 Trait 到底层原理'
 categories = ['rust']
-
+tags = ['Rust', 'Async', 'Trait', 'VTable', 'Pin']
+description = "通过手动实现异步 Trait，深入理解 Trait Object、VTable、Pinning、Send/Sync 及 Lifetimes。"
+slug = "async-trait-deep-dive"
 +++
 
 **核心冲突**：Rust 零成本抽象原则与动态分发的灵活性在`async`场景下发生了剧烈碰撞。**本文目标**：通过手动实现一个异步 Trait，彻底理解**Trait Object、VTable、Pinning、Send/Sync**以及**Lifetimes**的底层机制。

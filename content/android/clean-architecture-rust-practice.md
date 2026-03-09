@@ -1,7 +1,11 @@
 +++
 date = '2026-01-11T13:02:10+08:00'
 draft = true
-title = 'Clean_Architecture+Rust实战'
+title = 'Clean Architecture + Rust 实战'
+categories = ['android']
+tags = ['Architecture', 'Rust', 'CleanArchitecture', 'FFI']
+description = "Domain 驱动下的 UI 与逻辑彻底分离：Kotlin UI + Rust Core 架构实践。"
+slug = "clean-architecture-rust-practice"
 +++
 
 # 架构升维：Domain 驱动下的“UI 与 逻辑”彻底分离 (Kotlin UI + Rust Core)
