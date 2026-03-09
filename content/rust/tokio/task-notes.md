@@ -1,6 +1,6 @@
 +++
 date = '2025-09-17T10:00:38+08:00'
-draft = true
+draft = false
 title = 'Task阅读手记'
 categories = ['rust']
 tags = ['Rust', 'Tokio', 'Task', 'Source Code']

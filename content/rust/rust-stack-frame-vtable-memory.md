@@ -1,6 +1,6 @@
 +++
 date = '2026-01-11T17:32:07+08:00'
-draft = true
+draft = false
 title = 'Rust 底层揭秘：函数调用、栈帧与虚表的内存博弈'
 categories = ['rust']
 tags = ['Rust', 'VTable', 'StackFrame', 'Memory', 'LowLevel']

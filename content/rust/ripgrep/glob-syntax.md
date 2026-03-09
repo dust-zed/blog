@@ -1,6 +1,6 @@
 +++
 date = '2025-10-12T15:03:56+08:00'
-draft = true
+draft = false
 title = 'Glob语法'
 categories = ['rust']
 tags = ['Rust', 'Ripgrep', 'Glob', 'Syntax']
