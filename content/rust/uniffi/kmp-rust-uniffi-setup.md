@@ -294,7 +294,7 @@ import java.util.Properties
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.android.kotlin.multiplatform.library") // AGP 9.0 KMP 专用架构
+    id("com.android.kotlin.multiplatform.library") // gradle 9.0 KMP 专用架构
 }
 
 /* ==========================================================================
@@ -309,7 +309,7 @@ val buildDir = layout.buildDirectory.get().asFile
 val generatedKotlinDir = File(buildDir, "generated/rust/uniffi/kotlin")
 val generatedJvmResourcesDir = File(buildDir, "generated/rust/resources")
 
-// 2. Android 的 JNI 库放回 src 目录，顺应 AGP 9.0 默认嗅探机制
+// 2. Android 的 JNI 库放回 src 目录，顺应 gradle 9.0 默认嗅探机制
 // ⚠️ 极其重要：必须在 .gitignore 中忽略此目录！(src/androidMain/jniLibs/)
 val jniLibsDir = projectDir.resolve("src/androidMain/jniLibs")
 
@@ -330,7 +330,7 @@ val ndkHome: String = localProperties.getProperty("ndk.dir")
  * 2. KMP 与 Android 基础配置
  * ========================================================================== */
 kotlin {
-    // Android 平台 (AGP 9.0 极简配置，不写 sourceSets 避免 DSL 报错)
+    // Android 平台 (gradle 9.0 极简配置，不写 sourceSets 避免 DSL 报错)
     androidLibrary {
         namespace = "org.forge.kmp.uniffi.rust"
         compileSdk = 36
