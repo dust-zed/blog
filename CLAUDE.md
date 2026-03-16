@@ -73,6 +73,7 @@ Blog（本仓库）  →  候选池  →  公众号（发布）
 - `content/rust/`：Rust 相关
 - `content/computer-science/`：计算机基础（网络/OS/工具等）
 - `content/journal/`：周报、月报、流水笔记
+- `content/interview/`：面试知识体系（按主题组织，非问答式）
 
 约束：
 
@@ -90,6 +91,7 @@ Blog（本仓库）  →  候选池  →  公众号（发布）
 - `rust`
 - `computer-science`
 - `journal`
+- `interview`
 
 说明：
 
@@ -350,3 +352,75 @@ last_reviewed = "2026-03-08"
 - `missing_points`：需要补充的要点
 - `format_issues`：需要修复的格式项
 - `status`：`todo` / `doing` / `done`
+
+## 18) 各分区目录结构
+
+### 18.1 rust/
+
+```
+rust/
+├── fundamentals/      # 语言基础：所有权、异步、IO
+├── source-study/      # 源码学习：tokio、ripgrep、std
+│   ├── tokio/
+│   ├── ripgrep/
+│   ├── reqwest/
+│   └── std/
+├── practice/          # 实战项目：uniffi、wgpu
+└── guides/            # 学习指南：路线图、脚手架
+```
+
+### 18.2 interview/
+
+```
+interview/
+├── android/           # Android 面试主题
+│   ├── rendering-system.md
+│   ├── message-system.md
+│   ├── process-and-threads.md
+│   ├── async-programming.md
+│   ├── modern-ui-architecture.md
+│   ├── memory-management.md
+│   ├── performance-optimization.md
+│   └── cross-platform.md
+└── rust/              # Rust 面试主题
+    └── basics-ownership.md
+```
+
+**原则**：面试内容按**主题**组织，而非问答式。每个主题包含：
+- 核心问题（驱动性问题）
+- 知识脉络（层层递进）
+- 面试高频点（从理解中引出）
+- 实战案例
+- 知识关联
+
+### 18.3 android/
+
+```
+android/
+├── architecture/      # 架构设计
+├── compose/           # Jetpack Compose
+├── framework/         # Android 框架
+├── kotlin/            # Kotlin 语言
+├── ndk/               # NDK/Rust 集成
+├── performance/       # 性能优化
+├── pitfalls/          # 踩坑记录
+└── tools/             # 开发工具
+```
+
+### 18.4 computer-science/
+
+```
+computer-science/
+├── network/           # 网络协议
+├── os/                # 操作系统
+└── tools/             # 开发工具
+```
+
+### 18.5 journal/
+
+```
+journal/
+├── weekly/            # 周报
+├── monthly/           # 月报
+└── memos/             # 碎片笔记（可选）
+```
