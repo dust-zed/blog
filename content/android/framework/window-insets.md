@@ -468,7 +468,7 @@ ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
 ```kotlin
 // ❌ 错误：没有监听 IME Insets
 // 或者 AndroidManifest.xml 中设置了：
-android:windowSoftInputMode="adjustResize"  // 这个已过时
+android:windowSoftInputMode="adjustResize"  // 过时的是代码常量 SOFT_INPUT_ADJUST_RESIZE
 
 // ✅ 正确：
 WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -546,4 +546,3 @@ ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
 Modifier.systemBarsPadding()
 Modifier.imePadding()
 ```
-

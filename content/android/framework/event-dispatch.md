@@ -162,7 +162,7 @@ public boolean dispatchTouchEvent(MotionEvent event) {
 * onTouch是View.OnTouchListener接口中的方法
 * onTouchEvent是View的方法
 * onTouch的优先级高于onTouchEvent
-* 如果onTouch返回true，则onTouch不会被调用
+* 如果onTouch返回true，事件已被消费，后续通常不会再调用该 View 的`onTouchEvent()`
 
 ### 4.3 如何解决滑动冲突
 
@@ -210,4 +210,3 @@ public class CustomViewPager extends ViewGroup {
     }
 }
 ```
-

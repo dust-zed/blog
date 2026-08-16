@@ -96,8 +96,9 @@ let b: Option<&String> = opt.as_ref();  // Option 里装引用
 let mut opt = Some(String::from("hello"));
 
 // 问题：unwrap() 后 opt 变成未初始化状态
-let value = opt.unwrap(); // opt 被部分 move
-// opt = None;	// 不能赋值， opt 处于 "部分可用"的奇怪状态
+let value = opt.unwrap(); // opt 被 move
+// opt = None;	// opt 这个变量重新赋值
+// println!("{opt:?}")  // 不能读取旧值
 
 // 解决： take() 取出值， 自动留下 None
 let value = opt.take(); // value = Some("hello"), opt = None

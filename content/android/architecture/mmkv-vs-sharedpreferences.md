@@ -26,7 +26,7 @@ Android中的MMKV和SharedPreferences都是用于存储键值对数据的轻量�
 * 主要缺点：
   * 性能较差：
     * **全量写入**：即使只修改一个值，`apply()/commit()`也会触发整个XML文件的序列化和写入操作。
-    * **XML解析开销**：每次读取都需要解析XML
+    * **XML解析开销**：初次加载会读 XML，之后通常走内存缓存。
   * 潜在ANR风险：
     * `commit(`)在主线程同步写入大文件可能导致ANR。
     * `apply()`的潜在ANR：apply虽然异步，但它把写入任务放进一个`QueueWork队列`。在Activity生命周期（如`onPause`，`onStop`）触发`QueueWork.waitToFinish()`时，会等待所有未完成的apply()写入任务完成。如果后台任务积压或写入缓慢，会阻塞主线程，可能导致ANR(尤其在低端设备、频繁更新或大文件时)。
@@ -52,4 +52,3 @@ Android中的MMKV和SharedPreferences都是用于存储键值对数据的轻量�
     * 写入操作几乎完全被`mmap`和`OS`接管，是真正非阻塞的。
     * 完全避免了`SharedPreferences.apply`潜在的`QueueWork.waitToFinish()`ANR问题
   * 支持数据类型丰富：原生支持基本类型、`String`, `byte[]`, 并且能方便地支持实现了 `Parcelable` 或 `Serializable` 的**任意 Java 对象**。
-
