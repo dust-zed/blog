@@ -1,13 +1,22 @@
 +++
-title = "Jetpack Compose 渲染揭秘：从「洋葱模型」到极致性能"
+title = "Jetpack Compose 渲染性能：Modifier、graphicsLayer 与重组边界"
 date = 2026-01-02T21:30:00+08:00
 draft = false
 categories = ["android"]
 tags = ["Jetpack Compose", "GraphicsLayer", "Optimization", "Rendering"]
-description = "深入剖析 Compose 的渲染流水线，揭示 Modifier 链式调用的本质，并总结虚拟摇杆开发中的性能优化血泪史。"
+description = "整理 Compose 渲染性能的关键模型：Modifier 顺序、布局与绘制阶段、graphicsLayer、alpha 离屏缓冲和重组边界。"
+slug = "compose-performance-rendering"
 +++
 
-在开发云游戏客户端的虚拟手柄功能时，我们需要处理高频的触摸事件和复杂的 UI 动画。在这个过程中，我踩了无数因为不理解 Compose 底层机制而导致的坑，也总结出了一套行之有效的性能优化心法。
+在开发云游戏客户端的虚拟手柄功能时，我们需要处理高频触摸事件和复杂 UI 动画。这个场景很适合用来理解 Compose 性能：哪些变化会触发布局，哪些变化只影响绘制，哪些状态读取会扩大重组范围。
+
+## 核心结论
+
+1. Modifier 是按顺序包裹的，顺序会影响布局、点击和绘制。
+2. 布局阶段变化通常更贵，能放到绘制或合成阶段的动画尽量下沉。
+3. `graphicsLayer` 适合把平移、缩放、透明度等变换交给 GPU 合成。
+4. `alpha` 可能引入离屏缓冲，要关注裁剪和额外合成成本。
+5. 高频状态要隔离重组范围，不要让整棵 UI 跟着刷新。
 
 ## 1. Modifier 的「洋葱模型」
 
@@ -62,7 +71,7 @@ JoystickKnob(
 ```
 现在，`offset` 成了外层，它带着内部的 `clickable` 区域一起移动了。
 
-## 2. Alpha 导致的「截肢」惨案
+## 2. Alpha 与离屏缓冲
 
 当虚拟摇杆划出底座范围时，我希望它变半透明，于是加了 `Modifier.alpha(0.5f)`。结果发现：**超出底座的部分直接被切掉了！**
 
@@ -75,7 +84,7 @@ JoystickKnob(
 
 ### 优化对策
 
-对于只是想改变颜色透明度，且内容可能会溢出容器的场景，**绝对不要用 `Modifier.alpha`**。
+对于只是想改变颜色透明度，且内容可能会溢出容器的场景，要谨慎使用 `Modifier.alpha`。
 
 请直接操作颜色的 Alpha 通道：
 ```kotlin
@@ -95,7 +104,7 @@ Modifier.offset(x = state.x.dp, y = state.y.dp)
 
 这里有一个隐患：`offset` 会改变组件的 Layout 参数，不仅触发 **Draw (绘制)** 阶段，还会触发 **Placement (布局)** 阶段。虽然 Compose 做了优化不会触发 Measure，但在高频场景下，Layout 开销依然可观。
 
-### 使用 graphicsLayer 降维打击
+### 使用 graphicsLayer 降低布局压力
 
 更优的方案是使用 `Modifier.graphicsLayer`：
 
@@ -111,7 +120,7 @@ Modifier.graphicsLayer {
 
 这也解释了为什么在 Compose 动画中，优先推荐使用 `graphicsLayer` 属性，而不是修改 Layout 参数。
 
-## 4. 重组隔断术 (Provider Pattern)
+## 4. 重组边界隔离 (Provider Pattern)
 
 全局状态（如 `GameUiState`）的变化很容易导致大面积的 **Recomposition (重组)**。
 

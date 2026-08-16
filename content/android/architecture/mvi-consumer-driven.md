@@ -5,11 +5,20 @@ draft = false
 categories = ["android"]
 tags = ["MVI", "Clean Architecture", "Kotlin Flow", "Unidirectional Data Flow"]
 description = "深度解析在云游戏客户端开发中，如何从 MVVM 迁移到 MVI 架构，以及「消费者驱动」设计哲学带来的开发范式转变。"
+slug = "mvi-consumer-driven"
 +++
 
 在云游戏客户端的开发初期，我们采用了经典的 **MVVM (Model-View-ViewModel)** 架构。然而，随着业务复杂度的指数级上升——虚拟手柄状态、WebRTC 信令状态、视频流媒体状态、网络质量监控等多数据源的交织，MVVM 逐渐显露出疲态。
 
 State 分散在多个 `LiveData/StateFlow` 中，View 层充斥着各种状态的监听和组合逻辑，"状态"变得难以追踪和预测。这促使我们向 **MVI (Model-View-Intent)** 架构迈出了关键的一步。
+
+## 核心结论
+
+1. MVVM 在状态少时足够轻量，但复杂页面容易出现状态分散和监听组合混乱。
+2. MVI 的关键是把用户操作抽象成 `Intent`，把页面渲染抽象成单一 `State`。
+3. 一次性事件不要塞进 State，应通过 SideEffect 单独处理。
+4. Consumer-Driven Design 的重点是先设计上层想要的接口，再倒逼底层实现。
+5. 架构升级的目标不是换名词，而是让状态流向更可预测。
 
 ## 1. 核心概念：心智模型的重构
 

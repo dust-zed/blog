@@ -1,97 +1,127 @@
 +++
-title = 'RecyclerView缓存机制'
+title = 'RecyclerView 缓存机制：Scrap、Cache 与 RecycledViewPool'
 date = '2025-06-11T15:26:57+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'RecyclerView', 'Performance']
-description = "深入解析 RecyclerView 的多级缓存机制：Scrap, Cache, ViewCacheExtension 和 RecycledViewPool。"
+description = "整理 RecyclerView 多级缓存机制，解释 attachedScrap、changedScrap、mCachedViews、ViewCacheExtension、RecycledViewPool 与 Stable IDs 的作用。"
 slug = "recyclerview-caching-mechanism"
 +++
 
-## 多级缓存体系架构图
+RecyclerView 的性能核心不是“少创建几个 ViewHolder”这么简单，而是通过多级缓存把不同状态的 ViewHolder 放在不同位置，尽量减少创建、绑定和布局成本。
 
+## 核心结论
+
+1. 屏幕内重新布局优先命中 `attachedScrap`，通常不需要重新绑定。
+2. 屏幕外短距离滑动优先命中 `mCachedViews`，默认容量较小。
+3. `RecycledViewPool` 按 `viewType` 复用 ViewHolder，通常需要重新绑定。
+4. `changedScrap` 服务于更新动画和局部刷新。
+5. Stable IDs 能让 RecyclerView 在位置变化时仍按数据身份匹配 ViewHolder。
+
+## 多级缓存模型
+
+```text
+RecyclerView.Recycler
+├── attachedScrap
+│   └── 布局过程中临时保存屏幕内 ViewHolder
+├── changedScrap
+│   └── 保存发生数据变化、用于动画过渡的 ViewHolder
+├── mCachedViews
+│   └── 保存刚离开屏幕的 ViewHolder，按 position 优先复用
+├── ViewCacheExtension
+│   └── 业务自定义缓存入口，较少使用
+└── RecycledViewPool
+    └── 按 viewType 分类的共享回收池
 ```
-TEXT
 
-RecyclerView 缓存系统
-├── 1. 屏幕内缓存 (Attached Scrap)
-│   └── 存放当前可见的ViewHolder（快速复用）
-├── 2. 屏幕外缓存 (Cache)
-│   └── 保存最近离开屏幕的ViewHolder（默认容量=2）
-├── 3. 扩展缓存 (ViewCacheExtension)
-│   └── 开发者自定义缓存（特殊用途）
-└── 4. 回收池 (RecycledViewPool)
-    └── 全局共享的ViewHolder存储（不同类型独立缓存）
+可以粗略记成：
+
+```text
+越靠前，越接近原位置，复用成本越低；
+越靠后，越通用，但越可能需要重新绑定。
 ```
 
-根据`position`判断是否命中`Cache`，根据`viewType`判断是否命中`RecyclerViewPool`，会执行`onBindViewHolder`
+## attachedScrap
 
-在 **RecyclerView** 的回收复用机制中，`changedScrap` 和 `attachedScrap` 是两个关键临时缓存，而 **Stable IDs** 会改变 ViewHolder 获取的方式。以下是详细解释：
+`attachedScrap` 用在布局过程中。
 
----
+当 RecyclerView 重新布局时，当前可见的 ViewHolder 会先被临时放进 `attachedScrap`。布局管理器再次需要某个 position 时，可以直接取回来。
 
-## 1. `changedScrap` 的作用
+特点：
 
-- **用途**：专门配合 `notifyItemChanged()` 或 `notifyDataSetChanged()` 使用。
-- **工作机制**：
-  - 当调用 `notifyItemChanged(position)` 时，被标记更新的 item 会被临时移到 `changedScrap` 中。
-  - 在布局阶段（如 `onLayout`），这些 ViewHolder 会被重新绑定数据（调用 `onBindViewHolder()`），然后放回原位置。
-- **目的**：支持局部更新动画（如淡入淡出），避免直接回收导致视觉中断。
+1. 主要服务屏幕内重新布局；
+2. 通常按 position 匹配；
+3. 命中后一般不需要重新创建，也不需要重新绑定；
+4. 成本最低。
 
----
+## changedScrap
 
-## 2. `attachedScrap` 的作用
+`changedScrap` 主要服务更新动画。
 
-- **用途**：用于 **快速复用可见或即将可见的 ViewHolder**。
-- **工作机制**：
-  - 在布局过程中（如 `LinearLayoutManager.fill()`），RecyclerView 会先将当前屏幕上的 ViewHolder **临时移除** 到 `attachedScrap`。
-  - 遍历新布局时，直接从 `attachedScrap` 中按 **position 匹配** 取回 ViewHolder（无需创建或绑定）。
-- **目的**：避免无效的创建/绑定，提升滚动性能（尤其在快速滑动时）。
+当调用 `notifyItemChanged()` 或发生可动画的数据变化时，旧 ViewHolder 可能会进入 `changedScrap`，用于和新状态做动画过渡。
 
----
+特点：
 
-## 3. Stable IDs 如何改变 ViewHolder 获取方式
+1. 和 `ItemAnimator` 关系密切；
+2. 可能需要重新绑定；
+3. 用于保留变化前后的 ViewHolder 状态；
+4. 让局部刷新不至于直接闪烁。
 
-当启用 **Stable IDs**（通过 `setHasStableIds(true)` + 重写 `getItemId()`）时：
+## mCachedViews
 
-- **传统方式（无 Stable IDs）**：  
-  RecyclerView 通过 **position** 在 `attachedScrap` 或 `changedScrap` 中查找匹配的 ViewHolder。
+`mCachedViews` 保存刚离开屏幕的 ViewHolder，默认容量通常较小。
 
-  ```java
-  // 伪代码：按 position 匹配
-  ViewHolder vh = attachedScrap.findViewForPosition(position);
-  ```
+它的价值在于：用户短距离来回滑动时，刚离开的 item 很可能马上回来。这时直接复用可以避免重新绑定。
 
-- **启用 Stable IDs 后**：  
-  RecyclerView 改为通过 **item ID**（而非 position）在 `scrap` 中查找 ViewHolder：
+特点：
 
-  ```java
-  // 伪代码：按 stable ID 匹配
-  ViewHolder vh = changedScrap.findViewHolderByItemId(id);
-  ```
+1. 默认容量有限；
+2. 更偏向 position 级别复用；
+3. 命中后可能不需要重新绑定；
+4. 适合处理短距离滚动回退。
 
-### 优势
+## RecycledViewPool
 
-1. **位置无关复用**：  
-   - 即使数据集变化导致 item 位置改变（如插入/删除），仍能通过唯一 ID 正确复用 ViewHolder。
-   - 避免因 position 变化导致的 “复用错乱” 问题（如 A 位置复用到 B 数据）。
-2. **动画兼容性**：  
-   - 支持更流畅的动画（如 `DiffUtil`），因为 ID 是数据项的唯一标识，不受布局顺序影响。
-3. **效率提升**：  
-   - 查找操作从 O(N) 优化到 O(1)（基于 `LongSparseArray` 实现）。
+`RecycledViewPool` 是更通用的回收池，按 `viewType` 分类。
 
----
+进入这里的 ViewHolder 已经和具体 position 脱钩。复用时只保证类型匹配，不保证数据仍然正确，因此通常要重新执行 `onBindViewHolder()`。
 
-## 关键对比总结
+适合场景：
 
-| **特性**              | `changedScrap`                   | `attachedScrap`                   |
-| --------------------- | -------------------------------- | --------------------------------- |
-| **触发场景**          | `notifyItemChanged()` 调用时     | 布局过程中临时移除可见 ViewHolder |
-| **数据状态**          | 需重新绑定（`onBindViewHolder`） | 数据未变，直接复用                |
-| **存储内容**          | 被标记更新的 ViewHolder          | 当前/即将可见的 ViewHolder        |
-| **查找方式（无 ID）** | 按 `position` 匹配               | 按 `position` 匹配                |
-| **查找方式（有 ID）** | 按 `stableId` 匹配               | 按 `stableId` 匹配                |
+1. 长列表复用；
+2. 多个 RecyclerView 共享同类 item；
+3. ViewHolder 创建成本较高；
+4. 页面中存在嵌套列表。
 
-> **使用建议**：  
-> 若数据集存在动态位置变化（如排序、增删），强烈建议启用 **Stable IDs**，以提升复用准确性和动画效果。
+## Stable IDs 的作用
 
+默认情况下，RecyclerView 更依赖 position 判断 item 身份。数据插入、删除、排序后，position 会变化，这可能影响动画和复用判断。
+
+启用 Stable IDs 后：
+
+```kotlin
+adapter.setHasStableIds(true)
+
+override fun getItemId(position: Int): Long {
+    return items[position].id
+}
+```
+
+RecyclerView 可以用稳定 ID 判断“这是同一条数据”，即使它的位置变了。
+
+适合：
+
+1. 数据有天然唯一 ID；
+2. 列表存在插入、删除、排序；
+3. 需要更稳定的变更动画；
+4. 配合 `DiffUtil` 或 `ListAdapter` 使用。
+
+注意：Stable ID 必须稳定且唯一。如果 ID 错误，复用错乱会更难排查。
+
+## 回看清单
+
+1. `attachedScrap` 解决屏幕内布局复用。
+2. `changedScrap` 解决变化动画和局部刷新。
+3. `mCachedViews` 解决短距离滑动回退。
+4. `RecycledViewPool` 解决跨位置、跨列表的通用复用。
+5. Stable IDs 用数据身份补足 position 的不稳定性。

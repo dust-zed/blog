@@ -1,14 +1,23 @@
 +++
 date = '2025-10-24T03:52:15+08:00'
 draft = false
-title = 'Gradle构建组织方式Convention Plugins'
+title = 'Gradle Convention Plugins：多模块构建逻辑组织'
 categories = ['android']
 tags = ['Gradle', 'Build', 'Kotlin DSL', 'Convention Plugins']
-description = "使用 Convention Plugins 组织 Gradle 构建逻辑，实现标准化、复用和类型安全的构建配置。"
+description = "整理 Gradle Convention Plugins 的使用方式：通过 build-logic 收敛多模块重复配置，让构建逻辑标准化、复用和类型安全。"
 slug = "gradle-convention-plugins"
 image = ""
 
 +++
+
+多模块 Android 项目如果每个模块都手写一遍插件、Android 配置、Kotlin 配置、Compose 配置和通用依赖，构建脚本很快会失控。Convention Plugins 的价值就是把这些重复配置收敛到 `build-logic` 中，让业务模块只声明“我是什么类型的模块”。
+
+## 核心结论
+
+1. Convention Plugin 是项目内部的 Gradle 插件，用来封装约定配置。
+2. 它适合管理多模块项目的 Android、Kotlin、Compose、Hilt、测试等重复配置。
+3. 业务模块的 `build.gradle.kts` 应该尽量薄，只表达模块身份和少量特有依赖。
+4. `build-logic` 本身也要保持边界清晰，避免变成新的复杂中心。
 
 ## 核心思想
 

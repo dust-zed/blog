@@ -1,12 +1,22 @@
 +++
-title = 'Choreographer类解析'
+title = 'Choreographer 类解析：VSYNC 与一帧调度'
 date = '2025-06-16T06:49:21+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Choreographer', 'VSYNC', 'Performance']
-description = "深入解析 Android Choreographer：VSYNC 同步机制、帧调度流程及 Callback 执行逻辑。"
+description = "整理 Android Choreographer 的核心机制：VSYNC 接收、CallbackQueue、doFrame、输入/动画/遍历回调顺序和帧率监控。"
 slug = "choreographer-analysis"
 +++
+
+Choreographer 是 Android 应用侧的一帧调度器。它把输入、动画、Insets 动画、View 树遍历和提交阶段组织到同一个 VSYNC 节奏下执行。
+
+## 核心结论
+
+1. Choreographer 通过 VSYNC 信号驱动一帧开始。
+2. 每类回调都有独立 CallbackQueue，并按固定顺序执行。
+3. `doFrame()` 是应用侧处理一帧的核心入口。
+4. ViewRootImpl 会通过 Choreographer 安排 traversal。
+5. 掉帧本质是某一帧内任务超过了刷新周期预算。
 
 ## 一、核心作用
 

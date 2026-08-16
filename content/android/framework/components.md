@@ -1,14 +1,24 @@
 +++
 date = '2025-10-21T00:05:46+08:00'
 draft = false
-title = 'Android四大组件'
+title = 'Android 四大组件：Activity、Service、BroadcastReceiver 与 ContentProvider'
 categories = ['android']
 tags = ['Activity', 'Service', 'BroadcastReceiver', 'ContentProvider', 'Components']
-description = "Android 四大组件详细解析：Activity 生命周期与启动模式、Service 类型与使用、BroadcastReceiver 广播机制。"
+description = "系统整理 Android 四大组件：Activity 生命周期和启动模式、Service 类型与限制、BroadcastReceiver 广播机制、ContentProvider 的跨进程数据访问。"
 slug = "android-components"
 image = ""
 
 +++
+
+四大组件是 Android 应用与系统交互的基础。它们不是四个孤立 API，而是系统调度应用入口、后台任务、跨进程通信和数据共享的核心抽象。
+
+## 核心结论
+
+1. Activity 负责用户可见界面和任务栈。
+2. Service 负责无界面任务，但现代 Android 对后台服务限制越来越严格。
+3. BroadcastReceiver 适合接收系统或应用广播，不适合长时间工作。
+4. ContentProvider 主要解决跨进程结构化数据访问。
+5. 组件使用时要同时考虑生命周期、进程、权限和系统限制。
 
 ## Activity
 
@@ -1450,4 +1460,3 @@ intent.data = Uri.parse("content://com.example.provider/users/1")
 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 startActivity(intent)
 ```
-

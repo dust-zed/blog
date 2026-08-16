@@ -1,15 +1,15 @@
 +++
-  title = "Android Handler 消息机制：Looper、MessageQueue 与 Handler"
-  date = "2026-08-02T00:00:00+08:00"
-  draft = false
-  description = "系统梳理 Android Handler 消息机制，解释 Looper、MessageQueue、Handler 的职责边界、消息分发流程、阻塞唤醒机制与常见实践问题。"
-  slug = "android-handler-message-mechanism"
-  categories = ["android"]
-  tags = ["Android", "Handler", "Looper", "MessageQueue"]
+title = "Android Handler 消息机制：Looper、MessageQueue 与 Handler"
+date = "2026-08-02T00:00:00+08:00"
+draft = false
+description = "系统梳理 Android Handler 消息机制，解释 Looper、MessageQueue、Handler 的职责边界、消息分发流程、阻塞唤醒机制与常见实践问题。"
+slug = "android-handler-message-mechanism"
+categories = ["android"]
+tags = ["Android", "Handler", "Looper", "MessageQueue"]
 
 +++
 
-# 序言
+## 序言
 
 在 Android 开发中，我们经常会写出这样的代码：
 
@@ -39,7 +39,13 @@ Thread {
 * `Handler.postDelayed()`为什么不一定准时？
 * Java 层的消息队列为什么还需要 native 层的`poll`?
 
----
+## 核心结论
+
+1. Handler 不会真正“切换线程”，它只是把任务投递到目标 Looper 的 MessageQueue。
+2. 一个线程最多一个 Looper，一个 Looper 持有一个 MessageQueue，但可以对应多个 Handler。
+3. MessageQueue 是按执行时间排序的队列，不是简单 FIFO。
+4. `Looper.loop()` 不会占满 CPU，关键在于 `MessageQueue.next()` 里的 native poll 阻塞等待。
+5. 延迟消息不保证准时，只保证不早于目标时间执行。
 
 ## 一、Handler 并没有真正"切换线程"
 
@@ -448,7 +454,7 @@ msg.target.dispatchMessage(msg);
 
 ---
 
-## 七、 MessageQueue 不是简单的先进先出队列
+## 七、MessageQueue 不是简单的先进先出队列
 
 很多人看到MessageQueue，回自然认为它是普通的 FIFO 队列。
 
@@ -545,7 +551,7 @@ synchronized (this) {
 
 ---
 
-## 八、为什么插入消息后有时要唤醒Looper
+## 八、为什么插入消息后有时要唤醒 Looper
 
 假设主线程当前没有立即执行的任务，队头消息需要 10 秒后执行。
 
@@ -666,7 +672,7 @@ MessageQueue.next();
 
 ---
 
-## 十、MessageQueue.next()： 为什么无限循环不占满CPU
+## 十、MessageQueue.next()：为什么无限循环不占满CPU
 
 `MessageQueue.next()`的经典逻辑可以简化为：
 
@@ -819,7 +825,7 @@ while (true) {
 
 ---
 
-## 十二、为什么 Android 使用nativePollOnce，而不是Object.wait
+## 十一、为什么 Android 使用 nativePollOnce，而不是Object.wait
 
 纯 Java 消息循环完全可以使用：
 
@@ -871,7 +877,7 @@ poll / epoll 等待
 
 ---
 
-## 十三、dispatchMessage(): 最终执行Runnable 还是handleMessage
+## 十二、dispatchMessage(): 最终执行 Runnable 还是handleMessage
 
 Looper取出消息后，会调用：
 
@@ -966,7 +972,7 @@ val handler = object :
 
 ---
 
-## 十四、重新理解“Handler 为什么能切换线程”
+## 十三、重新理解“Handler 为什么能切换线程”
 
 现在把整条链路连起来。
 
@@ -1018,7 +1024,7 @@ Message.target 指向 mainHandler
 
 ---
 
-## 十五、postDelayed 为什么不保证准时
+## 十四、postDelayed 为什么不保证准时
 
 假设：
 
@@ -1068,7 +1074,7 @@ Looper 才有机会取出任务 B
 
 ---
 
-## 十六、主线程为什么会卡顿
+## 十五、主线程为什么会卡顿
 
 Android 主线程只有一个Looper，同一时间只能处理一条消息。
 
@@ -1104,7 +1110,7 @@ Message A 耗时 3 秒
 
 ---
 
-## 十七、Message 为什么需要对象池
+## 十六、Message 为什么需要对象池
 
 Looper 完成消息分发后，会执行类似：
 
@@ -1161,7 +1167,7 @@ new Message()
 
 ---
 
-## 十八、 Handler 消息机制的线程安全边界
+## 十七、Handler 消息机制的线程安全边界
 
 Handler 经常用于跨线程传递数据：
 
@@ -1210,7 +1216,7 @@ handler.post {
 
 ---
 
-## 十九、面试高频问题总结
+## 十八、面试高频问题总结
 
 ### 1. 一个线程可以有几个Looper
 
@@ -1262,7 +1268,7 @@ Looper 通过 ThreadLocal 与线程绑定，`prepare()` 会检查当前线程是
 
 ---
 
-## 二十、用一段伪代码概括整个机制
+## 十九、用一段伪代码概括整个机制
 
 最后，可以把一条 `Handler.post()` 调用压缩成下面这段伪代码：
 

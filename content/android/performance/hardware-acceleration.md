@@ -1,50 +1,108 @@
 +++
-title = '关于硬件加速'
+title = 'Android 硬件加速：CPU、GPU 与硬件层'
 date = '2025-06-13T22:50:57+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Performance', 'Hardware Acceleration']
-description = "Android 硬件加速详解：CPU 与 GPU 的分工、光栅化流程对比及最佳实践。"
+description = "整理 Android 硬件加速的核心模型：CPU 记录绘制指令，GPU 光栅化，硬件层用于短期缓存和动画优化。"
 slug = "hardware-acceleration"
 +++
 
-## 一、硬件加速核心概念
+硬件加速的核心不是“打开 GPU 就一定更快”，而是把绘制流程拆成两部分：CPU 负责记录绘制命令，GPU 负责把命令转换成像素。
 
-硬件加速是将图形渲染中的光栅化从CPU转移到GPU执行的技术。CPU只需要生成**绘制指令集(DisplayList)**，由GPU进行高效的并行光栅化计算，最终写入图形缓冲区提供屏幕显示。
+## 核心结论
 
-本质：CPU负责逻辑指令，GPU负责繁重像素计算，分工协作提升效率
+1. 硬件加速后，`onDraw()` 仍然会在主线程执行，但绘制命令会被记录成 DisplayList。
+2. GPU 负责光栅化，把图形命令转换成最终像素。
+3. 硬件层可以缓存 View 的绘制结果，适合短期属性动画。
+4. 硬件层不是越多越好，大面积或长期启用会增加显存压力。
 
-光栅化：可以高度抽象的概括为**计算屏幕上每个像素点最终显示的ARGB值**
+## 未启用硬件加速
 
-## 二、硬件加速启用前后的核心流程对比
+简化流程：
 
-1. **未启用硬件加速**
-   * **measure & layout**：由CPU在主线程（UI线程）执行
-   * **Draw**（关键区别）：
-     * CPU：遍历View树，在主线程直接执行每个View的onDraw(Canvas)方法
-     * 光栅化：onDraw中的绘制指令也由CPU执行，直接计算出最终的像素值。
-     * 缓冲区(Frame Buffer)
-       * 系统维护一个帧缓冲区。
-       * CPU光栅化好的像素数据直接写入这个帧缓冲区
-       * 核心：CPU既处理逻辑计算又处理生成最终像素的繁重计算(光栅化)，然后把结果放进帧缓冲
-   * **合成 & 显示**：屏幕读取帧缓冲区的内容显示到屏幕上。这个过程通常涉及双缓冲和Vsync信号来避免撕裂，但其绘制核心是CPU
-     * Front Buffer是屏幕当前帧显示的内容，Back Buffer是屏幕下一帧要显示的内容
-2. **开启硬件加速**
-   * **Measure & Layout**：仍然由CPU在主线程执行。
-   * **Draw**(关键区别)： 
-     * CPU：遍历View树，在主线程执行每个View的**`onDraw(Canvas)`**方法。但是这里的`Canvas`行为不同了
-     * Display List：onDraw(Canvas)中的绘制指令不再立即光栅化，而是被记录到DisplayList的数据结构中。DisplayList本质是一系列GPU能理解的绘图操作指令的序列化表示
-     * 光栅化：由GPU执行，CPU将构建好的`DisplayList`提交给GPU。GPU驱动程序将这些高级绘图指令**并行地、高效地光栅化**。
-   * **缓冲区**(Frame Buffer / GRALLOC Buffers):
-     * **普通开启硬件加速时的缓冲区：** GPU 将光栅化**好的像素数据写入系统分配的图形缓冲区** (通常是通过 `Gralloc` 分配管理的 Buffer Queue 中的缓冲区，如 `SurfaceTexture`)。这些缓冲区**就是屏幕最终合成时使用的像素数据源**
-     * 核心：CPU负责记录绘制命令(onDraw -> DisplayList)；GPU负责光栅化，结果写入图形缓冲区
-     * Frame Buffer是抽象的缓冲区，而GRALLOC Buffers是物理缓冲区
+```text
+View 树遍历
+  -> measure/layout
+  -> CPU 执行 onDraw()
+  -> CPU 光栅化
+  -> 写入图形缓冲区
+  -> 显示
+```
 
-## 三、启用硬件层
+此时 CPU 既要处理业务逻辑、布局计算，也要承担像素计算，复杂页面容易成为瓶颈。
 
-1. **目的**：对像素不会频繁变化的View采用空间换时间的方案，避免View内容未变时重复光栅化，用于后续快速合成
-2. **作用**：仅当视图内容改变(`invalidate()`)时或主动更新时：GPU重新光栅化该View的DisplayList -> 更新离屏纹理。而只涉及纹理的变换时，不会重新光栅化DisplayList，而是直接使用纹理缓存进行合成，纹理变换正是GPU擅长的。纹理变换和opengl管线工作流程中的顶点变换是不同的层级概念
-3. **最佳实践**
-   1. 适合**小面积静态视图**或**属性动画**
-   2. 避免对大视图（如列表视图）启用，易耗尽显存
+## 启用硬件加速
 
+简化流程：
+
+```text
+View 树遍历
+  -> measure/layout
+  -> CPU 执行 onDraw() 并记录 DisplayList
+  -> RenderThread / GPU 消费绘制命令
+  -> GPU 光栅化
+  -> 写入 Buffer
+  -> SurfaceFlinger 合成显示
+```
+
+这里的关键变化是：`Canvas` 的很多调用不再立即生成像素，而是记录成绘制指令。GPU 后续可以并行处理这些指令。
+
+## DisplayList 的意义
+
+DisplayList 可以理解为 View 绘制结果的命令列表：
+
+```text
+drawRect(...)
+drawText(...)
+drawBitmap(...)
+clipPath(...)
+```
+
+如果 View 内容没有变化，系统可以复用已有 DisplayList，减少主线程重复记录绘制命令的成本。
+
+但如果调用了 `invalidate()`，对应 View 的 DisplayList 仍然需要重新记录。
+
+## 硬件层
+
+硬件层会把 View 的绘制结果缓存成 GPU 纹理：
+
+```text
+View -> DisplayList -> GPU 光栅化 -> 离屏纹理
+```
+
+后续如果只是做平移、缩放、旋转、透明度变化，就可以直接复用纹理合成，不必重新绘制 View 内容。
+
+适合场景：
+
+1. 短时间属性动画；
+2. 小面积复杂 View；
+3. 内容不变，只做变换。
+
+不适合场景：
+
+1. 大面积列表；
+2. 每帧内容都变化的自定义 View；
+3. 长期启用的普通控件；
+4. 内存紧张的页面。
+
+## 使用方式
+
+```kotlin
+view.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
+view.animate()
+    .translationY(100f)
+    .alpha(0f)
+    .withEndAction {
+        view.setLayerType(View.LAYER_TYPE_NONE, null)
+    }
+```
+
+## 回看清单
+
+1. 硬件加速不是跳过 `onDraw()`，而是改变绘制命令的执行方式。
+2. CPU 负责记录命令，GPU 负责光栅化和合成。
+3. DisplayList 可以减少重复记录绘制命令。
+4. 硬件层适合短期动画缓存，不适合长期全局开启。
+5. 判断是否需要硬件层，要看 View 内容是否稳定、面积是否可控、动画是否只做属性变换。

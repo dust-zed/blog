@@ -1,150 +1,133 @@
 +++
-title = 'View性能优化'
+title = 'Android View 性能优化：从测量、绘制到过度绘制'
 date = '2025-06-13T23:55:35+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Performance', 'View']
-description = "Android View 性能优化全方位指南：GPU 过度绘制优化, CPU 绘制指令优化, 以及通用技术方案。"
+description = "整理 Android View 性能优化的核心路径：布局测量、绘制指令、GPU 过度绘制、硬件层和常用排查工具。"
 slug = "view-performance-optimization"
 +++
 
+View 性能问题通常不是单点问题，而是发生在一帧渲染链路中的某个阶段：测量太重、布局太深、绘制指令太多、GPU 重复填充，或者动画过程中反复触发布局。
 
+这篇笔记的目标是把优化动作放回渲染链路里理解，而不是只记一堆零散技巧。
 
----
+## 核心结论
 
-## 一、规避过度绘制（GPU优化）
-专注于减少GPU的无效像素填充负载
+1. **布局阶段看层级和测量次数**：减少嵌套，避免无意义的二次测量。
+2. **绘制阶段看 `onDraw()` 成本**：不要在绘制路径里分配对象、做 I/O 或触发布局。
+3. **GPU 阶段看过度绘制和混合**：减少被完全覆盖的背景和大面积半透明。
+4. **动画阶段看是否触发重新布局**：优先使用 `translationX/Y`、`alpha`、`scale` 等属性动画。
+5. **硬件层只作为优化选项**：具体原理和使用边界放到《Android 硬件加速》里单独整理。
 
-*   **概念解析：**  
-    GPU在单个像素点重复绘制超过2.5次（1x绘制+1.5x半透明混合）的现象，消耗填充率导致帧率下降
-*   **检测工具：**  
-    `开发者选项->调试GPU过度绘制`（蓝色<1x, 绿色<2x, 粉色<3x, 红色≥4x）
-*   **核心策略：**
-    *   **移除无效背景层：**
-        - 检查并移除Activity根布局或主题中冗余的`windowBackground`
-        - 删除被完全覆盖的中间层布局（如FrameLayout）背景
-        - 避免在自定义View的`onDraw()`中绘制被覆盖区域
-    *   **层级扁平化：**
-        - 使用`ConstraintLayout`替代多层嵌套布局
-        - 减少RelativeLayout导致的二次测量
-    *   **透明效果控制：**
-        - 避免大面积半透明视图（引发GPU混合计算）
-        - 硬件层动画结束时立即禁用（`setLayerType(LAYER_TYPE_NONE)`）
-    *   **引用关键通用技术：**  
-        结合`clipRect/quickReject`限定绘制区域（详见通用技术章节）
+## 一帧里的性能检查点
 
----
-
-## 二、绘制指令优化（CPU优化）
-降低CPU生成绘制指令的开销
-
-*   **优化焦点：**  
-    `onDraw()`方法的执行效率与资源管理
-*   **核心准则：**
-    *   **禁止内存分配：**  
-        绝不在`onDraw()`中创建Paint/Path/Bitmap对象（应在构造方法初始化）
-    *   **规避耗时操作：**  
-        避免复杂计算、IO或解析逻辑
-    *   **阻断递归触发：**  
-        禁止在`onDraw()`中调用`invalidate()`或`requestLayout()`
-*   **高级技巧：**
-    *   **绘图资源复用：**  
-        对矢量图(VectorDrawable)和位图采用不同优化策略
-        - 小图标优先使用矢量图
-        - 位图加载启用`inSampleSize`采样和`RGB_565`解码
-        - 使用`ImageView.setImageDrawable()`替代`canvas.drawBitmap()`
-    *   **透明效果实现：**  
-        优先使用`View.setAlpha()`而非半透明背景色
-    *   **引用关键通用技术：**  
-        精准控制硬件加速生命周期（详见通用技术章节）
-
----
-
-## 三、通用核心技术
-跨优化领域的共性技术方案
-
-*   **区域裁剪技术：**
-    ```mermaid
-    graph TB
-      A[canvas.clipRect] --> B[限定子View绘制区域]
-      C[canvas.quickReject] --> D[跳过屏幕外区域绘制]
-      A-->|ViewGroup| E[重写dispatchDraw控制]
-      C-->|自定义View| F[onDraw中预判可见性]
-    ```
-    - 在`ViewGroup.drawChild`中限定子View绘制边界
-    - 列表项等非重叠视图必备优化手段
-    
-*   **硬件加速深度指南：**
-    *   **运作机制：**
-        - 将View缓存为GPU纹理(Texture)
-        - 通过`setLayerType(LAYER_TYPE_HARDWARE, null)`启用
-    *   **最佳实践：**
-        
-        ```java
-        // 动画开始前启用
-        view.setLayerType(LAYER_TYPE_HARDWARE, null);
-        ObjectAnimator.run();
-        // 动画结束后立即释放
-        animator.addListener(() -> {
-            view.setLayerType(LAYER_TYPE_NONE, null);
-        });
-        ```
-    *   **开销预警：**
-        - 离屏缓冲增加20%-30%内存占用
-        - 静态视图启用反而降低性能
-    
-*   **圆角处理方案：**
-    | 实现方式            | 适用场景       | 性能影响 |
-    | ------------------- | -------------- | -------- |
-    | ViewOutlineProvider | 小面积圆角     | ★★☆      |
-    | .9.png贴图          | 固定尺寸元素   | ★☆☆      |
-    | 绘制圆角矩形        | 动态尺寸视图   | ★★☆      |
-    | clipToOutline       | 避免大面积使用 | ★★★      |
-
----
-
-## 四、布局优化（独立模块）
-优化测量(measure)与布局(layout)阶段性能
-
-*   **检测工具：**  
-    `Profile GPU Rendering`分析各阶段耗时
-*   **优化策略：**
-    *   **层级压缩：**
-        - 使用ConstraintLayout减少嵌套
-        - 避免LinearLayout权重导致的二次测量
-    *   **动态加载：**
-        - `<merge>`消除冗余容器层
-        - `ViewStub`延迟加载隐藏视图
-    *   **自定义布局优化：**
-        - 缓存`onMeasure()`计算结果
-        - 只测量可见子View
-
----
-
-## 优化关联图谱
-```mermaid
-flowchart TD
-    A[性能优化] --> B[GPU负载]
-    A --> C[CPU负载]
-    B --> D[过度绘制优化]
-    C --> E[布局计算优化]
-    C --> F[绘制指令优化]
-    D & F --> G[通用技术]
-    G --> H[区域裁剪]
-    G --> I[硬件加速]
-    G --> J[圆角处理]
+```text
+输入事件 / 状态变化
+  -> measure
+  -> layout
+  -> draw / record DisplayList
+  -> GPU rasterize
+  -> SurfaceFlinger 合成
+  -> 显示
 ```
 
-该重组方案：
-1. 完整保留原文所有技术点
-2. 消除硬件加速/clipRect等技术点的重复描述
-3. 建立清晰的「GPU优化-CPU优化-通用技术」逻辑链路
-4. 通过流程图和表格提升关键技术的可操作性
-5. 维持与原文档相同的技术细节颗粒度
+优化时先判断卡顿发生在哪一段：
 
-最终形成的体系逻辑：  
-**GPU优化**解决"绘制次数"问题 → **CPU优化**解决"绘制效率"问题 → **通用技术**提供跨领域解决方案 → **布局优化**作为独立并行模块
+| 阶段 | 常见问题 | 典型优化 |
+| --- | --- | --- |
+| measure | 布局层级深、权重布局二次测量 | 减少嵌套，使用 `ConstraintLayout`，缓存测量结果 |
+| layout | 频繁 `requestLayout()` | 避免在动画中改变布局参数 |
+| draw | `onDraw()` 分配对象或复杂计算 | 复用 `Paint/Path/Rect`，提前计算 |
+| GPU | 过度绘制、半透明混合 | 移除无效背景，控制透明层 |
+| 合成 | 大量离屏图层 | 谨慎使用硬件层和裁剪 |
 
-- `canvas.save()`: 将当前**绘制状态**（矩阵变换/裁剪区域/图层属性）存入栈中
-- `canvas.restore()`: 从栈顶取出最近保存的状态并恢复
-- `canvas.quickReject()`:快速判断指定矩形区域是否**完全位于当前裁剪区域外**
+## 布局优化
+
+布局优化关注 `measure` 和 `layout` 两个阶段。
+
+常见策略：
+
+1. **减少布局嵌套**
+
+   深层嵌套会增加遍历和测量成本。简单页面可以用 `ConstraintLayout` 合并层级，但不要为了“扁平”制造过度复杂的约束。
+
+2. **避免 `LinearLayout` 权重滥用**
+
+   `layout_weight` 可能导致额外测量。列表项、复杂卡片或高频刷新区域要谨慎使用。
+
+3. **使用 `<merge>` 和 `ViewStub`**
+
+   `<merge>` 适合消除无意义的根容器，`ViewStub` 适合延迟加载低频出现的内容。
+
+4. **自定义 ViewGroup 缓存测量结果**
+
+   如果子 View 尺寸和约束稳定，可以缓存中间计算，避免每次 `onMeasure()` 重复推导。
+
+## 绘制优化
+
+`onDraw()` 会在一帧内被频繁调用，必须保持轻量。
+
+不要在 `onDraw()` 中做这些事：
+
+1. 创建 `Paint`、`Path`、`Bitmap`、`Rect` 等对象；
+2. 读取文件、解析数据、访问网络；
+3. 做复杂业务计算；
+4. 调用 `invalidate()` 或 `requestLayout()` 形成循环；
+5. 绘制屏幕外或被遮挡的内容。
+
+推荐做法：
+
+```kotlin
+class ChartView(context: Context) : View(context) {
+    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val contentRect = RectF()
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        contentRect.set(0f, 0f, w.toFloat(), h.toFloat())
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        if (canvas.quickReject(contentRect, Canvas.EdgeType.AA)) return
+        canvas.drawLine(0f, height / 2f, width.toFloat(), height / 2f, linePaint)
+    }
+}
+```
+
+## 过度绘制优化
+
+过度绘制指同一个像素在一帧内被重复绘制多次。它会增加 GPU 填充压力，尤其在列表、复杂卡片和半透明蒙层中很常见。
+
+排查入口：
+
+```text
+开发者选项 -> 调试 GPU 过度绘制
+```
+
+优化动作：
+
+1. 移除 Activity 根布局、主题、容器里的重复背景；
+2. 删除被完全覆盖的中间层背景；
+3. 避免大面积半透明 View；
+4. 自定义绘制时使用 `clipRect()` 限制绘制区域；
+5. 对屏幕外区域使用 `quickReject()` 提前跳过。
+
+## 硬件层提示
+
+硬件层属于绘制与合成阶段的优化手段，适合短时间属性动画，但不适合长期、大面积启用。这里不展开原理，具体的 CPU/GPU 分工、DisplayList 和硬件层边界，统一放在《Android 硬件加速：CPU、GPU 与硬件层》中整理。
+
+## 常用工具
+
+1. **Profile GPU Rendering**：观察每帧耗时，判断是否超过 16.6ms。
+2. **Layout Inspector**：查看布局层级、约束和 View 树。
+3. **Debug GPU Overdraw**：定位重复绘制。
+4. **Perfetto / System Trace**：分析主线程、RenderThread 和系统调度。
+5. **Memory Profiler**：排查绘制过程中的异常分配。
+
+## 回看清单
+
+1. 卡顿先定位阶段，不要一上来就改代码。
+2. 布局优化看层级、测量次数和 `requestLayout()` 触发频率。
+3. 绘制优化看 `onDraw()` 是否分配对象、做计算或绘制不可见区域。
+4. GPU 优化看过度绘制、半透明和离屏图层。
+5. 硬件层只作为候选优化项，具体使用边界回到硬件加速笔记判断。

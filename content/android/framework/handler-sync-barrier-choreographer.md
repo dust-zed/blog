@@ -1,13 +1,23 @@
 +++
-  title = "Android Handler 深入：同步屏障与 Choreographer 调度机制"
-  date = "2026-08-10T00:00:00+08:00"
-  draft = false
-  description = "深入分析 Android Handler 消息机制中的同步屏障、异步消息与 Choreographer 帧调度流程，理解 UI 渲染为何能优先于普通同步消息执行。"
-  slug = "android-handler-sync-barrier-choreographer"
-  categories = ["android"]
-  tags = ["Android", "Handler", "MessageQueue", "Sync Barrier", "Choreographer"]
+title = "Android Handler 深入：同步屏障与 Choreographer 调度机制"
+date = "2026-08-10T00:00:00+08:00"
+draft = false
+description = "深入分析 Android Handler 消息机制中的同步屏障、异步消息与 Choreographer 帧调度流程，理解 UI 渲染为何能优先于普通同步消息执行。"
+slug = "android-handler-sync-barrier-choreographer"
+categories = ["android"]
+tags = ["Android", "Handler", "MessageQueue", "Sync Barrier", "Choreographer"]
 
 +++
+
+这篇是 Handler 消息机制的进阶笔记，重点把 `MessageQueue.next()`、同步屏障、异步消息、IdleHandler、Printer 和 Choreographer 串成一条线。
+
+## 核心结论
+
+1. 同步屏障本质是一条没有 `target` 的特殊消息。
+2. 同步屏障存在时，普通同步消息会被挡住，异步消息可以优先执行。
+3. Choreographer 借助异步消息和 VSYNC，把输入、动画、布局绘制组织到一帧内。
+4. `IdleHandler` 发生在队列空闲或下一条消息尚未到期时，适合做低优先级任务。
+5. `Printer` 能观察消息分发前后，但不能覆盖消息等待阶段。
 
 ## 一、Handler总体流程
 
@@ -108,7 +118,7 @@ Message.recycle()
 
 当前 AOSP 的`Looper.setMessageLogging()`明确就是在**每条消息 dispatch 开始和结束时调用 Printer**。
 
-## 三、Printer：Looper天然提供的消息监控点
+## 三、Printer：Looper 天然提供的消息监控点
 
 API:
 
@@ -189,7 +199,7 @@ Finished
 
 ---
 
-## 三、Printer能检测什么，不能检测什么
+## 四、Printer能检测什么，不能检测什么
 
 假设：
 
@@ -252,7 +262,7 @@ Printer  本身并不能直接告诉你：
 
 ---
 
-## 四、IdleHandler：MessageQueue 空闲时还能做什么
+## 五、IdleHandler：MessageQueue 空闲时还能做什么
 
 Printer位于：
 
@@ -324,7 +334,7 @@ MessageQueue 扔然处于 idle 状态。
 
 ---
 
-## 五、IdleHandler 在 next() 的哪个位置执行
+## 六、IdleHandler 在 next() 的哪个位置执行
 
 简化`MessageQueue.next()`
 
@@ -389,7 +399,7 @@ queueIdle()
 
 ---
 
-## 六、 同步屏障其实也发生在MessageQueue.next()
+## 七、同步屏障其实也发生在MessageQueue.next()
 
 现在进入另一个特殊分支。
 
@@ -469,7 +479,7 @@ Async C   返回
 
 ---
 
-## 七、同步屏障到底是什么作用
+## 八、同步屏障到底是什么作用
 
 同步屏障之后的同步消息会暂停执行，直到调用`removeBarrier()`；异步消息不受barrier影响。并且barrier必须成对移除，否则消息队列可能无法恢复正常运行。
 
@@ -539,7 +549,7 @@ val handler = Handler.createAsync(Looper.getMainLooper())
 
 这种 Handler 发出的消息会被标记为异步消息，因此如果队列里存在同步屏障，它们不会被屏障阻塞。
 
-## 八、Choreographer 和 Handler连接起来的地方
+## 九、Choreographer 和 Handler连接起来的地方
 
 Choreographer 源码开头直接说明了自己的职责：
 
@@ -594,7 +604,7 @@ Choreographer
 
 ---
 
-## 九、Choreographer为什么还需要自己的CallbackQueue
+## 十、Choreographer 为什么还需要自己的CallbackQueue
 
 Handler的MessageQueue管：
 
@@ -650,7 +660,7 @@ what → Handler 内部分类
 
 ---
 
-## 十、一次Choreographer回调是怎么样开始的
+## 十一、一次Choreographer回调是怎么样开始的
 
 比如：
 
@@ -718,7 +728,7 @@ msg.setAsynchronous(true);
 
 ---
 
-## 十一、VSYNC到底怎么进入Java世界
+## 十二、VSYNC 到底怎么进入Java世界
 
 Choreographer里面还有：
 
@@ -803,7 +813,7 @@ Choreographer 并不是：
 
 ---
 
-## 十二、doFrame() 才是一帧真正执行的地方
+## 十三、doFrame() 才是一帧真正执行的地方
 
 进入：
 
@@ -851,7 +861,7 @@ Looper
 
 ---
 
-## 十三、那ViewRootImpl又是怎么进来的
+## 十四、那ViewRootImpl 又是怎么进来的
 
 ViewRootImpl的：
 

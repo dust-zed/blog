@@ -1,14 +1,24 @@
 +++
 date = '2025-10-17T11:24:19+08:00'
-draft = true
-title = 'Android主题系统指南'
+draft = false
+title = 'Android 主题系统：Material 3、Dynamic Color 与深色模式'
 categories = ['android']
 tags = ['Material Design', 'Theming', 'UI']
-description = "Android 12+ Material Design 3 (Material You) 主题系统详解，Dynamic Color 动态取色原理与 Compose/View 主题适配指南。"
+description = "整理 Android 主题系统：Material 3 色彩角色、Dynamic Color、传统 View 主题、Compose MaterialTheme 和深色模式适配。"
 slug = "android-theming"
 image = ""
 
 +++
+
+主题系统的价值是把颜色、字体、形状和组件默认样式集中管理。Material 3 之后，颜色不再只是主色和强调色，而是一组有语义的 Color Scheme。
+
+## 核心结论
+
+1. 主题系统解决的是全局视觉一致性，不是单个控件样式。
+2. Material 3 用语义化色彩角色描述 UI，而不是直接到处写颜色值。
+3. Dynamic Color 基于系统壁纸生成色板，适合 Android 12+。
+4. Compose 使用 `MaterialTheme`，传统 View 使用 XML theme，两者可以共存但要统一设计令牌。
+5. 深色模式要关注对比度、语义色和图片资源，不只是反转颜色。
 
 ## Material Design3(Material You)
 

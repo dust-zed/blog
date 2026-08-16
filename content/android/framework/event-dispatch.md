@@ -1,12 +1,22 @@
 +++
-title = 'Android事件分发机制详解'
+title = 'Android 事件分发机制：Activity、ViewGroup 与 View'
 date = '2025-09-02T21:41:39+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Event Dispatch', 'View']
-description = "详解 Android 事件分发机制：Activity -> ViewGroup -> View 的传递流程及源码分析。"
+description = "整理 Android 触摸事件分发机制：Activity、ViewGroup、View 的 dispatchTouchEvent/onInterceptTouchEvent/onTouchEvent 调用链和滑动冲突处理。"
 slug = "android-event-dispatch"
 +++
+
+事件分发的核心问题是：一次触摸事件从系统进入应用后，最终由哪个 View 消费。理解这条链路后，点击冲突、滑动冲突和自定义 View 触摸问题会更容易定位。
+
+## 核心结论
+
+1. 事件从 Activity 开始，沿 View 树向下分发。
+2. ViewGroup 可以通过 `onInterceptTouchEvent()` 决定是否拦截。
+3. View 通过 `onTouchEvent()` 决定是否消费。
+4. `ACTION_DOWN` 的处理结果会影响后续 MOVE/UP 是否继续分发。
+5. 滑动冲突本质是父子 View 对同一事件序列的消费权竞争。
 
 ## 1. 事件分发的基本流程
 

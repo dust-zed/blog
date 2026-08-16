@@ -1,106 +1,150 @@
 +++
 date = '2025-10-25T19:52:44+08:00'
 draft = false
-title = 'Compose入门'
+title = 'Jetpack Compose 入门：声明式 UI、State 与重组'
 categories = ['android']
 tags = ['Compose', 'Jetpack', 'UI']
-description = "Jetpack Compose 入门指南：核心概念、组合与重组、状态管理 (State & remember)。"
+description = "整理 Jetpack Compose 的基础心智模型：声明式 UI、组合、重组、State、remember、状态提升和智能跳过。"
 slug = "compose-basics"
-image = ""
-
 +++
 
-## 大纲
+Compose 不是把 XML 换成 Kotlin，而是把 UI 从“命令式更新 View”换成“状态驱动界面”。理解 State 和重组之后，Compose 的很多 API 才会变得顺。
 
-1. **声明式UI**：只需要描述在特定状态下UI应该是什么样子，Compose框架会负责更新。
-2. **组合与复用**：将UI拆分成小而专一的Composable函数，然后像搭积木一样组合它们。
-3. **单向数据流**：状态从`ViewModel`向下流动到Composable，事件从Composable向上传递给`ViewModel`。
-4. **副作用处理**：使用`LaunchedEffect`等API来安全地处理需要在Composable生命周期内执行的**非UI**操作。
+## 核心结论
 
-## 核心概念
+1. Composable 函数描述某个状态下 UI 应该长什么样。
+2. State 变化会触发读取它的 Composable 重组。
+3. `remember` 负责在重组之间保存对象。
+4. 状态应该尽量上提，让无状态 Composable 更容易复用和测试。
+5. 重组不是重建整个屏幕，Compose 会尽量跳过输入未变化的部分。
 
-### 组合与重组
+## 声明式 UI
 
-* **组合(Composition)**：这是Compose第一次构建UI的过程。当你调用一个Composable函数时，Compose框架会执行它，把它描述的UI元素（如`Text`,`Button`,`Box`等）添加到UI树中。这个过程只会发生一次。
-* **重组(Recomposition)**：这是Compose更新UI的过程。当一个Composable函数所依赖的数据发生变化时，Compose不会重新构建整个屏幕，而是智能地、有选择性地再次调用这个Composable函数（以及其他依赖了相同数据的函数），用新的数据来更新UI树中对应的部分。这个过程可能发生多次，甚至非常频繁。
-
-**核心思想**：你只需要用代码声明在某个数据状态下，你的UI应该长什么样。当数据变化时，Compose框架会自动帮你完成从旧UI到新UI的转换，不需要手动去查找并更新某个`TextView`或`ImageView`。
-
-### 状态（State）
-
-在Compose中，**State**就是任何会随时间变化并且会影响**UI**的值。
-
-* `State<T>`和`MutableState<T>`
-
-### remember
-
-在多次重组之间保持Composable内部状态或对象的关键机制。没有它，每次重组都会导致局部变量被重置。
-
-* `remember`的作用是让一个对象（任何对象）在多次重组之间活下来。
-* `State`的作用是当它的值改变时，通知Compose进行重组。
-
-remember和State是一对黄金搭档，共同解决了“UI内部状态”的问题：
-
-1. 我需要一个变量来存储UI的状态(例如，一个计数器，一个复选框是否被选中)。
-2. 这个变量必须能在多次重组中保持他的值不被重置 -> 所以用`remember`。
-3. 当这个变量的值改变时，UI必须自动更新（即重组）-> 所以用`State`。
-
-* `remember`是为了“记忆”：让变量/对象在重组中幸存。
-* `State`是为了“通知”：让值的变化能触发重组。
-
-## 重组触发机制
-
-### 1. 基于State的订阅式重组（State-Read-based-Recomposition）
-
-* **注册/订阅**：当一个Composable函数在执行过程中读取(Read)了一个`State`对象的值，Compose就会在这个函数和这个`State`对象之间建立一个隐藏的订阅关系。
-* **变化通知**：当这个`State`对象的值被写入(write)一个新值时，它会像一个发布者一样，通知所有订阅了它的Composable: “我的值变了!”
-* **精确重组**：收到通知的Composable会标记为“需要重组”，Compose会在下一帧高效地更新它们。
-
-**优点**：非常精确和高效。只有直接读取了这个State的Composable才会被重组。
-
-### 2. 基于“函数调用与参数变化”的重组（Function-Call-with-Parameter-Change Recomposition）
-
-当一个父Composable发生重组时，它会重新执行其函数体内的代码。如果函数体内包含了对子Composable的调用（比如`Greeting(name)`），那么Compose就会执行一次“前置检查”：
-
-1. 参数比较：Compose会比较这次调用`Greeting`时传入的参数(`name`)和上一次调用时传入的参数。
-2. 决策：
-   * 如果参数没有变化，Compose就会跳过(**Skip**)`Greeting`函数的执行，直接复用上次的结果。
-   * 如果参数发生了变化，Compose就会执行`Greeting`函数，用新的参数来生成新的UI。这个执行过程，就是子Composable的重组。
+传统 View 更像这样：
 
 ```kotlin
-// ... 在有状态的 ForYouScreen 中
-// 机制 1 的开始：订阅 StateFlow，转换为 State
-val feedState by viewModel.feedState.collectAsStateWithLifecycle()
-
-// 机制 2 的开始：因为 feedState 变了，所以再次调用无状态的 ForYouScreen
-ForYouScreen(
-    feedState = feedState, // <--- 参数发生变化
-    ...
-)
+textView.text = user.name
+button.isEnabled = user.isValid
 ```
 
-1. `ViewModel` 中的 `StateFlow` 发出了一个新值。
-2. `collectAsStateWithLifecycle()` 将其转换为一个 `State` 对象，并更新了这个 `State` 的值。(机制 1 触发)
-3. 因为有状态的 `ForYouScreen` 读取了这个 `State`，所以它被安排重组。
-4. 有状态的 `ForYouScreen` 重新执行，当它调用无状态的 `ForYouScreen` 时，传入的 `feedState` 参数是一个全新的值。(机制 2 触发)
-5. 无状态的 `ForYouScreen` 检测到 `feedState` 参数变化，因此它也必须重组，并根据新的 `feedState` 更新其内部的 UI。
+Compose 更像这样：
 
-### 补充：智能重组(Smart Recomposition)
+```kotlin
+@Composable
+fun UserCard(user: User) {
+    Text(text = user.name)
+    Button(enabled = user.isValid, onClick = {}) {
+        Text("Submit")
+    }
+}
+```
 
-Compose能够跳过(**Skip**)那些输入参数没有变化的Composable函数的执行。
+你不再手动寻找某个 View 并修改它，而是声明：在当前状态下，UI 应该是什么样。
 
-这套机制，我们通常称之为智能重组(**Smart Recomposition**)。它依赖两个基本原则：
+## 组合与重组
 
-1. 位置记忆：Compose不靠函数名，而是靠Composable在UI树中的“位置”来识别它。在重组时，它知道上次在同一个位置的是哪个函数。
-2. 输入参数稳定性：在重组时，Compose会比较一个Composable上一次调用时的输入参数和这一次调用的输入参数。如果所有参数都没有变化，Compose就会完全跳过这个函数的执行，直接复用它上次生成的UI。
+**组合**是第一次执行 Composable，生成 UI 树。
 
-**什么是“稳定的”(Stable)参数**
+**重组**是状态变化后，Compose 再次执行受影响的 Composable，让 UI 和新状态保持一致。
 
-Compose的这个Skip机制依赖于能够可靠地判断参数是否“相等”。对于以下类型的参数，Compose认为它们是稳定的：
+关键点：
 
-* 基本类型：`Int`,`Float`,`Boolean`,`String`等。Compose可以轻易地通过`==`来判断它们是否相等。
-* 函数类型：例如`()-> Unit`。只要他们不是在每次重组时都创建一个新的lambda实例，它们就是稳定的
-* 被`@Stable`或`@Immutable`注解的类：`data class`默认是稳定的，因为它的`equals`是基于所有属性的。你可以使用这些注解告诉Compose你的类是稳定的。即使它不是`data class`。
-* Compose的内置类型：如`Modifier`。
+1. 重组可能频繁发生；
+2. Composable 应该保持轻量；
+3. 不要在 Composable 函数体里直接执行不可控副作用；
+4. 可以被重复调用的代码才适合放在 Composable 里。
 
-`Stable`参数意味着Compose可以安全的通过比较（通常是`equals`）来确定它是否发生了变化，从而决定是否Skip使用它的Composable重组。
+## State 和 remember
+
+State 的作用是通知 Compose：值变了，需要更新 UI。
+
+```kotlin
+@Composable
+fun Counter() {
+    var count by remember { mutableStateOf(0) }
+
+    Button(onClick = { count++ }) {
+        Text("count = $count")
+    }
+}
+```
+
+这里有两个角色：
+
+1. `remember`：让 `count` 在多次重组之间保留下来；
+2. `mutableStateOf`：让 `count` 变化时触发重组。
+
+如果没有 `remember`，每次重组都会重新创建状态。
+
+## 状态提升
+
+当一个 Composable 同时负责保存状态和展示 UI 时，它会比较难复用。
+
+更推荐拆成：
+
+```kotlin
+@Composable
+fun CounterScreen() {
+    var count by remember { mutableStateOf(0) }
+    CounterContent(
+        count = count,
+        onIncrease = { count++ }
+    )
+}
+
+@Composable
+fun CounterContent(
+    count: Int,
+    onIncrease: () -> Unit,
+) {
+    Button(onClick = onIncrease) {
+        Text("count = $count")
+    }
+}
+```
+
+`CounterScreen` 管状态，`CounterContent` 只负责展示和发事件。
+
+## 重组触发
+
+重组常见来源：
+
+1. Composable 读取的 `State` 发生变化；
+2. 父 Composable 重组，并传入了新参数；
+3. `Flow/LiveData` 被转换成 Compose State 后发出新值。
+
+典型链路：
+
+```text
+ViewModel StateFlow 发出新值
+  -> collectAsStateWithLifecycle()
+  -> Compose State 更新
+  -> 读取该 State 的 Composable 重组
+  -> 子 Composable 根据参数变化决定是否重组
+```
+
+## 智能跳过
+
+Compose 会尝试跳过输入没有变化的 Composable。
+
+更容易被跳过的参数：
+
+1. 基本类型；
+2. `String`；
+3. 稳定的函数引用；
+4. `@Stable` / `@Immutable` 类型；
+5. Compose 内置稳定类型。
+
+需要避免：
+
+1. 每次重组都创建新的复杂对象；
+2. 在参数里传不稳定集合；
+3. 把过大的状态对象直接传到很深层级。
+
+## 回看清单
+
+1. Compose 用状态描述 UI，而不是手动更新 View。
+2. `remember` 保存对象，`State` 触发重组。
+3. 状态尽量上提，UI 组件尽量无状态。
+4. 副作用用 `LaunchedEffect`、`DisposableEffect` 等 API 管理。
+5. 性能问题先判断是重组、布局还是绘制阶段。

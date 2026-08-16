@@ -1,26 +1,34 @@
 +++
 date = '2026-02-09T10:10:12+08:00'
-draft = true
-title = 'Android App 启动流程'
+draft = false
+title = 'Android App 启动流程：Launcher、AMS、Zygote 与 ActivityThread'
 categories = ['android']
 tags = ['Android', 'Startup', 'Framework', 'Zygote']
-description = "从点击图标到页面显示：Launcher、AMS、Zygote 三方协作的完整启动流程解析。"
+description = "梳理 Android App 从点击图标到首个 Activity 显示的流程：Launcher、AMS、Zygote、ActivityThread、Application 与 Activity 生命周期。"
 slug = "android-app-startup"
 +++
 
 ## 从点击图标到页面显示
 
-我们把这个过程分为三个剧场：**Launcher（桌面）**, **System Server(AMS)**, **Zygote (孵化器)**
+App 冷启动可以拆成三个关键角色：Launcher 发起请求，System Server 中的 AMS 负责调度，Zygote 负责 fork 新进程。
+
+## 核心结论
+
+1. Launcher 不能直接创建目标 App 进程，它通过 Binder 请求 AMS 启动 Activity。
+2. AMS 如果发现目标进程不存在，会通过 Socket 请求 Zygote fork 新进程。
+3. Zygote 使用 fork 和 Copy-on-Write 复用预加载类与资源。
+4. 新进程入口是 `ActivityThread.main()`，这里会启动主线程 Looper。
+5. AMS 通过 `IApplicationThread` 通知新进程绑定 Application 并启动 Activity。
 
 ### 第一阶段：请求与孵化（The Request & The Fork）
 
-这是一个“借刀杀人”的过程。Launcher 自己不能启动 App，它必须求助于 AMS。
+Launcher 自己不能创建目标 App 进程，它必须把启动请求交给 AMS。
 
 #### 1. Launcher -> AMS (Binder 通信)
 
 * 动作： 当你点击桌面图标，Launcher 进程调用`startActivity`。
 * 底层： Launcher(Client)通过 Binder 告诉 AMS（Server）：“我要启动某某 App 的 MainActivity”。
-* 知识点：这里发生来了一次 Binder IPC。
+* 知识点：这里发生了一次 Binder IPC。
 
 #### 2. AMS的决策
 
@@ -72,11 +80,11 @@ AMS 确认“人”到了，开始派活。
 * 执行： 主线程 Looper 收到消息后，执行`handleBindApplication`和`handleLaunchActivity`。
 * 结果：在屏幕上终于显示出了界面。
 
-### 核心图谱 : Android 的创世纪三部曲
+### 核心图谱：Android 进程启动三部曲
 
 我们要搞清楚三个角色的出场顺序：Init 进程 -> Zygote进程 -> System Server 进程。
 
-#### 第一铲：万物起源 -- Init进程（PID =1）
+#### 第一阶段：Init 进程（PID = 1）
 
 * 角色： Linux 系统的第一个用户级进程，所有进程的老祖宗。
 * 动作：
@@ -85,17 +93,17 @@ AMS 确认“人”到了，开始派活。
   3. Init 进程读取`init.rc`配置文件。
   4. 关键指令： 在配置文件里写着一行`service zygote ...`，Init 也就是在这里把 **Zygote**启动了起来。
 
-#### 第二铲：母体降临 -- Zygote进程（Java世界的夏娃）
+#### 第二阶段：Zygote 进程
 
 * 角色：Android Java 世界的孵化器。所有的 App 进程（包括 System Server）都是它的子孙。
 * 动作（ZygoteInit.main）:
   1. 启动虚拟机（ART/Dalvik）：这是 Java 代码运行的基础。
   2. 预加载资源（Preload）：（面试必考）Zygote 会把常用的系统类（`String`, `Activity`等）和资源（drawable, styles）加载到自己的内存里。
      * 为什么要这样做？因为后面 fork 出的新进程会继承这些内存（Copy-on-Write）。大家共享这些资源，既省内存，启动又快。
-  3. 启动 System Server：Zygote 觉得一个人太孤独，且管不过来，于是它`fork`出了它的长子 -- **System Server**。
+  3. 启动 System Server：Zygote 会 `fork` 出 System Server 进程。
   4. **建立 Socket 服务端**: 任务完成，Zygote 建立一个`LocalSocket`服务端，进入死循环，等待 System Server 发号施令。
 
-#### 第三铲：大管家上位 -- System Server 进程
+#### 第三阶段：System Server 进程
 
 * 角色： Android 系统的“CEO”。它虽然是 Zygote 生成的，但它掌管着 Zygote 的接单权。
 * 动作（SystemServer.main）:

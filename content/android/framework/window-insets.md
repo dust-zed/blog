@@ -1,14 +1,24 @@
 +++
 date = '2025-10-17T12:07:34+08:00'
-draft = true
-title = 'Window Insets指南'
+draft = false
+title = 'Window Insets 指南：系统栏、键盘与 Edge-to-Edge'
 categories = ['android']
 tags = ['WindowInsets', 'Edge-to-Edge', 'UI']
-description = "Android Window Insets 指南：什么是 Insets、Edge-to-Edge 全屏适配、键盘高度监听及 Compose 中的处理方式。"
+description = "整理 Android Window Insets 的核心概念：系统栏、刘海、IME、手势区域、Edge-to-Edge、View/Compose 适配和常见问题。"
 slug = "window-insets"
 image = ""
 
 +++
+
+Window Insets 描述的是系统窗口占用或保留的区域，例如状态栏、导航栏、刘海、软键盘和手势区域。做沉浸式和 Edge-to-Edge 时，Insets 是必须理解的基础。
+
+## 核心结论
+
+1. Insets 不是“状态栏高度”，而是一组系统窗口边界信息。
+2. 默认布局通常由系统处理 Insets，Edge-to-Edge 后需要自己消费和分发。
+3. IME Insets 用来处理键盘弹出后的内容避让。
+4. Compose 和 View 都有 Insets API，但不要重复消费。
+5. 适配目标是内容可见、交互安全、视觉连续。
 
 ## 什么是Window Insets？
 

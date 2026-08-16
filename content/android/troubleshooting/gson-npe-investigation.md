@@ -1,12 +1,22 @@
 +++
-title = '一次Gson解析导致NPE的排查'
+title = '一次 Gson 解析导致 NPE 的排查'
 date = '2025-11-05T13:20:21+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Gson', 'Kotlin', 'Troubleshooting']
-description = "排查 Gson 绕过 Kotlin 构造函数导致非空字段出现 NPE 的问题，深入分析 Gson 架构及解决方案。"
+description = "复盘 Gson 反序列化绕过 Kotlin 构造函数后，非空字段仍可能为 null 的问题，并整理 TypeAdapter、Factory 顺序和修复方案。"
 slug = "gson-npe-investigation"
 +++
+
+这是一篇问题复盘。核心问题不是 Gson “解析失败”，而是它成功创建了对象，却让 Kotlin 非空字段处在不可信状态，最终在业务代码里触发 NPE。
+
+## 核心结论
+
+1. Kotlin 的非空类型主要是编译期约束，反射/反序列化框架可能绕过构造函数。
+2. Gson 可以在不调用主构造函数的情况下创建对象，因此默认值和 `init` 逻辑不一定执行。
+3. 修复不能只靠业务层判空，应该在反序列化边界处理异常数据。
+4. 自定义 `TypeAdapter` 或替换序列化方案时，要关注 Factory 注册顺序。
+5. 数据模型越靠近外部输入，越应该显式表达可空和默认值。
 
 ## 问题描述
 

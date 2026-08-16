@@ -1,75 +1,170 @@
 +++
 date = '2025-10-25T16:01:56+08:00'
-draft = true
-title = 'Compose Navigation入门'
+draft = false
+title = 'Compose Navigation 入门：路由、NavHost 与模块化导航'
 categories = ['android']
 tags = ['Compose', 'Navigation', 'Jetpack']
-description = "Compose Navigation 核心组件与使用指南：NavController, NavGraph, Route 及模块化导航结构。"
+description = "整理 Compose Navigation 的核心模型：NavController、NavHost、Route、嵌套导航图、类型安全路由和模块化导航组织。"
 slug = "compose-navigation"
-image = ""
-
 +++
 
-## 1. 核心组件
+Compose Navigation 的重点不是“怎么跳页面”，而是如何把页面地址、返回栈、参数和模块边界组织清楚。页面少时可以直接写在一个 `NavHost` 里，页面多时就需要模块化导航。
 
-Compose Navigation 主要有三个核心概念：
+## 核心结论
 
-* `NavController`：导航控制器。它是整个导航的中枢，负责执行导航操纵(`navigate`)、管理返回栈（Back Stack）等。它通常在最高层级创建并向下传递。
-* `NavGraph`：可以理解为一张“导航地图”。它定义了所有可以到达的目标（屏幕），以及它们之间的关系。在代码中，我们通过一个 `NavHost`Composable来承载这张地图。
-* `Route`：每个目标的唯一地址。在传统的 Navigation 中，这通常是一个 Int 类型的 ID。但在 Compose Navigation 中，它是一个字符串，而在 "Now in Android" 这个项目中，它被进一步封装成了类型安全的对象。
+1. `NavController` 负责执行导航和维护返回栈。
+2. `NavHost` 承载导航图，把 route 映射到 Composable。
+3. route 是页面地址，建议统一封装，不要散落字符串。
+4. feature 模块可以通过扩展函数向主导航图注册自己的页面。
+5. 复杂页面参数要谨慎传递，优先传 ID，再由目标页加载数据。
 
-## 2. Navigation的常规
+## 核心组件
 
-### a. 定义路由
+| 组件 | 职责 |
+| --- | --- |
+| `NavController` | 导航控制器，负责 `navigate()`、`popBackStack()` 和返回栈 |
+| `NavHost` | 导航容器，根据当前 route 显示目标 Composable |
+| `NavGraph` | 导航图，描述页面和页面之间的关系 |
+| `Route` | 目标页面地址 |
 
-```kotlin
-@Serializable
-data object ForYouRoute // route to ForYou screen
-```
-
-### b. 定义导航动作
-
-```kotlin
-fun NavController.navigateToForYou(navOptions: NavOptions) = navigate(route = ForYouRoute, navOptions)
-```
-
-### c. 定义导航图的一部份
+基础结构：
 
 ```kotlin
-fun NavGraphBuilder.forYouSection(
-    onTopicClick: (String) -> Unit,
-    topicDestination: NavGraphBuilder.() -> Unit,
+@Composable
+fun AppNavHost(
+    navController: NavHostController = rememberNavController(),
 ) {
-    navigation<ForYouBaseRoute>(startDestination = ForYouRoute) {
-        composable<ForYouRoute>(...) {
-            ForYouScreen(onTopicClick)
+    NavHost(
+        navController = navController,
+        startDestination = "home",
+    ) {
+        composable("home") {
+            HomeScreen(
+                onOpenDetail = { id ->
+                    navController.navigate("detail/$id")
+                }
+            )
         }
-        topicDestination()
+
+        composable("detail/{id}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")
+            DetailScreen(id = id)
+        }
     }
 }
 ```
 
-这是模块化导航的精髓所在。这个函数的作用是“在总的导航地图上，画出属于 ForYou 功能的所有路线”。
+## 路由封装
 
-* `NavGraphBuilder.forYouSection`: 它是一个对 `NavGraphBuilder` 的扩展函数。这意味着，在构建总的 NavGraph 时，可以直接调用这个函数来添加一整个功能模块的导航配置。主 `NavGraph` 无需关心 `ForYou` 模块内部有多少个页面。
-* `navigation<...>(...)`: 这创建了一个嵌套的导航图 (**Nested Graph**)。它将所有与 "For You" 相关的页面（这里只有一个 `ForYouScreen`，但将来可能更多）组织在了一起，形成一个独立的子图。
-* `composable<ForYouRoute>(...) { ForYouScreen(...) }`: 这是最核心的绑定。它告诉 `NavController`：“当导航到 `ForYouRoute` 这个地址时，请显示 `ForYouScreen` 这个 `Composable` 界面。”
+不要在项目里到处写字符串 route。更稳的方式是集中定义：
 
-### 结构
+```kotlin
+object HomeRoute {
+    const val route = "home"
+}
 
-```
-NavHost (整个 App 的导航地图)
-│
-├── ... (其他模块的导航图)
-│
-└── navigation<ForYouBaseRoute> (子图的入口，ID 是 ForYouBaseRoute)
-    │
-    ├── startDestination = ForYouRoute (子图的默认页面)
-    │   │
-    │   └── composable<ForYouRoute> -> ForYouScreen (这就是默认页面)
-    │
-    └── topicDestination() (另一个页面/子图，被外部注入进来)
-        │
-        └── ...
+object DetailRoute {
+    const val route = "detail/{id}"
+
+    fun create(id: String): String = "detail/$id"
+}
 ```
 
+使用：
+
+```kotlin
+navController.navigate(DetailRoute.create(id))
+```
+
+如果项目使用 Navigation 的类型安全路由能力，也可以用序列化对象表达 route：
+
+```kotlin
+@Serializable
+data object ForYouRoute
+```
+
+## 模块化导航
+
+大型项目里，主导航图不应该知道每个 feature 内部的页面细节。可以让 feature 暴露一个注册函数：
+
+```kotlin
+fun NavGraphBuilder.forYouSection(
+    onTopicClick: (String) -> Unit,
+) {
+    navigation(
+        startDestination = "for-you/feed",
+        route = "for-you",
+    ) {
+        composable("for-you/feed") {
+            ForYouScreen(onTopicClick = onTopicClick)
+        }
+    }
+}
+```
+
+主工程只负责装配：
+
+```kotlin
+NavHost(
+    navController = navController,
+    startDestination = "for-you",
+) {
+    forYouSection(
+        onTopicClick = { id ->
+            navController.navigate("topic/$id")
+        }
+    )
+}
+```
+
+这样 feature 可以维护自己的子图，主导航只处理跨模块跳转。
+
+## 参数传递原则
+
+推荐：
+
+1. route 里传轻量 ID；
+2. 目标页面通过 ViewModel 根据 ID 加载数据；
+3. 复杂对象放在共享数据层或持久化层；
+4. 避免把大型 JSON 直接塞进 route。
+
+原因：
+
+1. route 本质是地址，不适合承载大对象；
+2. 进程重建后，参数越简单越容易恢复；
+3. 页面之间传复杂对象会增加耦合。
+
+## 返回栈
+
+常用操作：
+
+```kotlin
+navController.navigate("detail/$id")
+navController.popBackStack()
+```
+
+底部 Tab 场景通常需要：
+
+1. 保存每个 Tab 的状态；
+2. 避免重复创建同一个目的地；
+3. 回到根目的地时恢复状态。
+
+示例思路：
+
+```kotlin
+navController.navigate(tab.route) {
+    popUpTo(navController.graph.startDestinationId) {
+        saveState = true
+    }
+    launchSingleTop = true
+    restoreState = true
+}
+```
+
+## 回看清单
+
+1. `NavController` 管行为，`NavHost` 管展示，route 管地址。
+2. route 不要散落字符串，最好集中封装。
+3. feature 模块通过 `NavGraphBuilder` 扩展函数注册自己的导航图。
+4. 页面参数优先传 ID，不传复杂对象。
+5. 底部 Tab 要关注返回栈复用和状态恢复。

@@ -1,12 +1,22 @@
 +++
-title = 'Android Rust混合开发入门'
+title = 'Android Rust 混合开发入门：NDK、JNI、ABI 与 .so'
 date = '2025-10-15T11:55:59+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Rust', 'JNI', 'NDK']
-description = "Android Rust 混合开发入门指南：JNI 原理、NDK 工作流程及 Rust 与 Java/Kotlin 交互基础。"
+description = "整理 Android Rust 混合开发的基础模型：NDK、JNI、交叉编译、ABI、.so 文件、加载流程和适用场景。"
 slug = "android-rust-integration-intro"
 +++
+
+Android 与 Rust 混合开发的核心链路是：Rust 编译成 Android 可加载的 `.so`，Kotlin/Java 通过 JNI 或 UniFFI 访问其中的能力。
+
+## 核心结论
+
+1. NDK 提供 Android Native 开发和交叉编译工具链。
+2. Rust 代码最终要编译成对应 ABI 的 `.so`。
+3. JNI 是 JVM 与 Native 世界之间的桥。
+4. `.so` 需要放到 `jniLibs/<abi>/` 或由构建流程打进 APK/AAB。
+5. 只有在跨平台复用、性能、协议/算法核心等场景下，引入 Rust 才更值得。
 
 ## 什么是NDK?
 
@@ -14,7 +24,7 @@ slug = "android-rust-integration-intro"
 
 **一句话解释**
 
-NDK 是 Android 提供的工具集,让你能用 **C/C++/Rust** 等原生语言开发 Android 应用的一部分
+NDK 是 Android 提供的工具集，让你能用 **C/C++/Rust** 等原生语言开发 Android 应用的一部分。
 
 ----
 
@@ -189,40 +199,16 @@ nm -D librust_lib.so | grep Java
 
 ----
 
-## NDK开发流程
+## 开发流程概览
 
-### 完整开发流程
+完整环境安装、Rust target、`cargo-ndk` 和 ABI 输出目录已经单独放在《Rust JNI 环境配置》里。这里保留概念流程：
 
-```
-1. 安装 NDK
-   ↓
-   Android Studio → SDK Manager → SDK Tools → NDK
-
-2. 配置环境
-   ↓
-   export ANDROID_NDK_HOME=/path/to/ndk
-
-3. 编写原生代码 (C/C++/Rust)
-   ↓
-   例如: add.c, image.cpp, search.rs
-
-4. 使用 NDK 编译
-   ↓
-   ndk-build  (C/C++)
-   cargo-ndk  (Rust)
-
-5. 生成 .so 文件
-   ↓
-   libmylib.so
-
-6. 放入 jniLibs 目录
-   ↓
-   app/src/main/jniLibs/arm64-v8a/libmylib.so
-
-7. Kotlin 加载和调用
-   ↓
-   System.loadLibrary("mylib")
-   external fun add(a: Int, b: Int): Int
+```text
+Rust 代码
+  -> NDK / cargo-ndk 交叉编译
+  -> 生成对应 ABI 的 .so
+  -> 打进 APK/AAB
+  -> Kotlin 通过 JNI 或 UniFFI 调用
 ```
 
 ----
@@ -315,22 +301,7 @@ x86_64/libmylib.so       → x86_64 模拟器
 
 -----
 
-## NDK开发工具
-
-### 必备工具
-
-```
-1. Android NDK
-   - 下载: Android Studio SDK Manager
-
-2. CMake (C/C++) 或 cargo-ndk (Rust)
-   - cargo install cargo-ndk
-
-3. LLDB (调试器)
-   - Android Studio 内置
-```
-
-### 辅助工具
+## 常用排查工具
 
 ```
 # 查看 .so 文件信息
@@ -375,4 +346,3 @@ ABI:   不同 CPU 架构
 流程:
 Rust 代码 → NDK 编译 → .so 文件 → JNI 调用 → Kotlin 使用
 ```
-

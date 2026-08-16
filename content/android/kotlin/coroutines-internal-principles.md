@@ -1,144 +1,161 @@
 +++
-title = '协程原理'
+title = 'Kotlin 协程原理：Continuation、状态机与挂起恢复'
 date = '2025-06-30T15:13:25+08:00'
 draft = false
 categories = ['android']
 tags = ['Android', 'Kotlin', 'Coroutines', 'Internal']
-description = "深入解析 Kotlin 协程原理：挂起函数、状态机转换、CPS 变换及续体传递机制。"
+description = "整理 Kotlin 协程底层原理：挂起函数如何被编译成状态机，Continuation 如何保存现场，调度器如何恢复执行。"
 slug = "coroutines-internal-principles"
 +++
 
-Kotlin协程的本质是**通过状态机管理挂起点，由编译器进行CPS变换实现的轻量级并发抽象**。其核心原理和状态推进机制如下：
+协程看起来像同步代码，但底层依然有明确的转换规则。编译器会把挂起函数改写成状态机，并通过 `Continuation` 保存“下一步要从哪里继续执行”。
 
-## 核心原理
+## 核心结论
 
-### 1. 挂起函数
+1. `suspend` 函数会被编译器改写，额外接收一个 `Continuation`。
+2. 挂起点会把函数拆成多个状态。
+3. 局部变量会被保存到状态机对象里，恢复时继续使用。
+4. 挂起不会阻塞线程，只是当前协程把执行权交出去。
+5. 恢复执行本质是调用 `Continuation.resumeWith()`。
 
-* 用suspend修饰的函数
-* 编译器会将其编译为**状态机代码**(而非阻塞线程)，支持在任意位置挂起/恢复
+## CPS 变换
 
-### 2. 续体
-
-* 类似回调的接口`Continuation<T>`，其关键方法是`resumeWith(result)`
-* 协程的每一步执行都依附于一个续体对象，存储当前执行状态和上下文
-
-### 3. 状态机转换
-
-* 编译器将挂起函数拆解成一个状态机（通过`label`标记状态）
-* 每个挂起点对应一个状态迁移
-
---------
-
-## 状态推进流程
-
-以下代码展示状态机的运作：
+挂起函数：
 
 ```kotlin
-suspend fun fetchData(): String {
-  val data1 = fetchPart1()  //挂起点1
-  val data2 = fetchPart2()  //挂起点2
-  return data1 + data2
+suspend fun load(): User {
+    val token = getToken()
+    return getUser(token)
 }
 ```
 
-**编译器转换后（伪代码）**
-
- ```kotlin
- class FetchDataStateMachine(
- 	val completion: Continuation<String>,
-   var label: Int = 0
- ) : Continuation<Unit> {
-   var data1: String? = null
-   var data2: String? = null
-   
-   override fun resumeWith(result: Result<Any?>) {
-     when(label) {
-       0 -> {
-         label = 1
-         fetchPart1(this)
-       }
-       1 -> {
-         data1 = result.getOrThrow() as String
-         label = 2
-         fetchPart2(this)
-       }
-       2 -> {
-         data2 = result.getOrThrow() as String
-         completion.resumeWith(data1 + data2)	//返回最终结果
-       }
-     }
-   }
- }
- ```
-
-----
-
-## 关键机制
-
-### 1. 挂起不阻塞线程：
-
-* 协程挂起时，底层线程立即释放（例如返回到线程池），避免资源浪费
-* 异步操作完成后，任务被派发到合适的线程继续执行（通过`Dispatcher`）
-
-### 2.续体传递风格
-
-*  挂起函数被编译为接受额外`Continuation`参数的函数
-* 例如`suspend fun foo()` → `fun foo(continuation: Continuation)`
-
-### 3. 协程上下文（CoroutineContext）
-
-* 通过`CoroutineContext`传递调度器、异常处理器等。
-* 状态机中通过`Continuation.context`获取当前上下文
-
-### 4. 结构化并发
-
-* 协程树通过父-子关系管理生命周期
-* 父协程取消时，自动取消所有子协程
-
-----
-
-## 状态推进
-
-在`FetchDataStateMachine`的`resumeWith`中并没有循环，label的状态是如何推进的呢？实际上状态推进是通过**递归链式调用与间接跳转**实现的。
-
-### 1. 单次触发模型
-
-* 每次resumeWith被调用时只处理当前状态
-* 通过更新label值标记下一步状态
-* 不立即处理后续状态，而是等待下一次恢复
+可以粗略理解成编译器改写为：
 
 ```kotlin
-label = 2  //只标记下一步状态，不立即执行
-fetchPart2(this)  //触发异步操作（挂起），this就是FetchDataStateMachine，其是Continuation，可通过this调用resumeWith
+fun load(continuation: Continuation<User>): Any?
 ```
 
-### 2. 链式递归唤醒
+这种把“后续要执行的逻辑”显式传入函数的方式，叫 CPS：Continuation Passing Style。
 
-* 每个异步操作完成时，都会重新调用resumeWith
-* 每调用一次，就会处理当前状态并设置下一次状态
+## Continuation
 
-``````
-resumeWith(结果) → 处理当前状态
-      ↑               ↓
-  异步完成          设置下一状态
-      ↑             
-  恢复执行        
-``````
+`Continuation` 可以理解为“恢复执行的入口”。
 
-### 3. 状态变量持久化
+核心方法：
 
-* 状态机对象在挂起期间持续存在（堆内存）
-* 成员变量(data1, label)保存中间状态
-* 每次恢复时从正确状态继续执行
+```kotlin
+interface Continuation<in T> {
+    val context: CoroutineContext
+    fun resumeWith(result: Result<T>)
+}
+```
 
-### 4. 编译器优化技巧
+它保存两类信息：
 
-* 尾递归优化：编译器会将状态处理转为循环
-* 状态折叠 ：合并可优化状态减少跳转次数
-* 内联状态：简单状态机转为switch跳转表
+1. 协程上下文，例如 Dispatcher、Job；
+2. 恢复执行所需的状态机。
 
-----
+## 状态机
 
-## 对挂起的理解
+假设有两个挂起点：
 
-协程挂机：在挂起点暂停当前的同步代码，转而去执行消息队列的runnable；这样就是我对挂起的理解，也就是让出线程
+```kotlin
+suspend fun fetch() {
+    val a = requestA()
+    val b = requestB(a)
+    render(b)
+}
+```
+
+编译器会把它拆成类似状态：
+
+```text
+state 0: 调用 requestA()
+state 1: requestA 返回后，调用 requestB(a)
+state 2: requestB 返回后，调用 render(b)
+```
+
+伪代码：
+
+```kotlin
+when (label) {
+    0 -> {
+        label = 1
+        val result = requestA(this)
+        if (result == COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED
+    }
+    1 -> {
+        val a = result
+        label = 2
+        val result = requestB(a, this)
+        if (result == COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED
+    }
+    2 -> {
+        val b = result
+        render(b)
+    }
+}
+```
+
+真实代码更复杂，但核心就是：用 `label` 记录执行到哪一步。
+
+## 挂起不阻塞线程
+
+挂起时发生的是：
+
+```text
+当前协程保存状态
+  -> 返回 COROUTINE_SUSPENDED
+  -> 当前线程可以去执行其他任务
+  -> 异步结果回来
+  -> resumeWith()
+  -> 从对应状态继续执行
+```
+
+所以挂起不是让线程睡眠，而是协程暂停，线程释放。
+
+## CoroutineContext
+
+`CoroutineContext` 是协程运行环境的集合。
+
+常见元素：
+
+1. `Job`：控制生命周期和取消；
+2. `CoroutineDispatcher`：决定在哪个线程或线程池执行；
+3. `CoroutineName`：调试用名称；
+4. `CoroutineExceptionHandler`：异常处理。
+
+调度器决定恢复时在哪执行：
+
+```kotlin
+withContext(Dispatchers.IO) {
+    readFile()
+}
+```
+
+这里不是把线程“切过去”，而是把后续执行调度到 IO dispatcher。
+
+## 结构化并发的底层意义
+
+结构化并发把协程组织成父子关系：
+
+```text
+Parent Job
+├── Child Job A
+└── Child Job B
+```
+
+好处：
+
+1. 父任务取消时，子任务一起取消；
+2. 子任务失败可以向父任务传播；
+3. 生命周期边界清楚；
+4. 不容易留下后台孤儿任务。
+
+## 回看清单
+
+1. 协程底层是状态机 + Continuation。
+2. `suspend` 函数会被编译器改写，不是普通函数直接暂停。
+3. 挂起保存现场，恢复调用 `resumeWith()`。
+4. 线程没有被挂起，协程让出执行权。
+5. Dispatcher 决定恢复在哪执行，Job 决定生命周期。

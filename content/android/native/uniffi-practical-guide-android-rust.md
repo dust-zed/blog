@@ -1,20 +1,28 @@
 +++
 date = '2026-01-11T13:59:24+08:00'
-draft = true
+draft = false
 title = 'UniFFI 实战手册：Android + Rust 混合开发'
 categories = ['android']
 tags = ['UniFFI', 'Rust', 'Android', 'FFI']
-description = "UniFFI 实战手册：像写普通 Rust 代码一样开发，自动生成完美的 Kotlin 接口。"
+description = "整理 UniFFI 在 Android + Rust 混合开发中的实践：过程宏、类型映射、错误处理、回调、异步和 Gradle 集成。"
 slug = "uniffi-practical-guide-android-rust"
 +++
 
-**核心定位**：UniFFI 是你的“AI 翻译机”。它让你像写普通 Rust 代码一样开发，然后自动生成完美的 Kotlin 接口 (JNI 胶水代码)。推荐模式：全线采用 **Proc Macros（过程宏）**模式。
+UniFFI 的核心价值是减少手写 JNI 胶水代码：Rust 侧定义类型和函数，UniFFI 生成 Kotlin 绑定，让 Android 侧像调用普通 Kotlin API 一样访问 Rust Core。
 
-### 一、环境与配置
+## 核心结论
 
-#### 1.1 `Cargo.toml`依赖配置
+1. UniFFI 适合把 Rust Core 暴露给 Kotlin/Swift 等上层语言。
+2. Android 场景下通常生成 Kotlin binding，再加载 Rust `.so`。
+3. 类型边界要保持简单，避免跨 FFI 传递复杂平台对象。
+4. 异步、回调、错误类型要提前设计，否则后期迁移成本很高。
+5. 推荐优先使用过程宏模式，减少 `.udl` 文件和实现之间的漂移。
 
-在 Rust 项目根目录的`Cargol.toml`中，注意`crate-type`和`uniffi`的版本一致性：
+## 一、环境与配置
+
+### 1.1 `Cargo.toml` 依赖配置
+
+在 Rust 项目根目录的 `Cargo.toml` 中，注意 `crate-type` 和 `uniffi` 的版本一致性：
 
 ```toml
 [lib]
@@ -37,9 +45,9 @@ android_logger = "0.13" # 让 Rust 日志输出到 Logcat
 uniffi = { version = "0.28", features = ["build"] }
 ```
 
-#### 1.2 Rust入口文件 (lib.rs)
+### 1.2 Rust 入口文件 (`lib.rs`)
 
-```toml
+```rust
 // 这一行宏会自动生成 JNI 胶水代码，不可省略
 uniffi::setup_scaffolding!();
 
@@ -52,7 +60,7 @@ fn init_logger() {
 }
 ```
 
-#### 1.3 `uniffi.toml`配置文件
+### 1.3 `uniffi.toml` 配置文件
 
 在项目根目录（与`Cargo.toml`同级）创建`uniffi.toml`：
 
@@ -64,7 +72,7 @@ package_name = "com.example.app.core"
 cdylib_name = "rust_lib_core"
 ```
 
-#### 1.4 Gradle集成（Android侧）
+### 1.4 Gradle 集成（Android 侧）
 
 在 Android 项目的 `app/build.gradle.kts` 中，你需要让 Gradle 自动调用 `uniffi-bindgen`。 *(注：市面上有 `net.navatwo.uniffi` 等插件，但手动配置更稳定)*
 
@@ -74,7 +82,7 @@ cdylib_name = "rust_lib_core"
 2. `uniffi-bindgen` 读取 `.so` -> 生成 `.kt`
 3. 将 `.kt` 加入 Android 源码集
 
-### 二、类型系统 -- 通信的词汇
+## 二、类型系统：通信的词汇
 
 #### 2.1 基础类型映射表
 
@@ -143,7 +151,7 @@ imple CoreService {
 }
 ```
 
-### 三、函数与交互
+## 三、函数与交互
 
 #### 3.1 异步函数(Async) -- 彻底告别卡顿
 
@@ -188,12 +196,12 @@ class AndroidListener: StateListener {
     }
   }
   override fun onLog(msg: String) {
-    Lod.d("RustCore", msg)
+    Log.d("RustCore", msg)
   }
 }
 ```
 
-### 三、高级技巧
+## 四、高级技巧
 
 #### 4.1 自定义类型 -- 包装`SystemTime`
 
@@ -202,7 +210,7 @@ class AndroidListener: StateListener {
 Rust实现：
 
 1. 创建一个NewType 包装器（如果需要）或直接为你的类型实现 `UniffiCustomTypeConverter`。
-2. 此处演示简单包装模式（Uniffi 尚不支持直接对标准库类型 impl Converter, 通常用 NewType）。
+2. 此处演示简单包装模式（UniFFI 尚不支持直接对标准库类型实现 Converter，通常使用 NewType）。
 
 ```rust
 #[derive(uniffi::Object)]
@@ -248,4 +256,3 @@ override fun onCleared() {
   coreService.destory()
 }
 ```
-

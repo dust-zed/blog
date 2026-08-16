@@ -1,14 +1,24 @@
 +++
 date = '2025-10-19T13:50:30+08:00'
 draft = false
-title = 'Surface体系指南'
+title = 'Android Surface 体系：设计概念、Compose Surface 与底层缓冲'
 categories = ['android']
 tags = ['Surface', 'Graphics', 'View System']
-description = "深入理解 Android Surface 体系：从 Material Design 设计概念到底层 SurfaceFlinger 渲染原理，以及 SurfaceView/TextureView 的区别。"
+description = "整理 Android Surface 的多层含义：Material/Compose 的视觉表面、传统 View 容器，以及 SurfaceView/TextureView/SufaceFlinger 的底层缓冲模型。"
 slug = "surface-system"
 image = ""
 
 +++
+
+Surface 这个词在 Android 里有多层含义：设计系统里的视觉表面、Compose 的 `Surface` 组件、传统 View 的容器感，以及底层图形系统中的缓冲区。混在一起看会很乱，分层理解会清晰很多。
+
+## 核心结论
+
+1. Material/Compose 的 Surface 是视觉语义，强调背景、形状、阴影和内容承载。
+2. 底层 Surface 是图形缓冲生产者和消费者之间的连接点。
+3. SurfaceView 有独立 Surface，适合视频、相机、游戏等高性能画面。
+4. TextureView 更容易参与 View 层变换，但通常比 SurfaceView 成本更高。
+5. Compose 中嵌入 SurfaceView 时，要特别关注生命周期和层级关系。
 
 ## 什么是surface？
 
@@ -408,4 +418,3 @@ SurfaceView：
 * **Canvas**：绘制API，提供画图方法
 
 ----
-
